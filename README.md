@@ -27,11 +27,29 @@ what the engine returns.
   significators of houses and grahas, ruling planets and Fortuna. The significator sets are folded in the
   shell (`app/Reading.swift`) from what the engine returns.
 - Transits: the sky at any moment set in the houses of the birth lagna.
-- A printed report (the Report… button, or `FormJyotish --report out.pdf [--ayanamsa truecitra]`), 22
+- Strength: ashtakavarga (each graha's bindus by sign, and the sarvashtakavarga) and the six-fold shadbala
+  after B.V. Raman, row by row, with rupas and the share of what is required. Planetary war is not read.
+- A printed report (⌘K, "report"; or `FormJyotish --report out.pdf [--ayanamsa truecitra]`), 24
   pages in the dress of a classical horoscope: cover, birth particulars, birth chart, Chandra, Navamsha
-  and Bhava, two pages of divisional charts, Vimshottari (mahadasha and antardasha, nine pages of
+  and Bhava, two pages of divisional charts, shadbala, ashtakavarga, Vimshottari (mahadasha and antardasha, nine pages of
   pratyantardashas, three of sookshma dashas from today), two of Krishnamurti Paddhati, and the transits
   of the day.
+
+## The window
+
+- **One pick.** Click a graha, a sign or a dasha period on any card; the inspector at the right explains
+  it and every other card highlights the same thing.
+- **One time.** The bar at the bottom moves the whole desk: Birth, Now, step, play. Away from the birth,
+  the sky of that moment is drawn beside the birth positions in every chart. Rectify steps the birth time
+  itself in seconds and minutes; Apply writes it into the birth data.
+- **Workspaces of cards.** Overview, Vargas, Dasha, KP and Transits come filled; cards can be added,
+  moved and removed, and the layout is remembered.
+- **Type to do anything (⌘K).** "d9", "kp", "north", "true chitra", "now", "report".
+- The Vimshottari timeline zooms from 120 years to six weeks, showing finer levels as it narrows; dragging
+  along it moves the moment, a click picks the period.
+
+Each reading is a fresh run of the engine (about a twentieth of a second), so nothing on screen is
+interpolated.
 
 ## Layout
 
@@ -40,10 +58,12 @@ what the engine returns.
 | `engine/num.bml` | sine, cosine, arctangent in double precision |
 | `engine/spk.bml` | the DAF/SPK reader: segments and Chebyshev states from the file's bytes |
 | `engine/sky.bml` | time scales, apparent positions, precession, ayanamsa, node, ascendant |
+| `engine/strength.bml` | the sixteen vargas, ashtakavarga and shadbala |
 | `engine/chart.bml` | the Jyotish reading and its JSON |
 | `engine/chart-run.bml` | the door: one line in, one JSON line out |
 | `witness/positions-run.bml` | seven bodies against JPL Horizons, within 0.3 arcsec |
 | `witness/swiss-run.bml` | Sun, Moon, lagna and ayanamsa against Swiss Ephemeris, Lahiri and True Chitra, within 0.5 arcsec |
+| `witness/strength-run.bml` | the strength module's invariants: ashtakavarga row sums, varga signs, natural order |
 | `app/` | the SwiftUI shell; `app/Report.swift` draws the report |
 
 ## Setup
@@ -75,5 +95,5 @@ The app finds this folder and the kernel at the paths it was built from; both ca
 
 ## Not yet here
 
-Shadbala and ashtakavarga, the dasha systems beyond Vimshottari, Jaimini, varshaphala, muhurta, yogas,
+Bhava bala, the dasha systems beyond Vimshottari, Jaimini, varshaphala, muhurta, yogas,
 compatibility, interpretive text, and an atlas that works offline.

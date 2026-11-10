@@ -94,7 +94,7 @@ struct NorthPanel: View {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     ForEach(rows[row].indices, id: \.self) { item in
                         let mark = rows[row][item]
-                        Text(mark.code).font(Ink.times(codeSize)).foregroundColor(mark.color)
+                        Text(mark.code).font(Ink.times(codeSize)).foregroundColor(mark.color).underline(mark.code.count == 3 && mark.code.hasSuffix("R"))
                             + Text(mark.detail.isEmpty ? "" : " " + mark.detail).font(Ink.times(codeSize * 0.7)).foregroundColor(.black)
                     }
                 }
@@ -344,8 +344,8 @@ struct Report {
             rows.append(Row(name: Names.lords[g.id] ?? g.name, code: g.id, flags: (g.retro && !node ? "R" : "") + (g.combust == true ? "C" : ""),
                             p: p, speed: Names.colons(g.speed), status: g.status ?? ""))
         }
-        let widths: [CGFloat] = [58, 24, 28, 50, 52, 92, 28, 20, 20, 20, 22, 44]
-        let titles = ["Planet", "R/C", "Sign", "Degree", "Speed", "Nakshatra", "Pada", "RL", "NL", "SL", "SS", "Status"]
+        let widths: [CGFloat] = [54, 24, 28, 50, 50, 84, 28, 20, 20, 20, 22, 44, 30]
+        let titles = ["Planet", "R/C", "Sign", "Degree", "Speed", "Nakshatra", "Pada", "RL", "NL", "SL", "SS", "Status", "SB"]
         let lord = { (code: String) in Text(code).foregroundColor(Ink.graha(code)) }
         return page(number, title: "Birth Chart") {
             Text(headline).font(Ink.times(11.5)).bold().foregroundColor(Ink.maroon).centred(from: 50, to: 548, y: 76)
@@ -375,6 +375,7 @@ struct Report {
                         lord(row.p.sub_lord).frame(width: widths[9], alignment: .leading)
                         lord(row.p.sub_sub).frame(width: widths[10], alignment: .leading)
                         Text(row.status).frame(width: widths[11], alignment: .leading)
+                        Text((1...7).contains(index) ? String(format: "%.2f", chart.strengthRatio(index - 1)) : "").frame(width: widths[12], alignment: .leading)
                     }
                     .frame(height: 13.9)
                 }
@@ -423,7 +424,12 @@ struct Report {
     }
 
     var pages: [AnyView] {
-        let makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, birthChart, bhavaPage] + vargaPages + dashaPages + kpPages + transitPages
+        var makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, birthChart, bhavaPage]
+        makers += vargaPages
+        makers += strengthPages
+        makers += dashaPages
+        makers += kpPages
+        makers += transitPages
         return makers.enumerated().map { $1($0 + 1) }
     }
 

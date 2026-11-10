@@ -1,0 +1,167 @@
+//////////////////////////////////////////////////////////////////////
+// strength.bml — how strong the grahas stand: ashtakavarga and shadbala.
+//
+// The seven grahas are numbered 0 to 6: Sun Moon Mars Mercury Jupiter Venus Saturn. Signs are 0 to 11.
+//
+//   st-varga-signs(s, d)                 the sixteen vargas of a point at d degrees of sign s
+//   st-ashtakavarga(signs)               seven rows of twelve bindu counts, by sign; signs = the seven grahas' signs, then the lagna's
+//   st-shadbala(...)                     the named rows of the six-fold strength, in virupas (sixtieths of a rupa)
+//
+// Shadbala follows B.V. Raman's "Graha and Bhava Balas". Planetary war (yuddha bala) is not read.
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+section [form.bml] {
+ class JyStrength {
+  def st-seven() = [0, 1, 2, 3, 4, 5, 6];
+  def st-abs(x) = x < 0.0 ? 0.0 - x : x;
+  // the shorter arc between two longitudes, 0 to 180
+  def st-arc(a, b) = st-abs(jn-norm180(a - b));
+  def st-has(xs, v) = nil?(xs) ? 0 : xs[0] == v ? 1 : st-has(xs[1:], v);
+  def st-index(xs, v, i) = nil?(xs) ? 0 : xs[0] == v ? i : st-index(xs[1:], v, i + 1);
+  def st-add(a, b) = nil?(a) ? [] : cons(a[0] + b[0], st-add(a[1:], b[1:]));
+  def st-total(rows) = nil?(rows[1:]) ? rows[0] : st-add(rows[0], st-total(rows[1:]));
+  // a row where one graha holds a value and the rest hold none
+  def st-award(lord, value) = st-seven() |> map(i => i == lord ? value : 0.0);
+
+  // each sign's lord; each graha's sign of exaltation; natural friendship, row toward column (1 friend, 0 neutral, -1 enemy)
+  def st-sign-lords() = [2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4];
+  def st-exalted() = [0, 1, 9, 5, 3, 11, 6];
+  def st-natural() = [[0, 1, 1, 0, 1, -1, -1], [1, 0, 0, 1, 0, 0, 0], [1, 1, 0, -1, 1, 0, 0], [1, -1, 0, 0, 0, 1, 0],
+   [1, 1, 1, -1, 0, -1, 0], [-1, -1, 0, 1, 0, 0, 1], [-1, -1, -1, 1, 0, 1, 0]];
+  // a graha's temporal friends stand in the 2nd, 3rd, 4th, 10th, 11th and 12th from it
+  def st-temporal(d) = (d >= 1 && d <= 3) || d >= 9 ? 1 : 0 - 1;
+  // the compound of natural and temporal friendship of graha i toward graha lord: -2 to 2
+  def st-compound(i, lord, signs) = st-natural()[i][lord] + st-temporal((signs[lord] - signs[i] + 12) % 12);
+
+  // ---- the sixteen vargas of Parashara, as signs: D1 2 3 4 7 9 10 12 16 20 24 27 30 40 45 60 ----
+  def st-part(d, n) = floor(d * n / 30.0);
+  def st-odd(s) = s % 2 == 0;
+  def st-kind(s, movable, fixed, dual) = s % 3 == 0 ? movable : s % 3 == 1 ? fixed : dual;
+  def st-trimsamsa(s, d) = st-odd(s) ? (d < 5.0 ? 0 : d < 10.0 ? 10 : d < 18.0 ? 8 : d < 25.0 ? 2 : 6) : (d < 5.0 ? 1 : d < 12.0 ? 5 : d < 20.0 ? 11 : d < 25.0 ? 9 : 7);
+  def st-varga-signs(s, d) {
+   let first = d < 15.0;
+   [s, st-odd(s) ? (first ? 4 : 3) : (first ? 3 : 4), s + 4 * st-part(d, 3), s + 3 * st-part(d, 4), (st-odd(s) ? s : s + 6) + st-part(d, 7),
+    st-kind(s, s, s + 8, s + 4) + st-part(d, 9), (st-odd(s) ? s : s + 8) + st-part(d, 10), s + st-part(d, 12), st-kind(s, 0, 4, 8) + st-part(d, 16),
+    st-kind(s, 0, 8, 4) + st-part(d, 20), (st-odd(s) ? 4 : 3) + st-part(d, 24), (s % 4) * 3 + st-part(d, 27), st-trimsamsa(s, d),
+    (st-odd(s) ? 0 : 6) + st-part(d, 40), st-kind(s, 0, 4, 8) + st-part(d, 45), s + st-part(d, 60)] |> map(x => x % 12);
+  }
+
+  // ---- ashtakavarga ----
+  // For each graha's own varga: the houses, counted from the Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn
+  // and the lagna in turn, where that reference gives a bindu. The rows sum to 48 49 39 54 56 52 39.
+  def st-av-rules() = [
+   [[1, 2, 4, 7, 8, 9, 10, 11], [3, 6, 10, 11], [1, 2, 4, 7, 8, 9, 10, 11], [3, 5, 6, 9, 10, 11, 12], [5, 6, 9, 11], [6, 7, 12], [1, 2, 4, 7, 8, 9, 10, 11], [3, 4, 6, 10, 11, 12]],
+   [[3, 6, 7, 8, 10, 11], [1, 3, 6, 7, 10, 11], [2, 3, 5, 6, 9, 10, 11], [1, 3, 4, 5, 7, 8, 10, 11], [1, 4, 7, 8, 10, 11, 12], [3, 4, 5, 7, 9, 10, 11], [3, 5, 6, 11], [3, 6, 10, 11]],
+   [[3, 5, 6, 10, 11], [3, 6, 11], [1, 2, 4, 7, 8, 10, 11], [3, 5, 6, 11], [6, 10, 11, 12], [6, 8, 11, 12], [1, 4, 7, 8, 9, 10, 11], [1, 3, 6, 10, 11]],
+   [[5, 6, 9, 11, 12], [2, 4, 6, 8, 10, 11], [1, 2, 4, 7, 8, 9, 10, 11], [1, 3, 5, 6, 9, 10, 11, 12], [6, 8, 11, 12], [1, 2, 3, 4, 5, 8, 9, 11], [1, 2, 4, 7, 8, 9, 10, 11], [1, 2, 4, 6, 8, 10, 11]],
+   [[1, 2, 3, 4, 7, 8, 9, 10, 11], [2, 5, 7, 9, 11], [1, 2, 4, 7, 8, 10, 11], [1, 2, 4, 5, 6, 9, 10, 11], [1, 2, 3, 4, 7, 8, 10, 11], [2, 5, 6, 9, 10, 11], [3, 5, 6, 12], [1, 2, 4, 5, 6, 7, 9, 10, 11]],
+   [[8, 11, 12], [1, 2, 3, 4, 5, 8, 9, 11, 12], [3, 5, 6, 9, 11, 12], [3, 5, 6, 9, 11], [5, 8, 9, 10, 11], [1, 2, 3, 4, 5, 8, 9, 10, 11], [3, 4, 5, 8, 9, 10, 11], [1, 2, 3, 4, 5, 8, 9, 11]],
+   [[1, 2, 4, 7, 8, 10, 11], [3, 6, 11], [3, 5, 6, 10, 11, 12], [6, 8, 9, 10, 11, 12], [5, 6, 11, 12], [6, 11, 12], [3, 5, 6, 11], [1, 3, 4, 6, 10, 11]]];
+  def st-av-count(rules, signs, s) = nil?(rules) ? 0 : st-has(rules[0], (s - signs[0] + 12) % 12 + 1) + st-av-count(rules[1:], signs[1:], s);
+  def st-av-row(rules, signs, s) = s >= 12 ? [] : cons(st-av-count(rules, signs, s), st-av-row(rules, signs, s + 1));
+  def st-ashtakavarga(signs) = st-av-rules() |> map(r => st-av-row(r, signs, 0));
+
+  // ---- sthana bala: strength of place ----
+  // uccha: a third of the arc from the point of deepest fall
+  def st-fall() = [190.0, 213.0, 118.0, 345.0, 275.0, 177.0, 20.0];
+  def st-uccha(lons) = st-seven() |> map(i => st-arc(lons[i], st-fall()[i]) / 3.0);
+  // saptavargaja: dignity in rasi, hora, drekkana, saptamsa, navamsa, dwadasamsa and trimsamsa
+  // moolatrikona stretches, read in the rasi only: [sign, from, to]
+  def st-moola() = [[4, 0.0, 20.0], [1, 3.0, 30.0], [0, 0.0, 12.0], [5, 15.0, 20.0], [8, 0.0, 10.0], [6, 0.0, 15.0], [10, 0.0, 20.0]];
+  def st-seven-vargas() = [0, 1, 2, 4, 5, 7, 12];
+  def st-dignity(i, sign, deg, rasi, signs) {
+   let m = st-moola()[i]; let lord = st-sign-lords()[sign];
+   rasi && sign == m[0] && deg >= m[1] && deg < m[2] ? 45.0 : lord == i ? 30.0 : [1.875, 3.75, 7.5, 15.0, 22.5][st-compound(i, lord, signs) + 2];
+  }
+  def st-sapta-sum(i, vs, ks, deg, signs) = nil?(ks) ? 0.0 : st-dignity(i, vs[ks[0]], deg, ks[0] == 0, signs) + st-sapta-sum(i, vs, ks[1:], deg, signs);
+  def st-saptavarga(lons, signs) = st-seven() |> map(i => st-sapta-sum(i, st-varga-signs(signs[i], lons[i] - 30.0 * signs[i]), st-seven-vargas(), lons[i] - 30.0 * signs[i], signs));
+  // ojayugma: the Moon and Venus gain in even signs, the rest in odd, in rasi and navamsa each
+  def st-oja-one(i, sign) = (i == 1 || i == 5) ? (st-odd(sign) ? 0.0 : 15.0) : (st-odd(sign) ? 15.0 : 0.0);
+  def st-ojayugma(lons, signs) = st-seven() |> map(i => st-oja-one(i, signs[i]) + st-oja-one(i, st-varga-signs(signs[i], lons[i] - 30.0 * signs[i])[5]));
+  // kendradi: angle 60, succedent 30, cadent 15, by sign from the lagna
+  def st-kendradi(signs, asc) = st-seven() |> map(i => [60.0, 30.0, 15.0][((signs[i] - asc + 12) % 12) % 3]);
+  // drekkana: male grahas in the first decanate, neuter in the second, female in the third
+  def st-drekkana(lons, signs) = st-seven() |> map(i => floor((lons[i] - 30.0 * signs[i]) / 10.0) == [0, 2, 0, 1, 0, 2, 1][i] ? 15.0 : 0.0);
+
+  // ---- dig bala: a third of the arc from the angle where the graha is powerless ----
+  def st-dig(lons, asc, mc) = st-seven() |> map(i => st-arc(lons[i], [mc + 180.0, mc, mc + 180.0, asc + 180.0, asc + 180.0, mc, asc][i]) / 3.0);
+
+  // ---- kala bala: strength of time ----
+  // nata-unnata: `midnight` is the Sun's arc from the lower meridian, 0 to 180
+  def st-nata(midnight) = st-seven() |> map(i => i == 3 ? 60.0 : (i == 1 || i == 2 || i == 6) ? 60.0 - midnight / 3.0 : midnight / 3.0);
+  // paksha: benefics gain with the Moon's distance from the Sun, malefics lose
+  def st-paksha(lons) { let p = st-arc(lons[1], lons[0]) / 3.0; st-seven() |> map(i => (i == 0 || i == 2 || i == 6) ? 60.0 - p : p); }
+  // tribhaga: the lord of the third of the day or night; Jupiter always. ev = [sunrise before, sunset before, sunrise, sunset, sunrise after]
+  def st-third(jd, from, to, lords) = lords[floor(((jd - from) / (to - from)) * 2.9999999)];
+  def st-tribhaga-lord(jd, ev) {
+   nothing?(ev[2]) || nothing?(ev[1]) || nothing?(ev[3]) || nothing?(ev[4]) ? 4 :
+   jd < ev[2] ? st-third(jd, ev[1], ev[2], [1, 5, 2]) : jd < ev[3] ? st-third(jd, ev[2], ev[3], [3, 0, 6]) : st-third(jd, ev[3], ev[4], [1, 5, 2]);
+  }
+  def st-tribhaga(jd, ev) { let lord = st-tribhaga-lord(jd, ev); st-seven() |> map(i => i == 4 || i == lord ? 60.0 : 0.0); }
+  // The lords of the year and the month, by days counted from the creation in 360s and 30s (Surya Siddhanta:
+  // 714,402,296,627 days to the Kali epoch, JD 588465.5). `day` is the civil day number at the place, less one before sunrise.
+  def st-ahargana(day) = 714402296627 + day - 588466;
+  def st-year-lord(day) = (((st-ahargana(day) / 360) * 3 + 1) % 7 + 6) % 7;
+  def st-month-lord(day) = (((st-ahargana(day) / 30) * 2 + 1) % 7 + 6) % 7;
+  // the lord of the hour: 24 equal horas from sunrise to sunrise, in the order Saturn Jupiter Mars Sun Venus Mercury Moon from the day's lord
+  def st-hora-lord(jd, from, to, weekday) { let order = [6, 4, 2, 0, 5, 3, 1]; order[(st-index(order, weekday, 0) + floor(((jd - from) / (to - from)) * 23.9999999)) % 7]; }
+  // ayana: declination taken as 23.45 degrees times the sine of the tropical longitude
+  def st-ayana(tropical) {
+   st-seven() |> map(i => (23.45 + (i == 3 ? st-abs(23.45 * jn-sind(tropical[i])) : (i == 1 || i == 6) ? 0.0 - 23.45 * jn-sind(tropical[i]) : 23.45 * jn-sind(tropical[i]))) * 60.0 / 46.9);
+  }
+
+  // ---- cheshta bala: strength of motion ----
+  // mean tropical longitudes of date: Sun, then Mars, Mercury, Jupiter, Venus, Saturn about the Sun
+  def st-mean(i, t) = jn-norm360([280.4665 + 36000.7698 * t, 0.0, 355.4330 + 19140.2993 * t, 252.2509 + 149472.6746 * t, 34.3515 + 3034.9057 * t, 181.9798 + 58517.8157 * t, 50.0774 + 1222.1138 * t][i]);
+  // the cheshta kendra: the seeghrocha less the midpoint of mean and true place; for Mercury and Venus the
+  // seeghrocha is the planet's own mean place and its mean is the mean Sun
+  def st-kendra(i, place, t) {
+   let inner = i == 3 || i == 5; let apex = inner ? st-mean(i, t) : st-mean(0, t); let mean = inner ? st-mean(0, t) : st-mean(i, t);
+   st-arc(apex, mean + jn-norm180(place - mean) / 2.0) / 3.0;
+  }
+  def st-cheshta(tropical, t, ayana, paksha) = st-seven() |> map(i => i == 0 ? ayana[0] : i == 1 ? paksha[1] : st-kendra(i, tropical[i], t));
+
+  // ---- naisargika bala: the natural order, Sun strongest ----
+  def st-natural-strength() = [60.0, 360.0 / 7.0, 120.0 / 7.0, 180.0 / 7.0, 240.0 / 7.0, 300.0 / 7.0, 60.0 / 7.0];
+
+  // ---- drik bala: a quarter of the aspects received, benefic less malefic ----
+  // the aspect a graha casts on a point d degrees ahead of it, 0 to 60
+  def st-glance(d) = d < 30.0 ? 0.0 : d < 60.0 ? (d - 30.0) / 2.0 : d < 90.0 ? d - 45.0 : d < 120.0 ? 30.0 + (120.0 - d) / 2.0 : d < 150.0 ? 150.0 - d : d < 180.0 ? (d - 150.0) * 2.0 : d < 300.0 ? (300.0 - d) / 2.0 : 0.0;
+  // Mars adds a quarter on the 4th and 8th, Jupiter a half on the 5th and 9th, Saturn three quarters on the 3rd and 10th
+  def st-special(j, d) {
+   j == 2 && ((d >= 90.0 && d < 120.0) || (d >= 210.0 && d < 240.0)) ? 15.0 :
+   j == 4 && ((d >= 120.0 && d < 150.0) || (d >= 240.0 && d < 270.0)) ? 30.0 :
+   j == 6 && ((d >= 60.0 && d < 90.0) || (d >= 270.0 && d < 300.0)) ? 45.0 : 0.0;
+  }
+  def st-drik-one(i, j, lons, waxing) {
+   let d = jn-norm360(lons[i] - lons[j]); let malefic = j == 0 || j == 2 || j == 6 || (j == 1 && !waxing);
+   i == j ? 0.0 : (malefic ? 0.0 - 1.0 : 1.0) * (st-glance(d) + st-special(j, d)) / 4.0;
+  }
+  def st-drik-sum(i, js, lons, waxing) = nil?(js) ? 0.0 : st-drik-one(i, js[0], lons, waxing) + st-drik-sum(i, js[1:], lons, waxing);
+  def st-drik(lons) { let waxing = jn-norm360(lons[1] - lons[0]) < 180.0; st-seven() |> map(i => st-drik-sum(i, st-seven(), lons, waxing)); }
+
+  // ---- the whole: named rows, in virupas; "=" opens the name of a sum ----
+  // lons: the seven sidereal longitudes; tropical: the same from the equinox of date; asc, mc sidereal;
+  // midnight: the Sun's arc from the lower meridian; ev: the five Sun events; day: the civil day number at the
+  // place; weekday: 0 Sunday to 6 Saturday at the place; t: Julian centuries from J2000
+  def st-shadbala(lons, tropical, asc, mc, midnight, jd, ev, day, weekday, t) {
+   let signs = lons |> map(x => floor(x / 30.0)); let early = !nothing?(ev[2]) && jd < ev[2];
+   let hindu = early ? (weekday + 6) % 7 : weekday; let dayno = early ? day - 1 : day;
+   let from = early ? ev[0] : ev[2]; let to = early ? ev[2] : ev[4];
+   let place = [["Uccha", st-uccha(lons)], ["Saptavargaja", st-saptavarga(lons, signs)], ["Ojayugma", st-ojayugma(lons, signs)],
+    ["Kendradi", st-kendradi(signs, floor(asc / 30.0))], ["Drekkana", st-drekkana(lons, signs)]];
+   let paksha = st-paksha(lons); let ayana = st-ayana(tropical);
+   let time = [["Nata-unnata", st-nata(midnight)], ["Paksha", paksha], ["Tribhaga", st-tribhaga(jd, ev)], ["Abda", st-award(st-year-lord(dayno), 15.0)],
+    ["Masa", st-award(st-month-lord(dayno), 30.0)], ["Vara", st-award(hindu, 45.0)],
+    ["Hora", nothing?(from) || nothing?(to) ? st-award(7, 0.0) : st-award(st-hora-lord(jd, from, to, hindu), 60.0)], ["Ayana", ayana]];
+   let sthana = st-total(place |> map(r => r[1])); let kala = st-total(time |> map(r => r[1])); let dig = st-dig(lons, asc, mc);
+   let cheshta = st-cheshta(tropical, t, ayana, paksha); let drik = st-drik(lons);
+   append(append(append(place, [["=Sthana bala", sthana], ["=Dig bala", dig]]), append(time, [["=Kala bala", kala]])),
+    [["=Cheshta bala", cheshta], ["=Naisargika bala", st-natural-strength()], ["=Drik bala", drik],
+     ["=Total", st-total([sthana, dig, kala, cheshta, st-natural-strength(), drik])]]);
+  }
+  // rupas a graha needs to count as strong
+  def st-required() = [6.5, 6.0, 5.0, 7.0, 6.5, 5.5, 5.0];
+ }
+ 0;
+}

@@ -1,0 +1,27 @@
+// Witness: the strength module holds its own invariants, for 1 January 2000, 12:00 UT, New Delhi.
+//
+//   ashtakavarga: the seven rows sum to 48 49 39 54 56 52 39 whatever the chart (the count of bindus each rule gives)
+//   vargas: the lagna's sixteen signs are signs, and its navamsa agrees with the ninth-part count of its longitude
+//   shadbala: natural strength runs Sun, Moon, Venus, Jupiter, Mercury, Mars, Saturn; every graha's kendradi is 15, 30 or 60
+//   ./fkwu witness/strength-run.bml   ->  one verdict line
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/strength.bml;
+section [form.bml] {
+ def wt-sum(xs) = nil?(xs) ? 0 : xs[0] + wt-sum(xs[1:]);
+ def wt-same(a, b) = nil?(a) ? nil?(b) : !nil?(b) && a[0] == b[0] && wt-same(a[1:], b[1:]);
+ def wt-all(xs) = nil?(xs) ? true : xs[0] && wt-all(xs[1:]);
+ def wt-run(path, jd, lat, lon) {
+  let segs = js-segments(path); let ay = sk-ayanamsa(jd);
+  let lons = [10, 301, 4, 1, 5, 2, 6] |> map(id => jn-norm360(sk-tropical(path, segs, id, jd)[0] - ay));
+  let asc = sk-ascendant(jd, lat, lon)[0]; let signs = append(lons |> map(x => floor(x / 30.0)), [floor(asc / 30.0)]);
+  let rows = st-ashtakavarga(signs) |> map(r => wt-sum(r)); let vargas = st-varga-signs(floor(asc / 30.0), asc - 30.0 * floor(asc / 30.0));
+  let n = st-natural-strength(); let kendradi = st-kendradi(signs, floor(asc / 30.0));
+  let claims = [wt-same(rows, [48, 49, 39, 54, 56, 52, 39]), len(vargas) == 16 && wt-all(vargas |> map(v => v >= 0 && v < 12)), vargas[5] == floor(asc / (360.0 / 108.0)) % 12,
+   n[0] > n[1] && n[1] > n[5] && n[5] > n[4] && n[4] > n[3] && n[3] > n[2] && n[2] > n[6], wt-all(kendradi |> map(k => k == 15.0 || k == 30.0 || k == 60.0))];
+  let held = len(claims |> filter(c => c));
+  "strength witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims (ashtakavarga sums " + value_str(rows) + ")";
+ }
+ print_str(wt-run("data/de440s.bsp", 2451545.0, 28.6139, 77.209));
+}

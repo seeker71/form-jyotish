@@ -12,6 +12,7 @@
 import engine/num.bml;
 import engine/spk.bml;
 import engine/sky.bml;
+import engine/strength.bml;
 section [form.bml] {
  class JyChart {
   def jc-signs() = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"];
@@ -24,11 +25,9 @@ section [form.bml] {
   def jc-grahas() = [["Su", "Surya", 10], ["Mo", "Chandra", 301], ["Ma", "Mangala", 4], ["Me", "Budha", 1], ["Ju", "Guru", 5], ["Ve", "Shukra", 2], ["Sa", "Shani", 6]];
   def jc-outer() = [["Ur", "Uranus", 7], ["Ne", "Neptune", 8], ["Pl", "Pluto", 9]];
   // each sign's lord, as a graha number
-  def jc-sign-lords() = [2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4];
-  def jc-exalted() = [0, 1, 9, 5, 3, 11, 6];
-  // natural friendship, row toward column: 1 friend, 0 neutral, -1 enemy
-  def jc-natural() = [[0, 1, 1, 0, 1, -1, -1], [1, 0, 0, 1, 0, 0, 0], [1, 1, 0, -1, 1, 0, 0], [1, -1, 0, 0, 0, 1, 0],
-   [1, 1, 1, -1, 0, -1, 0], [-1, -1, 0, 1, 0, 0, 1], [-1, -1, -1, 1, 0, 1, 0]];
+  def jc-sign-lords() = st-sign-lords();
+  def jc-exalted() = st-exalted();
+  def jc-natural() = st-natural();
   // degrees from the Sun within which a graha is combust: [direct, retrograde]
   def jc-combust() = [[0.0, 0.0], [12.0, 12.0], [17.0, 17.0], [14.0, 12.0], [11.0, 11.0], [10.0, 8.0], [15.0, 15.0]];
 
@@ -47,18 +46,7 @@ section [form.bml] {
   // the sub-lord: a span divided in Vimshottari shares from `lord`; answers [lord, fraction through its share]
   def jc-sub(lord, f, left) { let share = jc-lords()[lord][1] / 120.0; f < share || left <= 0 ? [lord, f / share] : jc-sub(jc-next(lord), f - share, left - 1); }
   def jc-next(lord) = (lord + 1) % 9;
-  // ---- the sixteen vargas of Parashara, as signs: D1 2 3 4 7 9 10 12 16 20 24 27 30 40 45 60 ----
-  def jc-part(d, n) = floor(d * n / 30.0);
-  def jc-odd(s) = s % 2 == 0;
-  def jc-kind(s, movable, fixed, dual) = s % 3 == 0 ? movable : s % 3 == 1 ? fixed : dual;
-  def jc-trimsamsa(s, d) = jc-odd(s) ? (d < 5.0 ? 0 : d < 10.0 ? 10 : d < 18.0 ? 8 : d < 25.0 ? 2 : 6) : (d < 5.0 ? 1 : d < 12.0 ? 5 : d < 20.0 ? 11 : d < 25.0 ? 9 : 7);
-  def jc-vargas(s, d) {
-   let first = d < 15.0;
-   [s, jc-odd(s) ? (first ? 4 : 3) : (first ? 3 : 4), s + 4 * jc-part(d, 3), s + 3 * jc-part(d, 4), (jc-odd(s) ? s : s + 6) + jc-part(d, 7),
-    jc-kind(s, s, s + 8, s + 4) + jc-part(d, 9), (jc-odd(s) ? s : s + 8) + jc-part(d, 10), s + jc-part(d, 12), jc-kind(s, 0, 4, 8) + jc-part(d, 16),
-    jc-kind(s, 0, 8, 4) + jc-part(d, 20), (jc-odd(s) ? 4 : 3) + jc-part(d, 24), (s % 4) * 3 + jc-part(d, 27), jc-trimsamsa(s, d),
-    (jc-odd(s) ? 0 : 6) + jc-part(d, 40), jc-kind(s, 0, 4, 8) + jc-part(d, 45), s + jc-part(d, 60)] |> map(x => jc-num(x % 12));
-  }
+  def jc-vargas(s, d) = st-varga-signs(s, d) |> map(x => jc-num(x));
   def jc-place(lon) {
    let span = 360.0 / 27.0; let sign = floor(lon / 30.0); let nak = floor(lon / span); let ninth = floor(lon / (360.0 / 108.0));
    let part = jc-sub(nak % 9, (lon - nak * span) / span, 8); let fine = jc-sub(part[0], part[1], 8);
@@ -129,11 +117,20 @@ section [form.bml] {
   }
 
   // ---- the day: tithi (0 to 29 from Shukla Pratipada), yoga (0 to 26), karana (0 to 59), sunrise and sunset ----
-  def jc-day(path, segs, jd, lat, lon, zone, sun, moon) {
-   let midnight = floor(jd + zone / 24.0 - 0.5) + 0.5 - zone / 24.0; let apart = jn-norm360(moon - sun);
+  // the Sun's five crossings about the birth: [sunrise before, sunset before, sunrise, sunset, sunrise after] of the civil day at the place
+  def jc-sun-events(path, segs, jd, lat, lon, zone) {
+   let midnight = floor(jd + zone / 24.0 - 0.5) + 0.5 - zone / 24.0;
+   [0.0 - 0.75, 0.0 - 0.25, 0.25, 0.75, 1.25] |> map(o => sk-sun-event(path, segs, lat, lon, midnight + o));
+  }
+  // the Sun's arc from the lower meridian, 0 at midnight to 180 at noon; lst is the local sidereal time in degrees
+  def jc-midnight-arc(lst, sun, jd) {
+   let eps = sk-obliquity(sk-century(jd)); let ra = jn-deg(jn-atan2(jn-sind(sun) * jn-cosd(eps), jn-cosd(sun)));
+   jc-abs(jn-norm180(lst - ra + 180.0));
+  }
+  def jc-day(ev, sun, moon) {
+   let apart = jn-norm360(moon - sun);
    jc-obj([jc-pair("tithi", jc-num(floor(apart / 12.0))), jc-pair("yoga", jc-num(floor(jn-norm360(sun + moon) / (360.0 / 27.0)))), jc-pair("karana", jc-num(floor(apart / 6.0))),
-    jc-pair("sunrise_before", jc-opt(sk-sun-event(path, segs, lat, lon, midnight - 0.75))), jc-pair("sunrise", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 0.25))),
-    jc-pair("sunset", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 0.75))), jc-pair("sunrise_after", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 1.25)))]);
+    jc-pair("sunrise_before", jc-opt(ev[0])), jc-pair("sunrise", jc-opt(ev[2])), jc-pair("sunset", jc-opt(ev[3])), jc-pair("sunrise_after", jc-opt(ev[4]))]);
   }
 
   def jc-error(why) = jc-obj([jc-pair("error", jc-q(why))]);
@@ -151,6 +148,7 @@ section [form.bml] {
    let rahu = jn-norm360(sk-node-of-date(path, segs, jd, node) - ay); let rahu1 = jn-norm360(sk-node-of-date(path, segs, soon, node) - ay1);
    let asc = jn-norm360(rise[0] - ay - dpsi); let mc = jn-norm360(rise[1] - ay - dpsi);
    let far = jc-lons(path, segs, jc-outer(), jd, ay); let far1 = jc-lons(path, segs, jc-outer(), soon, ay1);
+   let ev = jc-sun-events(path, segs, jd, lat, lon, zone); let signs = now |> map(x => floor(x / 30.0));
    jc-obj([jc-pair("jd", jc-num(jd)), jc-pair("ayanamsa", jc-num(ay + dpsi)), jc-pair("ayanamsa_mode", jc-q(mode)), jc-pair("delta_t", jc-num(sk-delta-t(jd))), jc-pair("node", jc-q(node)),
     jc-pair("sidereal_time", jc-num(rise[2])), jc-pair("sun_tropical", jc-num(jn-norm360(now[0] + ay + dpsi))),
     jc-pair("asc", jc-obj(jc-place(asc))), jc-pair("mc", jc-obj(jc-place(mc))),
@@ -159,7 +157,10 @@ section [form.bml] {
     jc-pair("kp", jc-kp(jd, lat, lon, ay - sk-ayanamsa-kp(jd), dpsi, now, later, rahu, rahu1, far, far1)),
     jc-pair("bhrigu", jc-obj(jc-place(jc-between(rahu, now[1])))),
     jc-pair("bhavas", jc-arr(jc-bhavas(jc-mids(asc, mc), 0))),
-    jc-pair("day", jc-day(path, segs, jd, lat, lon, zone, now[0], now[1])),
+    jc-pair("day", jc-day(ev, now[0], now[1])),
+    jc-pair("ashtakavarga", jc-arr(st-ashtakavarga(append(signs, [floor(asc / 30.0)])) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
+    jc-pair("shadbala", jc-arr(st-shadbala(now, now |> map(x => jn-norm360(x + ay + dpsi)), asc, mc, jc-midnight-arc(rise[2], now[0] + ay + dpsi, jd), jd, ev,
+      floor(jd + zone / 24.0 + 0.5), floor(jd + zone / 24.0 + 1.5) % 7, sk-century(jd)) |> map(r => jc-obj([jc-pair("name", jc-q(r[0])), jc-pair("values", jc-arr(r[1] |> map(x => jc-num(x))))])))),
     jc-pair("dasha", jc-dasha(now[1], jd))]);
   }
  }

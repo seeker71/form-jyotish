@@ -43,9 +43,9 @@ struct FormJyotishApp: App {
 
     var body: some Scene {
         WindowGroup("Form Jyotish") {
-            ContentView()
+            MainView()
                 .environmentObject(store)
-                .frame(minWidth: 980, minHeight: 720)
+                .frame(minWidth: 1100, minHeight: 720)
         }
         Settings { SettingsView() }
     }

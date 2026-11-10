@@ -116,6 +116,15 @@ struct KP: Codable {
     var fortuna: Placement
 }
 
+/// One named row of the shadbala, a value for each of the seven grahas in virupas. A name that opens with "=" is a sum.
+struct BalaRow: Codable, Identifiable {
+    var name: String
+    var values: [Double]
+    var id: String { name }
+    var isSum: Bool { name.hasPrefix("=") }
+    var title: String { isSum ? String(name.dropFirst()) : name }
+}
+
 struct Chart: Codable {
     var jd: Double
     var ayanamsa: Double
@@ -131,10 +140,22 @@ struct Chart: Codable {
     var bhrigu: Placement
     var bhavas: [Bhava]
     var kp: KP
+    /// bindus by graha (Sun to Saturn) and sign
+    var ashtakavarga: [[Int]]
+    var shadbala: [BalaRow]
     var day: Day
     var dasha: [Period]
 
     func graha(_ id: String) -> Graha? { grahas.first { $0.id == id } }
+
+    /// rupas a graha needs to count as strong, Sun to Saturn
+    static let requiredRupas = [6.5, 6.0, 5.0, 7.0, 6.5, 5.5, 5.0]
+    /// a graha's whole shadbala in rupas, by its place among the seven
+    func rupas(_ index: Int) -> Double { (shadbala.first { $0.name == "=Total" }?.values[index] ?? 0) / 60 }
+    /// that strength as a multiple of what is required
+    func strengthRatio(_ index: Int) -> Double { rupas(index) / Chart.requiredRupas[index] }
+    /// the sarvashtakavarga: all seven grahas' bindus in each sign
+    var sarva: [Int] { (0..<12).map { sign in ashtakavarga.reduce(0) { $0 + $1[sign] } } }
 }
 
 enum Names {
