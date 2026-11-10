@@ -102,9 +102,9 @@ struct TransitDates: View {
             }
         }
         .onAppear { if from == nil { read() } }
-        .onChange(of: days) { read() }
-        .onChange(of: natal.jd) { read() }
-        .onChange(of: store.node) { read() }
-        .onChange(of: store.ayanamsa) { read() }
+        .onChanged(of: days) { read() }
+        .onChanged(of: natal.jd) { read() }
+        .onChanged(of: store.node) { read() }
+        .onChanged(of: store.ayanamsa) { read() }
     }
 }

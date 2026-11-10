@@ -21,9 +21,17 @@ struct Engine {
     /// under Resources/payload. With that present, no kernel checkout and no source are needed.
     static let payload: URL? = {
         guard let found = Bundle.main.resourceURL?.appendingPathComponent("payload"),
-              FileManager.default.isExecutableFile(atPath: found.appendingPathComponent("fkwu").path) else { return nil }
+              FileManager.default.isExecutableFile(atPath: found.appendingPathComponent("\(processor)/fkwu").path) else { return nil }
         return found
     }()
+
+    /// The processor this copy of the app runs as. The payload holds a runtime and its images for each:
+    /// an image runs only under the runtime build that wrote it.
+    #if arch(x86_64)
+    static let processor = "x86_64"
+    #else
+    static let processor = "arm64"
+    #endif
 
     /// Where the carried engine runs: a writable folder outside the bundle, so the runtime's scratch files
     /// never touch the signed app. The image is copied in when it differs; the ephemeris is linked.
@@ -33,7 +41,7 @@ struct Engine {
         try files.createDirectory(at: folder.appendingPathComponent("engine"), withIntermediateDirectories: true)
         // two readings may arrive at once: each image is copied aside and moved into place in one step
         for door in ["chart-run", "transit-run"] {
-            let image = folder.appendingPathComponent("engine/\(door).bml.fkb"), source = payload.appendingPathComponent("engine/\(door).bml.fkb")
+            let image = folder.appendingPathComponent("engine/\(door).bml.fkb"), source = payload.appendingPathComponent("\(processor)/engine/\(door).bml.fkb")
             if !files.contentsEqual(atPath: image.path, andPath: source.path) {
                 let aside = folder.appendingPathComponent("engine/arriving-\(UUID().uuidString)")
                 try files.copyItem(at: source, to: aside)
@@ -99,7 +107,7 @@ struct Engine {
 
         let process = Process()
         if let carried {
-            process.executableURL = carried.appendingPathComponent("fkwu")
+            process.executableURL = carried.appendingPathComponent("\(Engine.processor)/fkwu")
             process.arguments = ["engine/\(door).bml.fkb"]
             process.currentDirectoryURL = try Engine.runFolder(for: carried)
         } else {

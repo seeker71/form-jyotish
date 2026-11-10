@@ -7,7 +7,7 @@ what the engine returns.
 ## Download
 
 [FormJyotish.zip](https://github.com/seeker71/form-jyotish/releases/latest/download/FormJyotish.zip) is the
-latest built app, for Apple Silicon Macs on macOS 14 or later. Unzip it and move Form Jyotish to the
+latest built app, for Apple Silicon and Intel Macs on macOS 13 or later. Unzip it and move Form Jyotish to the
 Applications folder. It carries its own engine and ephemeris; nothing else is needed.
 
 The app is not signed with an Apple Developer ID, so the first time it is opened macOS refuses it. Open

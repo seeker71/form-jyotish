@@ -64,7 +64,12 @@ struct Workspace: View {
                     Label(Help.workspace(store.workspace), systemImage: "lightbulb").font(.callout).foregroundStyle(.secondary)
                 }
                 if store.cards.isEmpty {
-                    ContentUnavailableView("This workspace is empty", systemImage: "rectangle.dashed", description: Text("Press ⌘K and type what to add, such as “d9” or “transits”."))
+                    VStack(spacing: 8) {
+                        Image(systemName: "rectangle.dashed").font(.largeTitle).foregroundStyle(.secondary)
+                        Text("This workspace is empty").font(.title3).fontWeight(.semibold)
+                        Text("Press ⌘K and type what to add, such as “d9” or “transits”.").foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity).padding(40)
                 }
                 ForEach(runs, id: \.self) { run in
                     if Catalog.info(run[0]).wide {

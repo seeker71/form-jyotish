@@ -116,6 +116,10 @@ struct OmSeal: View {
 }
 
 extension View {
+    /// Act when a value changes, in the form macOS 13 also carries.
+    func onChanged<V: Equatable>(of value: V, _ action: @escaping () -> Void) -> some View {
+        onChange(of: value) { _ in action() }
+    }
     /// Place a view by its top-left corner on the page, in points.
     func at(_ x: CGFloat, _ y: CGFloat) -> some View {
         frame(width: 612, height: 792, alignment: .topLeading).offset(x: x, y: y)

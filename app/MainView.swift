@@ -132,7 +132,7 @@ struct TimeBar: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .onReceive(tick) { _ in if playing { store.step(seconds: step) } }
-        .onChange(of: store.rectifying) { step = store.rectifying ? 60 : 86400 }
+        .onChanged(of: store.rectifying) { step = store.rectifying ? 60 : 86400 }
     }
 }
 

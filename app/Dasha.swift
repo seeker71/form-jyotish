@@ -88,9 +88,9 @@ struct DashaTimeline: View {
             .font(.caption).foregroundStyle(.secondary)
         }
         .onAppear { recentre() }
-        .onChange(of: span) { recentre() }
-        .onChange(of: chart.jd) { recentre() }
-        .onChange(of: store.viewDay) { if let day = store.viewDay, day < start || day > start + days { recentre() } }
+        .onChanged(of: span) { recentre() }
+        .onChanged(of: chart.jd) { recentre() }
+        .onChanged(of: store.viewDay) { if let day = store.viewDay, day < start || day > start + days { recentre() } }
     }
 }
 

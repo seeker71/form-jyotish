@@ -5,6 +5,7 @@
 *.app/
 .DS_Store
 .fkwu-*
+.hearth/
 *.fkb
 *.lowfk
 *.sym
