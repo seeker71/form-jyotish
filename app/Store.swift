@@ -148,7 +148,7 @@ final class Store: ObservableObject {
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(births) else { return }
+        guard !ephemeral, let data = try? JSONEncoder().encode(births) else { return }
         try? data.write(to: file, options: .atomic)
     }
 
@@ -177,6 +177,19 @@ final class Store: ObservableObject {
         births.append(birth)
         current = birth.id
     }
+
+    /// Add a chart of a public figure as a published reading gives it, with the dated events of the life.
+    /// The reading's own ayanamsa is set with it, so its dates can be followed.
+    func addPublic(_ key: String) {
+        guard let entry = PublicCharts.all.first(where: { $0.key == key }) else { return }
+        var birth = entry.birth
+        birth.id = UUID()
+        births.append(birth)
+        current = birth.id
+        ayanamsa = "raman"
+    }
+    /// while set, nothing is written to the saved charts: used when a public chart is opened only to be looked at
+    var ephemeral = false
 
     func remove(_ id: Birth.ID) {
         births.removeAll { $0.id == id }
