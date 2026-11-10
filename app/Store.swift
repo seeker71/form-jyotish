@@ -76,6 +76,8 @@ final class Store: ObservableObject {
     @Published var paletteShown = false
     /// what is typed into the glossary's search
     @Published var glossary = ""
+    /// how large charts are drawn, from as many as fit (0) to one filling the window (1)
+    @Published var chartSize: Double = UserDefaults.standard.object(forKey: "chartSize") as? Double ?? 0.3 { didSet { defaults.set(chartSize, forKey: "chartSize") } }
     /// charts drawn large, a row to themselves: the birth chart is, until told otherwise
     @Published var enlarged: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "enlarged") ?? ["chart:0"]) { didSet { defaults.set(Array(enlarged), forKey: "enlarged") } }
     func toggleEnlarged(_ id: String) { if enlarged.contains(id) { enlarged.remove(id) } else { enlarged.insert(id) } }

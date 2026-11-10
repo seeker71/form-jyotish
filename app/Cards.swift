@@ -62,14 +62,29 @@ struct Workspace: View {
         return result
     }
 
-    /// Rows of charts side by side. Up to three share one row whatever the width; a longer run takes as many
-    /// to a row as the width holds. The count comes from one reading of the width, so the layout settles in
-    /// one pass on every macOS the app runs on.
-    private func rows(_ run: [String], width: CGFloat) -> [[String]] {
-        let fit = max(1, min(4, Int((width - 32 + 14) / (240 + 14))))
-        let perRow = run.count <= 3 ? min(run.count, max(fit, Int((width - 32 + 14) / (190 + 14)))) : fit
-        return stride(from: 0, to: run.count, by: perRow).map { Array(run[$0..<min($0 + perRow, run.count)]) }
+    /// The room one chart card may take when `columns` of them share a row: its share of the width, and never
+    /// more than shows whole in the height on screen (the card's title and words stand above the square).
+    private func cardWidth(columns: Int, width: CGFloat, height: CGFloat) -> CGFloat {
+        let share = (width - 32 - CGFloat(columns - 1) * 14) / CGFloat(columns)
+        return max(150, min(share, height - (store.showHelp ? 150 : 80)))
     }
+
+    /// How many charts share a row. Everything is read from the window: the smallest chart that still reads
+    /// well, the largest that shows whole, and between them the size the reader set with the slider. As many
+    /// charts stand side by side as can be at least that size.
+    private func columns(for count: Int, width: CGFloat, height: CGFloat) -> Int {
+        let smallest: CGFloat = 185, largest = cardWidth(columns: 1, width: width, height: height)
+        let wanted = smallest + max(0, largest - smallest) * store.chartSize
+        var columns = min(count, 8)
+        while columns > 1 && cardWidth(columns: columns, width: width, height: height) < wanted - 0.5 { columns -= 1 }
+        return columns
+    }
+
+    private func rows(_ run: [String], columns: Int) -> [[String]] {
+        stride(from: 0, to: run.count, by: columns).map { Array(run[$0..<min($0 + columns, run.count)]) }
+    }
+
+    private var hasCharts: Bool { store.cards.contains { !Catalog.info($0).wide } }
 
     var body: some View {
         // below this width the cards keep their shape and the workspace scrolls sideways
@@ -86,6 +101,15 @@ struct Workspace: View {
                 if store.showHelp {
                     Label(Help.workspace(store.workspace), systemImage: "lightbulb").font(.callout).foregroundStyle(.secondary)
                 }
+                if hasCharts {
+                    HStack(spacing: 8) {
+                        Text("Chart size").font(.callout).foregroundStyle(.secondary)
+                        Image(systemName: "square.grid.3x3").foregroundStyle(.secondary)
+                        Slider(value: $store.chartSize, in: 0...1).frame(width: 180).accessibilityLabel("Chart size")
+                        Image(systemName: "square").foregroundStyle(.secondary)
+                    }
+                    .help("Drag left for more charts side by side, right for fewer and larger. The largest is the size that shows whole in this window; make the window bigger and the charts grow with it.")
+                }
                 if store.cards.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "rectangle.dashed").font(.largeTitle).foregroundStyle(.secondary)
@@ -96,16 +120,13 @@ struct Workspace: View {
                 }
                 ForEach(runs, id: \.self) { run in
                     if wide(run[0]) {
-                        // an enlarged chart is as large as shows whole in the room on screen: its title and words
-                        // above it, the square chart under them, nothing cut off
-                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : max(300, min(700, height - (store.showHelp ? 150 : 100))))
+                        // an enlarged chart is the largest that shows whole in the window
+                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : cardWidth(columns: 1, width: width, height: height))
                     } else {
-                        let lines = rows(run, width: width), perRow = lines.first?.count ?? 1
-                        ForEach(lines, id: \.self) { line in
+                        let perRow = columns(for: run.count, width: width, height: height), each = cardWidth(columns: perRow, width: width, height: height)
+                        ForEach(rows(run, columns: perRow), id: \.self) { line in
                             HStack(alignment: .top, spacing: 14) {
-                                ForEach(line, id: \.self) { Card(id: $0).frame(maxWidth: 420) }
-                                // a short last row keeps the widths of the rows above it
-                                ForEach(0..<(perRow - line.count), id: \.self) { _ in Color.clear.frame(maxWidth: 420, maxHeight: 1) }
+                                ForEach(line, id: \.self) { Card(id: $0).frame(width: each) }
                             }
                         }
                     }
