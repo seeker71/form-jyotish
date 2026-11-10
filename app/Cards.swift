@@ -287,20 +287,24 @@ struct PickRow: View {
 
 struct GrahaTable: View {
     let chart: Chart
-    private let widths: [CGFloat] = [112, 86, 84, 150, 44, 96, 70, 96]
+    /// narrow enough to stand whole in the workspace at the larger text sizes: the seconds of arc and the
+    /// finer digits of motion are a click away in the inspector
+    private let widths: [CGFloat] = [92, 70, 54, 134, 68, 60, 46]
 
     private func row(_ texts: [String]) -> [(text: String, width: CGFloat)] { texts.indices.map { (texts[$0], widths[$0]) } }
+    /// degrees and minutes within the sign
+    private func place(_ deg: Double) -> String { let m = Int(deg * 60); return "\(m / 60)°\(String(format: "%02d", m % 60))′" }
 
     var body: some View {
         ScrollView(.horizontal) {
-            VStack(alignment: .leading, spacing: 1) {
-                PickRow(pick: nil, cells: row(["Graha", "Rasi", "Longitude", "Nakshatra", "Pada", "Rasi · star · sub", "Dignity", "Motion °/day"]), header: true)
-                PickRow(pick: .sign(chart.asc.sign), cells: row(["Lagna", Names.signs[chart.asc.sign], Names.dms(chart.asc.deg), chart.asc.nak_name, "\(chart.asc.pada)",
-                                                                  "\(chart.asc.rasi_lord) · \(chart.asc.nak_lord) · \(chart.asc.sub_lord)", "", ""]), tint: .accentColor)
+            VStack(alignment: .leading, spacing: 0) {
+                PickRow(pick: nil, cells: row(["Graha", "Rasi", "Long.", "Nakshatra · pada", "Lords", "Dignity", "°/day"]), header: true)
+                PickRow(pick: .sign(chart.asc.sign), cells: row(["Lagna", Names.signs[chart.asc.sign], place(chart.asc.deg), "\(chart.asc.nak_name) \(chart.asc.pada)",
+                                                                  "\(chart.asc.rasi_lord)·\(chart.asc.nak_lord)·\(chart.asc.sub_lord)", "", ""]), tint: .accentColor)
                 ForEach(chart.grahas) { g in
-                    PickRow(pick: .graha(g.id), cells: row(["\(g.name) (\(g.id))", Names.signs[g.sign], Names.dms(g.deg), g.nak_name, "\(g.pada)",
-                                                             "\(g.rasi_lord) · \(g.nak_lord) · \(g.sub_lord)", (g.status ?? "") + (g.combust == true ? " C" : ""),
-                                                             String(format: "%+.4f", g.speed) + (g.retro && g.id != "Ra" && g.id != "Ke" ? " ℞" : "")]), tint: Tint.graha(g.id), retro: g.retro && g.id != "Ra" && g.id != "Ke")
+                    PickRow(pick: .graha(g.id), cells: row(["\(g.name) (\(g.id))", Names.signs[g.sign], place(g.deg), "\(g.nak_name) \(g.pada)",
+                                                             "\(g.rasi_lord)·\(g.nak_lord)·\(g.sub_lord)", (g.status ?? "") + (g.combust == true ? " C" : ""),
+                                                             String(format: "%+.2f", g.speed)]), tint: Tint.graha(g.id), retro: g.retro && g.id != "Ra" && g.id != "Ke")
                 }
             }
         }

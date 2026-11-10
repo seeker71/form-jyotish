@@ -41,7 +41,7 @@ enum Help {
         case "avasthas": return "The state each graha is in: its age by degree, its wakefulness by the sign it is in, and its mood by its dignity."
         case "moon": return "The birth chart counted from the Moon's sign in place of the lagna. Read beside the birth chart: what holds from both is firm. “As” still marks the lagna's sign."
         case "birth": return "Date as year-month-day, time on the 24-hour clock at the birthplace. Type a place and press Look up place to fill latitude, longitude and time zone. Every card recalculates as you type."
-        case "grahas": return "One row per graha: its sign, its exact degree within the sign, its nakshatra (one of 27 lunar mansions) and how it is placed. Hover a column heading for what it means."
+        case "grahas": return "One row per graha: its sign, its degree within the sign, its nakshatra and pada, its lords and how it is placed. Click a row for the full detail; hover a column heading for what it means."
         case "dasha-context": return "Whose time it is at the moment in the time bar, and what that graha is in this chart: the houses it rules and stands in, what supports and strains it, how the period lords stand to each other, and where Saturn, Jupiter and Rahu are passing. Move the time bar and it follows."
         case "other-dashas": return "Nine more ways of dividing life into graha periods, each from the Moon's nakshatra. For each: how it works, the condition under which the classics apply it and whether this chart meets it, and its periods. Open a period for its sub-periods; click one to go there."
         case "timeline": return "Life as a sequence of graha periods. The top row is the mahadasha; the rows below divide it further. The blue line is the moment in the time bar. Narrow the span to see finer periods."
@@ -62,6 +62,10 @@ enum Help {
     static let terms: [String: String] = [
             "Graha": "A planet in the Jyotish sense: the Sun, the Moon, five planets, and the Moon's two nodes Rahu and Ketu.",
             "Rasi": "The sign of the sidereal zodiac the graha is in.",
+            "Long.": "Longitude: how far the graha has moved through its sign, in degrees and minutes out of 30 degrees. Click the row for the seconds.",
+            "Nakshatra · pada": "The lunar mansion the graha is in, one of 27, and which of its four quarters.",
+            "Lords": "The lord of the graha's sign, of its nakshatra, and of its sub-division, in that order.",
+            "°/day": "Motion in degrees a day. A minus sign is retrograde motion; the graha's name is underlined then.",
             "Longitude": "How far the graha has moved through its sign: degrees, minutes, seconds, out of 30 degrees.",
             "Nakshatra": "One of 27 lunar mansions of 13°20′ each. The Moon's nakshatra sets the dasha sequence.",
             "Pada": "The quarter of the nakshatra, 1 to 4. Each pada is 3°20′ and corresponds to one navamsa.",
