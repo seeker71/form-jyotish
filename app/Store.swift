@@ -98,8 +98,24 @@ final class Store: ObservableObject {
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
-    @Published var node: String { didSet { if node != oldValue { defaults.set(node, forKey: "node"); readNatal(); readSky() } } }
-    @Published var ayanamsa: String { didSet { if ayanamsa != oldValue { defaults.set(ayanamsa, forKey: "ayanamsa"); readNatal(); readSky() } } }
+    /// The node and the ayanamsa belong to the chart on the desk: choosing one writes it into that chart, and
+    /// each chart comes up with its own. A chart that has never been given one follows the app's default.
+    @Published var node: String { didSet { if node != oldValue { keep(\.node, node, key: "node"); readNatal(); readSky() } } }
+    @Published var ayanamsa: String { didSet { if ayanamsa != oldValue { keep(\.ayanamsa, ayanamsa, key: "ayanamsa"); readNatal(); readSky() } } }
+    private var applying = false
+    private func keep(_ path: WritableKeyPath<Birth, String?>, _ value: String, key: String) {
+        guard !applying else { return }
+        if let index { births[index][keyPath: path] = value } else { defaults.set(value, forKey: key) }
+    }
+    /// bring the chart's own settings to the desk
+    private func applySettings() {
+        guard let birth else { return }
+        applying = true
+        let wantNode = birth.node ?? defaults.string(forKey: "node") ?? "mean", wantAyanamsa = birth.ayanamsa ?? defaults.string(forKey: "ayanamsa") ?? "lahiri"
+        if node != wantNode { node = wantNode }
+        if ayanamsa != wantAyanamsa { ayanamsa = wantAyanamsa }
+        applying = false
+    }
     @Published var style: ChartStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
     /// explanations shown in place on every card and in the inspector; on until the person turns it off
     @Published var showHelp: Bool { didSet { defaults.set(showHelp, forKey: "showHelp") } }
@@ -179,14 +195,13 @@ final class Store: ObservableObject {
     }
 
     /// Add a chart of a public figure as a published reading gives it, with the dated events of the life.
-    /// The reading's own ayanamsa is set with it, so its dates can be followed.
+    /// It carries its own ayanamsa, so a reading's dates can be followed without changing other charts.
     func addPublic(_ key: String) {
         guard let entry = PublicCharts.all.first(where: { $0.key == key }) else { return }
         var birth = entry.birth
         birth.id = UUID()
         births.append(birth)
         current = birth.id
-        ayanamsa = "raman"
     }
     /// while set, nothing is written to the saved charts: used when a public chart is opened only to be looked at
     var ephemeral = false
@@ -199,6 +214,7 @@ final class Store: ObservableObject {
     // MARK: readings
 
     func readNatal() {
+        applySettings()
         guard let birth else { chart = nil; return }
         guard let jd = birth.julianDay, let zoneHours = birth.zoneHours else {
             problem = "The date reads as YYYY-MM-DD, the time as HH:MM:SS, and the zone as a name like Asia/Kolkata."

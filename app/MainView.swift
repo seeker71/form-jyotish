@@ -209,7 +209,7 @@ struct Palette: View {
         if let chart = store.chart {
             list += (1...12).map { house in Command(id: "pick-house-\(house)", title: "Show the \(Chart.ordinal(house)) house (\(Lore.houseNames[house - 1].lowercased()))", keywords: "house bhava \(house) pick", run: { store.pick = .sign(chart.sign(ofHouse: house)) }) }
         }
-        list += PublicCharts.all.map { entry in Command(id: "public-\(entry.key)", title: "Add a public chart: \(entry.birth.name.replacingOccurrences(of: " (Raman)", with: "")), as B.V. Raman read it", keywords: "example famous celebrity notable horoscopes sample test public", run: { store.addPublic(entry.key) }) }
+        list += PublicCharts.all.map { entry in Command(id: "public-\(entry.key)", title: "Add a public chart: \(entry.birth.name)", keywords: "example famous celebrity notable horoscopes sample test public", run: { store.addPublic(entry.key) }) }
         list += ChartStyle.allCases.map { style in Command(id: "style-\(style.rawValue)", title: "\(style.rawValue) charts", keywords: "style chart form", run: { store.style = style }) }
         list += [
             Command(id: "text-larger", title: "Larger text", keywords: "font size bigger zoom in", run: { store.textScale = Store.textScales.first { $0.scale > store.textScale }?.scale ?? store.textScale }),
@@ -357,12 +357,12 @@ struct ChartSettings: View {
             row("Chart style", "South Indian charts keep the signs in place; North Indian charts keep the houses in place.") {
                 Picker("Chart style", selection: only(\.style)) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
             }
-            row("Ayanamsa", "The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars. Lahiri is India's official value; True Chitra fixes the star Spica at the start of Libra; B.V. Raman's is about 1 degree 27 minutes smaller.") {
+            row("Ayanamsa (this chart)", "Kept with the chart on the desk. The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars. Lahiri is India's official value; True Chitra fixes the star Spica at the start of Libra; B.V. Raman's is about 1 degree 27 minutes smaller.") {
                 Picker("Ayanamsa", selection: only(\.ayanamsa)) {
                     ForEach(["lahiri", "truecitra", "raman"], id: \.self) { Text(Names.ayanamsas[$0] ?? $0).tag($0) }
                 }
             }
-            row("Rahu and Ketu", "The mean node moves evenly; the true node follows the Moon's orbit as it wobbles. Most almanacs use the mean node.") {
+            row("Rahu and Ketu (this chart)", "Kept with the chart on the desk. The mean node moves evenly; the true node follows the Moon's orbit as it wobbles. Most almanacs use the mean node.") {
                 Picker("Node", selection: only(\.node)) { Text("Mean node").tag("mean"); Text("True node").tag("true") }
             }
         }

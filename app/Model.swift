@@ -12,6 +12,11 @@ struct Birth: Codable, Identifiable, Hashable {
     var longitude = 0.0
     /// dated events of the life, entered by the reader
     var events: [LifeEvent]? = nil
+    /// this chart's own ayanamsa and node; nil follows the app's default
+    var ayanamsa: String? = nil
+    var node: String? = nil
+    /// where the birth data comes from and how well it is documented
+    var source: String? = nil
 
     var timeZone: TimeZone? { TimeZone(identifier: zone) }
 

@@ -256,6 +256,9 @@ struct BirthForm: View {
             }
             .textFieldStyle(.roundedBorder)
             .foregroundStyle(.secondary)
+            if let source = birth.wrappedValue.source, !source.isEmpty {
+                Text("Source. " + source).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
+            }
         }
     }
 }

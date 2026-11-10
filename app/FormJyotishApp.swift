@@ -40,7 +40,7 @@ struct FormJyotishApp: App {
                             kernel: URL(fileURLWithPath: defaults.string(forKey: "kernelPath") ?? Engine.defaultKernel))
         guard let birth = Store().births.first else { print("no saved chart"); exit(1) }
         do {
-            let node = option("node") ?? "mean", ayanamsa = option("ayanamsa") ?? "lahiri"
+            let node = birth.node ?? option("node") ?? "mean", ayanamsa = birth.ayanamsa ?? option("ayanamsa") ?? "lahiri"
             let chart = try engine.chart(for: birth, node: node, ayanamsa: ayanamsa)
             let transit = try? engine.chart(julianDay: Date().timeIntervalSince1970 / 86400 + 2440587.5, latitude: birth.latitude, longitude: birth.longitude,
                                             node: node, ayanamsa: ayanamsa, zoneHours: birth.zoneHours ?? 0)
