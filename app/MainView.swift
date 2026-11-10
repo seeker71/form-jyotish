@@ -8,15 +8,19 @@ struct MainView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $store.current) {
-                ForEach(store.births) { birth in
-                    Text(birth.name.isEmpty ? "Unnamed" : birth.name)
-                        .tag(birth.id)
-                        .contextMenu { Button("Delete", role: .destructive) { store.remove(birth.id) } }
+            // the list above, the settings below it as a plain second row: nothing laid over the list
+            VStack(spacing: 0) {
+                List(selection: $store.current) {
+                    ForEach(store.births) { birth in
+                        Text(birth.name.isEmpty ? "Unnamed" : birth.name)
+                            .tag(birth.id)
+                            .contextMenu { Button("Delete", role: .destructive) { store.remove(birth.id) } }
+                    }
                 }
+                ChartSettings()
             }
-            .safeAreaInset(edge: .bottom) { ChartSettings() }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
+            .toolbar { Button { store.add() } label: { Label("New chart", systemImage: "plus") } }
         } detail: {
             Zoomed(scale: store.textScale) { room in
                 VStack(spacing: 0) {
@@ -259,6 +263,12 @@ struct ChartSettings: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var updater: Updater
 
+    /// A setting written only when the choice differs: a picker that hands back the value it was given
+    /// must not set the whole desk recalculating.
+    private func only<V: Equatable>(_ path: ReferenceWritableKeyPath<Store, V>) -> Binding<V> {
+        Binding(get: { store[keyPath: path] }, set: { if $0 != store[keyPath: path] { store[keyPath: path] = $0 } })
+    }
+
     private func row<Content: View>(_ title: String, _ help: String, @ViewBuilder _ picker: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(title).font(.caption).foregroundStyle(.secondary)
@@ -275,23 +285,22 @@ struct ChartSettings: View {
                 .help("Add a chart for another person or moment")
             Divider()
             row("Text size", "How large the charts, tables and words are drawn.") {
-                Picker("Text size", selection: $store.textScale) { ForEach(Store.textScales, id: \.scale) { Text($0.name).tag($0.scale) } }
+                Picker("Text size", selection: only(\.textScale)) { ForEach(Store.textScales, id: \.scale) { Text($0.name).tag($0.scale) } }
             }
             row("Chart style", "South Indian charts keep the signs in place; North Indian charts keep the houses in place.") {
-                Picker("Chart style", selection: $store.style) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
+                Picker("Chart style", selection: only(\.style)) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
             }
             row("Ayanamsa", "The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars. Lahiri is India's official value; True Chitra fixes the star Spica at the start of Libra; B.V. Raman's is about 1 degree 27 minutes smaller.") {
-                Picker("Ayanamsa", selection: $store.ayanamsa) {
+                Picker("Ayanamsa", selection: only(\.ayanamsa)) {
                     ForEach(["lahiri", "truecitra", "raman"], id: \.self) { Text(Names.ayanamsas[$0] ?? $0).tag($0) }
                 }
             }
             row("Rahu and Ketu", "The mean node moves evenly; the true node follows the Moon's orbit as it wobbles. Most almanacs use the mean node.") {
-                Picker("Node", selection: $store.node) { Text("Mean node").tag("mean"); Text("True node").tag("true") }
+                Picker("Node", selection: only(\.node)) { Text("Mean node").tag("mean"); Text("True node").tag("true") }
             }
         }
         .controlSize(.small)
         .padding(.horizontal, 10).padding(.bottom, 8)
-        .background(.bar)
         .overlay(alignment: .bottomTrailing) {
             if let build = Updater.build { Text("Build \(build)").font(.caption2).foregroundStyle(.tertiary).padding(.trailing, 8).padding(.bottom, 4).help("The build of Form Jyotish that is running") }
         }

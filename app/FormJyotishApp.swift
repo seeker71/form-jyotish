@@ -45,12 +45,39 @@ struct FormJyotishApp: App {
         }
     }
 
+    /// `FormJyotish --probe-tabs`: press each workspace tab with a real mouse event sent to the window, and say
+    /// whether the workspace followed. A witness that the tabs answer clicks, not only accessibility presses.
+    private func probeTabs() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { print("probe: no window"); exit(1) }
+            var held = 0
+            let spots = WorkspaceTabs.spots
+            func press(_ index: Int) {
+                guard index < Store.workspaces.count else { print("probe: \(held) of \(Store.workspaces.count) tabs answered a click"); exit(held == Store.workspaces.count ? 0 : 1) }
+                let name = Store.workspaces[index]
+                guard let spot = spots[name] else { print("probe: \(name) reported no place"); press(index + 1); return }
+                // SwiftUI counts from the top of the room below the title bar; the window counts from its bottom edge
+                let point = NSPoint(x: spot.midX, y: window.contentLayoutRect.maxY - spot.midY)
+                for kind in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                    if let event = NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { window.sendEvent(event) }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    let hit = window.contentView?.hitTest(point)
+                    print("probe: \(name) at \(Int(spot.midX)),\(Int(spot.midY)) -> workspace \(store.workspace)\(store.workspace == name ? "" : "  MISSED, hit \(hit.map { String(describing: type(of: $0)) } ?? "nothing")")")
+                    if store.workspace == name { held += 1 }
+                    press(index + 1)
+                }
+            }
+            press(0)
+        }
+    }
+
     var body: some Scene {
         WindowGroup("Form Jyotish") {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check() }
+                .onAppear { updater.check(); if CommandLine.arguments.contains("--probe-tabs") { probeTabs() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

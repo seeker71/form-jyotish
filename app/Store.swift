@@ -81,8 +81,8 @@ final class Store: ObservableObject {
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
-    @Published var node: String { didSet { defaults.set(node, forKey: "node"); readNatal(); readSky() } }
-    @Published var ayanamsa: String { didSet { defaults.set(ayanamsa, forKey: "ayanamsa"); readNatal(); readSky() } }
+    @Published var node: String { didSet { if node != oldValue { defaults.set(node, forKey: "node"); readNatal(); readSky() } } }
+    @Published var ayanamsa: String { didSet { if ayanamsa != oldValue { defaults.set(ayanamsa, forKey: "ayanamsa"); readNatal(); readSky() } } }
     @Published var style: ChartStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
     /// explanations shown in place on every card and in the inspector; on until the person turns it off
     @Published var showHelp: Bool { didSet { defaults.set(showHelp, forKey: "showHelp") } }

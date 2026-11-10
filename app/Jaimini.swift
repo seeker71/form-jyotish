@@ -166,6 +166,8 @@ struct SourcesCard: View {
 /// The workspaces as a strip that scrolls when the window is narrow, so none is ever pushed out of sight.
 struct WorkspaceTabs: View {
     @EnvironmentObject var store: Store
+    /// where each tab stands in the window, top-left origin: read by the tab probe
+    static var spots: [String: CGRect] = [:]
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -179,6 +181,7 @@ struct WorkspaceTabs: View {
                         .background(Capsule().fill(Color.accentColor.opacity(store.workspace == name ? 0.22 : 0)))
                         .contentShape(Capsule())
                         .help(Help.workspace(name))
+                        .background(GeometryReader { geo in Color.clear.onAppear { WorkspaceTabs.spots[name] = geo.frame(in: .global) } })
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
