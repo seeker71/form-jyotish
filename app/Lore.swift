@@ -120,6 +120,13 @@ extension Lore {
         if name.hasPrefix("Kemadruma") { return "Read as a mind that stands alone: it asks for chosen company and steady routines, and grows self-reliance." }
         if name.hasPrefix("Kala-sarpa") { return "Read as a life drawn strongly along one axis: it asks for patience with its turns, and gives focus." }
         if name.hasPrefix("Guru-Chandala") { return "Read as wisdom meeting the unconventional: it asks for discernment about teachers, and can renew what is handed down." }
+        if name.hasPrefix("Shakata yoga") { return "Read as fortune that turns like a wheel: it asks for steadiness through rises and dips, and teaches resilience." }
+        if name.hasPrefix("Daridra") { return "Read as gains that come by a harder road: it asks for care with what is earned, and grows resourcefulness." }
+        if name.hasPrefix("Grahana") { return "Read as a light that is eclipsed and returns: it asks for patience with self-doubt, and gives depth of insight." }
+        if name.hasPrefix("Angaraka") { return "Read as drive that runs hot: it asks for a worthy outlet for its force, and gives daring." }
+        if name.hasPrefix("Shrapit") { return "Read as old burdens carried forward: it asks for perseverance and service, and gives endurance." }
+        if name.hasPrefix("Visha") { return "Read as feeling held under weight: it asks for kindness toward oneself, and gives emotional maturity." }
+        if name.hasPrefix("Sarpa") { return "The tradition reads this shape sternly; its teachers also read it as strength gained through sustained effort." }
         if name.hasPrefix("Papa-kartari") { return "Read as a lagna held between firm influences: it asks for clear boundaries, and builds resilience." }
         return nil
     }
