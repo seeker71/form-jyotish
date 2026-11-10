@@ -45,7 +45,7 @@ final class Feed {
 final class Store: ObservableObject {
     static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "KP", "Transits"]
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "reading", "houses"],
+        "Guide": ["guide", "reading", "houses", "glossary"],
         "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["dasha-context", "timeline", "dashas"],
@@ -69,6 +69,10 @@ final class Store: ObservableObject {
     @Published var pick: Pick?
     @Published var hover: Pick?
     @Published var problem: String?
+    /// the type-to-do-anything panel is open
+    @Published var paletteShown = false
+    /// what is typed into the glossary's search
+    @Published var glossary = ""
     @Published var workspace: String { didSet { defaults.set(workspace, forKey: "workspace") } }
     @Published var layout: [String: [String]] { didSet { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } }
     @Published var node: String { didSet { defaults.set(node, forKey: "node"); readNatal(); readSky() } }

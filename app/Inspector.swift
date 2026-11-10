@@ -31,7 +31,7 @@ struct Inspector: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Point at anything").font(.title3).fontWeight(.semibold)
             Text("Click a graha, a sign or a dasha period on any card. It is explained here, and every other card shows where it stands.")
-            Text("The bar below moves the whole desk through time. Press ⌘K and type to add a card or change a setting.")
+            Text("The bar below moves the whole desk through time. Press ⌘K and type to add a card, change a setting, or ask what a word means.")
         }
         .foregroundStyle(.secondary)
     }

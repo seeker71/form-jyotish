@@ -67,6 +67,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   moment with how far through each stands; what each lord rules and where it stands; its supports and
   strains; how the two lords stand to each other; and where Saturn, Jupiter and Rahu are passing, with the
   bindus of those signs.
+- **Glossary and search.** A Glossary card on the Guide workspace holds every term the app uses (the basic
+  ideas, the grahas, signs, houses, nakshatras, the strength rows, dasha levels and KP terms), searchable,
+  each in plain words and, where it applies, with what it is in the open chart. ⌘K answers "what is…" for
+  the basic ideas and picks any graha, sign or house by name.
 - **One pick.** Click a graha, a sign or a dasha period on any card; the inspector at the right explains
   it and every other card highlights the same thing.
 - **One time.** The bar at the bottom moves the whole desk: Birth, Now, step, play. Away from the birth,

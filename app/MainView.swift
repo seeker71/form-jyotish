@@ -5,7 +5,6 @@ import UniformTypeIdentifiers
 struct MainView: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var updater: Updater
-    @State private var palette = false
 
     var body: some View {
         NavigationSplitView {
@@ -36,17 +35,8 @@ struct MainView: View {
                     .pickerStyle(.segmented).labelsHidden()
                     .help("Each workspace gathers the cards for one kind of reading")
             }
-            ToolbarItem {
-                Button { store.showHelp.toggle() } label: { Label(store.showHelp ? "Hide explanations" : "Show explanations", systemImage: store.showHelp ? "questionmark.circle.fill" : "questionmark.circle") }
-                    .help(store.showHelp ? "Hide the explanations on each card and in the inspector" : "Show an explanation on each card and in the inspector")
-            }
-            ToolbarItem {
-                Button { palette = true } label: { Label("Add or change anything", systemImage: "magnifyingglass") }
-                    .keyboardShortcut("k", modifiers: .command)
-                    .help("Type to add a card, switch workspace or change a setting (⌘K)")
-            }
         }
-        .overlay { if palette { Palette(shown: $palette, report: exportReport) } }
+        .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }
         .onAppear { store.readNatal() }
     }
 
@@ -135,6 +125,14 @@ struct TimeBar: View {
                 Button("Rectify") { playing = false; store.goBirth(); store.rectifying = true }
                     .help("Step the birth time itself in seconds and minutes and watch every card change")
             }
+            Divider().frame(height: 18)
+            // kept here, not in the window's toolbar, where the workspace tabs can crowd them out of sight
+            Button { store.paletteShown = true } label: { Label("Search", systemImage: "magnifyingglass") }
+                .keyboardShortcut("k", modifiers: .command)
+                .help("Type to add a card, switch workspace, change a setting, or ask what a word means (⌘K)")
+            Button { store.showHelp.toggle() } label: { Image(systemName: store.showHelp ? "questionmark.circle.fill" : "questionmark.circle") }
+                .accessibilityLabel(store.showHelp ? "Hide explanations" : "Show explanations")
+                .help(store.showHelp ? "Hide the explanations on each card and in the inspector" : "Show an explanation on each card and in the inspector")
         }
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
@@ -161,6 +159,13 @@ struct Palette: View {
     private var commands: [Command] {
         var list: [Command] = Store.workspaces.map { name in Command(id: "ws-\(name)", title: "Go to \(name)", keywords: "workspace", run: { store.workspace = name }) }
         list += Catalog.all.map { card in Command(id: "add-\(card.id)", title: "Add \(card.title)", keywords: card.keywords + " card", run: { store.addCard(card.id) }) }
+        // looking something up: a term opens the glossary on it; a graha, sign or house is picked
+        list += Glossary.basics.map { entry in Command(id: "what-\(entry.term)", title: "What is \(entry.term)?", keywords: "glossary explain meaning define", run: { store.workspace = "Guide"; store.glossary = entry.term }) }
+        list += ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"].map { code in Command(id: "pick-\(code)", title: "Show \(Names.lords[code] ?? code)", keywords: "graha planet pick " + (store.chart?.graha(code)?.name ?? ""), run: { store.pick = .graha(code) }) }
+        list += (0..<12).map { sign in Command(id: "pick-sign-\(sign)", title: "Show \(Names.signs[sign]) (\(Names.signsWestern[sign]))", keywords: "sign rasi pick", run: { store.pick = .sign(sign) }) }
+        if let chart = store.chart {
+            list += (1...12).map { house in Command(id: "pick-house-\(house)", title: "Show the \(Chart.ordinal(house)) house (\(Lore.houseNames[house - 1].lowercased()))", keywords: "house bhava \(house) pick", run: { store.pick = .sign(chart.sign(ofHouse: house)) }) }
+        }
         list += ChartStyle.allCases.map { style in Command(id: "style-\(style.rawValue)", title: "\(style.rawValue) charts", keywords: "style chart form", run: { store.style = style }) }
         list += [
             Command(id: "ay-lahiri", title: "Lahiri ayanamsa", keywords: "chitrapaksha", run: { store.ayanamsa = "lahiri" }),

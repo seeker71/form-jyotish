@@ -14,7 +14,8 @@ enum Catalog {
     static let all: [CardInfo] =
         [CardInfo(id: "birth", title: "Birth data", keywords: "name date time place enter", wide: true)]
         + (0..<16).map { CardInfo(id: "chart:\($0)", title: $0 == 0 ? "Rasi chart" : "\(Names.vargaCodes[$0]) \(Names.vargas[$0])", keywords: "\(Names.vargaCodes[$0]) varga divisional chart", wide: false) }
-        + [CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
+        + [CardInfo(id: "glossary", title: "Glossary", keywords: "dictionary terms words meaning search look up what is", wide: true),
+           CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
            CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
            CardInfo(id: "houses", title: "The twelve houses", keywords: "bhava lords areas of life", wide: true),
            CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
@@ -110,6 +111,8 @@ struct Card: View {
     @ViewBuilder private var content: some View {
         if id == "birth" {
             BirthForm()
+        } else if id == "glossary" {
+            GlossaryCard(chart: store.chart)
         } else if let chart = store.chart {
             if id == "moon" {
                 // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house

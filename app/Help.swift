@@ -22,6 +22,7 @@ enum Help {
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {
+        case "glossary": return "Look up any word used in the app. Each entry says what it is in plain words and, where it applies, what it is in the open chart. Click an entry to pick it; a link opens the workspace where it lives."
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
         case "houses": return "One row per house. A house does well when its lord is strong and well placed, benefics stand in it or look at it, and its bindus are high. Click a row to pick the house."
@@ -47,8 +48,7 @@ enum Help {
     }
 
     /// A table heading, a row name or a label, explained.
-    static func term(_ word: String) -> String? {
-        let terms: [String: String] = [
+    static let terms: [String: String] = [
             "Graha": "A planet in the Jyotish sense: the Sun, the Moon, five planets, and the Moon's two nodes Rahu and Ketu.",
             "Rasi": "The sign of the sidereal zodiac the graha is in.",
             "Longitude": "How far the graha has moved through its sign: degrees, minutes, seconds, out of 30 degrees.",
@@ -113,8 +113,7 @@ enum Help {
             "Pratyantardasha": "A sub-period within an antardasha, weeks to months long.", "Sookshma dasha": "A sub-period within a pratyantardasha, days long.",
             "Prana dasha": "The finest division, hours long.",
         ]
-        return terms[word]
-    }
+    static func term(_ word: String) -> String? { terms[word] }
 
     static func graha(_ code: String) -> String {
         switch code {
