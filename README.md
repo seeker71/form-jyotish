@@ -17,6 +17,14 @@ what the engine returns.
   saved in `~/Library/Application Support/FormJyotish/charts.json`; a place name can be looked up for its
   latitude, longitude and time zone (the name goes to Apple's geocoder).
 
+- A second ayanamsa, True Chitra (Spica held at 180°), beside Lahiri; Uranus, Neptune and Pluto; the Bhrigu
+  point; rasi, nakshatra, sub and sub-sub lords; dignity (exalted, debilitated, own, or the compound
+  friendship with the sign's lord) and combustion; Sripati bhavas; tithi, yoga and karana at birth; sunrise
+  and sunset.
+- A printed report (the Report… button, or `FormJyotish --report out.pdf [--ayanamsa truecitra]`): cover,
+  birth particulars, birth chart with Moon and navamsa charts and the graha table, and the Chandra,
+  Navamsha and Bhava page, in the dress of a classical horoscope.
+
 ## Layout
 
 | Path | Holds |
@@ -27,7 +35,8 @@ what the engine returns.
 | `engine/chart.bml` | the Jyotish reading and its JSON |
 | `engine/chart-run.bml` | the door: one line in, one JSON line out |
 | `witness/positions-run.bml` | seven bodies against JPL Horizons, within 0.3 arcsec |
-| `app/` | the SwiftUI shell |
+| `witness/swiss-run.bml` | Sun, Moon, lagna and ayanamsa against Swiss Ephemeris, Lahiri and True Chitra, within 0.5 arcsec |
+| `app/` | the SwiftUI shell; `app/Report.swift` draws the report |
 
 ## Setup
 

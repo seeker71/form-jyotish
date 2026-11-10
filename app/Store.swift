@@ -44,17 +44,13 @@ final class Store: ObservableObject {
         if selection == id { selection = births.first?.id }
     }
 
-    func calculate(engine: Engine, node: String) {
+    func calculate(engine: Engine, node: String, ayanamsa: String) {
         guard let index else { return }
         let birth = births[index]
-        guard let jd = birth.julianDay else {
-            problem = "The date reads as YYYY-MM-DD, the time as HH:MM:SS, and the zone as a name like Asia/Kolkata."
-            return
-        }
         busy = true
         problem = nil
         Task.detached {
-            let result = Result { try engine.chart(julianDay: jd, latitude: birth.latitude, longitude: birth.longitude, node: node) }
+            let result = Result { try engine.chart(for: birth, node: node, ayanamsa: ayanamsa) }
             await MainActor.run {
                 self.busy = false
                 switch result {

@@ -39,7 +39,14 @@ struct Engine {
         }
     }
 
-    func chart(julianDay: Double, latitude: Double, longitude: Double, node: String) throws -> Chart {
+    func chart(for birth: Birth, node: String, ayanamsa: String) throws -> Chart {
+        guard let jd = birth.julianDay, let zone = birth.zoneHours else {
+            throw EngineFailure(message: "The date reads as YYYY-MM-DD, the time as HH:MM:SS, and the zone as a name like Asia/Kolkata.")
+        }
+        return try chart(julianDay: jd, latitude: birth.latitude, longitude: birth.longitude, node: node, ayanamsa: ayanamsa, zoneHours: zone)
+    }
+
+    func chart(julianDay: Double, latitude: Double, longitude: Double, node: String, ayanamsa: String, zoneHours: Double) throws -> Chart {
         try prepare()
         let errors = FileManager.default.temporaryDirectory.appendingPathComponent("form-jyotish-\(UUID().uuidString).err")
         FileManager.default.createFile(atPath: errors.path, contents: nil)
@@ -54,7 +61,7 @@ struct Engine {
         process.standardOutput = output
         process.standardError = try FileHandle(forWritingTo: errors)
         try process.run()
-        let line = String(format: "%.9f %.6f %.6f %@\n", julianDay, latitude, longitude, node)
+        let line = String(format: "%.9f %.6f %.6f %@ %@ %.4f\n", julianDay, latitude, longitude, node, ayanamsa, zoneHours)
         input.fileHandleForWriting.write(Data(line.utf8))
         try input.fileHandleForWriting.close()
         let data = output.fileHandleForReading.readDataToEndOfFile()

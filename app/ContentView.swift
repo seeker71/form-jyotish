@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var store: Store
@@ -6,6 +7,7 @@ struct ContentView: View {
     @AppStorage("kernelPath") private var kernelPath = Engine.defaultKernel
     @AppStorage("node") private var node = "mean"
     @AppStorage("style") private var style = ChartStyle.south.rawValue
+    @AppStorage("ayanamsa") private var ayanamsa = "lahiri"
 
     private var engine: Engine { Engine(root: URL(fileURLWithPath: enginePath), kernel: URL(fileURLWithPath: kernelPath)) }
     private var chartStyle: ChartStyle { ChartStyle(rawValue: style) ?? .south }
@@ -32,14 +34,19 @@ struct ContentView: View {
             Picker("Chart style", selection: $style) {
                 ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0.rawValue) }
             }
+            Picker("Ayanamsa", selection: $ayanamsa) {
+                Text("Lahiri").tag("lahiri")
+                Text("True Chitra").tag("truecitra")
+            }
             Picker("Node", selection: $node) {
                 Text("Mean node").tag("mean")
                 Text("True node").tag("true")
             }
         }
-        .onChange(of: store.selection) { store.chart = nil; store.calculate(engine: engine, node: node) }
-        .onChange(of: node) { store.calculate(engine: engine, node: node) }
-        .onAppear { store.calculate(engine: engine, node: node) }
+        .onChange(of: store.selection) { store.chart = nil; store.calculate(engine: engine, node: node, ayanamsa: ayanamsa) }
+        .onChange(of: node) { store.calculate(engine: engine, node: node, ayanamsa: ayanamsa) }
+        .onChange(of: ayanamsa) { store.calculate(engine: engine, node: node, ayanamsa: ayanamsa) }
+        .onAppear { store.calculate(engine: engine, node: node, ayanamsa: ayanamsa) }
     }
 
     private func detail(_ birth: Binding<Birth>) -> some View {
@@ -55,7 +62,7 @@ struct ContentView: View {
                         ChartDiagram(style: chartStyle, title: "Navamsa", ascSign: chart.asc.navamsa, bySign: labels(chart, navamsa: true))
                     }
                     .frame(maxHeight: 420)
-                    Text("Lahiri ayanamsa \(Names.dms(chart.ayanamsa)) · \(chart.node) node · TT − UTC \(String(format: "%.1f", chart.delta_t)) s")
+                    Text("\(Names.ayanamsas[chart.ayanamsa_mode] ?? chart.ayanamsa_mode) ayanamsa \(Names.dms(chart.ayanamsa)) · \(chart.node) node · TT − UTC \(String(format: "%.1f", chart.delta_t)) s")
                         .font(.footnote).foregroundStyle(.secondary)
                     grahaTable(chart)
                     dashaList(chart, zone: birth.wrappedValue.timeZone ?? .current)
@@ -94,10 +101,13 @@ struct ContentView: View {
             GridRow {
                 Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
                 HStack {
-                    Button("Calculate") { store.calculate(engine: engine, node: node) }
+                    Button("Calculate") { store.calculate(engine: engine, node: node, ayanamsa: ayanamsa) }
                         .keyboardShortcut(.return, modifiers: .command)
                         .buttonStyle(.borderedProminent)
                     if store.busy { ProgressView().controlSize(.small) }
+                    Button("Report…") { exportReport() }
+                        .disabled(store.chart == nil || store.chartOf != store.selection)
+                        .help("Writes the chart as a PDF report.")
                 }
                 .gridCellColumns(3)
             }
@@ -105,6 +115,16 @@ struct ContentView: View {
         .textFieldStyle(.roundedBorder)
         .labelsHidden()
         .frame(maxWidth: 640)
+    }
+
+    private func exportReport() {
+        guard let index = store.index, let chart = store.chart else { return }
+        let birth = store.births[index]
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = "\(birth.name.isEmpty ? "Chart" : birth.name).pdf"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if Report(birth: birth, chart: chart).write(to: url) { NSWorkspace.shared.open(url) } else { store.problem = "The report could not be written to \(url.path)." }
     }
 
     private func labels(_ chart: Chart, navamsa: Bool) -> [Int: [String]] {

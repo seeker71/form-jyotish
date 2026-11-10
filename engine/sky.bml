@@ -80,6 +80,32 @@ section [form.bml] {
   def sk-ayanamsa(jd) = 23.245524743 + sk-prec-p(sk-century(jd)) - sk-prec-p(0.0 - 0.437823409);
   def sk-sidereal(path, segs, id, jd) = jn-norm360(sk-tropical(path, segs, id, jd)[0] - sk-ayanamsa(jd));
 
+  // ---- nutation (IAU 1980; every term above 0.002 arcsec) ----
+  // [D, M, M', F, node, longitude sine, per century, obliquity cosine, per century], in 0.0001 arcsec
+  def sk-nut-rows() = [[0, 0, 0, 0, 1, -171996.0, -174.2, 92025.0, 8.9], [-2, 0, 0, 2, 2, -13187.0, -1.6, 5736.0, -3.1],
+   [0, 0, 0, 2, 2, -2274.0, -0.2, 977.0, -0.5], [0, 0, 0, 0, 2, 2062.0, 0.2, -895.0, 0.5], [0, 1, 0, 0, 0, 1426.0, -3.4, 54.0, -0.1],
+   [0, 0, 1, 0, 0, 712.0, 0.1, -7.0, 0.0], [-2, 1, 0, 2, 2, -517.0, 1.2, 224.0, -0.6], [0, 0, 0, 2, 1, -386.0, -0.4, 200.0, 0.0],
+   [0, 0, 1, 2, 2, -301.0, 0.0, 129.0, -0.1], [-2, -1, 0, 2, 2, 217.0, -0.5, -95.0, 0.3], [-2, 0, 1, 0, 0, -158.0, 0.0, 0.0, 0.0],
+   [-2, 0, 0, 2, 1, 129.0, 0.1, -70.0, 0.0], [0, 0, -1, 2, 2, 123.0, 0.0, -53.0, 0.0], [2, 0, 0, 0, 0, 63.0, 0.0, 0.0, 0.0],
+   [0, 0, 1, 0, 1, 63.0, 0.1, -33.0, 0.0], [2, 0, -1, 2, 2, -59.0, 0.0, 26.0, 0.0], [0, 0, -1, 0, 1, -58.0, -0.1, 32.0, 0.0],
+   [0, 0, 1, 2, 1, -51.0, 0.0, 27.0, 0.0], [-2, 0, 2, 0, 0, 48.0, 0.0, 0.0, 0.0], [0, 0, -2, 2, 1, 46.0, 0.0, -24.0, 0.0],
+   [2, 0, 0, 2, 2, -38.0, 0.0, 16.0, 0.0], [0, 0, 2, 2, 2, -31.0, 0.0, 13.0, 0.0], [0, 0, 2, 0, 0, 29.0, 0.0, 0.0, 0.0],
+   [-2, 0, 1, 2, 2, 29.0, 0.0, -12.0, 0.0], [0, 0, 0, 2, 0, 26.0, 0.0, 0.0, 0.0], [-2, 0, 0, 2, 0, -22.0, 0.0, 0.0, 0.0],
+   [0, 0, -1, 2, 1, 21.0, 0.0, -10.0, 0.0]];
+  def sk-nut-sum(rows, t, d, m, mp, f, om, psi, eps) {
+   if nil?(rows) then [psi / 36000000.0, eps / 36000000.0] else {
+    let r = rows[0]; let arg = d * r[0] + m * r[1] + mp * r[2] + f * r[3] + om * r[4];
+    sk-nut-sum(rows[1:], t, d, m, mp, f, om, psi + (r[5] + r[6] * t) * jn-sind(arg), eps + (r[7] + r[8] * t) * jn-cosd(arg));
+   };
+  }
+  // [nutation in longitude, nutation in obliquity], degrees
+  def sk-nutation(t) = sk-nut-sum(sk-nut-rows(), t,
+   297.85036 + 445267.111480 * t - 0.0019142 * t * t, 357.52772 + 35999.050340 * t - 0.0001603 * t * t,
+   134.96298 + 477198.867398 * t + 0.0086972 * t * t, 93.27191 + 483202.017538 * t - 0.0036825 * t * t,
+   125.04452 - 1934.136261 * t + 0.0020708 * t * t, 0.0, 0.0);
+  // the ayanamsa from the true equinox of date, as almanacs print it
+  def sk-ayanamsa-true(jd) = sk-ayanamsa(jd) + sk-nutation(sk-century(jd))[0];
+
   // ---- the Moon's node ----
   def sk-node-mean(t) = 125.0445479 - 1934.1362891 * t + 0.0020754 * t * t + (t * t * t) / 467441.0 - (t * t * t * t) / 60616000.0;
   // the osculating node: where the plane of the Moon's motion about the Earth, at this instant, crosses the ecliptic northward
@@ -89,20 +115,62 @@ section [form.bml] {
    let hx = r[1] * v[2] - r[2] * v[1]; let hy = r[2] * v[0] - r[0] * v[2];
    sk-precess(jn-deg(jn-atan2(hx, 0.0 - hy)), 0.0, t)[0];
   }
-  def sk-node(path, segs, jd, kind) {
+  // Rahu's longitude of date, to meet a mean ayanamsa. The mean node is a mean-equinox quantity that Swiss
+  // Ephemeris sets against the ayanamsa of the true equinox; the nutation is taken off here so the two agree.
+  def sk-node-of-date(path, segs, jd, kind) {
    let t = sk-century(jd);
-   jn-norm360(((String) kind == "true" ? sk-node-true(path, segs, sk-et(jd), t) : sk-node-mean(t)) - sk-ayanamsa(jd));
+   (String) kind == "true" ? sk-node-true(path, segs, sk-et(jd), t) : sk-node-mean(t) - sk-nutation(t)[0];
   }
+  def sk-node(path, segs, jd, kind) = jn-norm360(sk-node-of-date(path, segs, jd, kind) - sk-ayanamsa(jd));
+
+  // ---- True Chitra: the ayanamsa that keeps Spica at 180 degrees ----
+  // Spica (ICRS, J2000): RA 13h25m11.5794s, Dec -11d09m40.759s, proper motion -42.50 and -31.73 mas/yr.
+  // Its direction carries the annual aberration, as the grahas' do.
+  def sk-true-citra(path, segs, jd) {
+   let et = sk-et(jd); let years = et / 31557600.0; let dec = 0.0 - 11.1613219 - (31.73 / 3600000.0) * years;
+   let ra = 201.2982475 - (42.50 / 3600000.0 / jn-cosd(11.1613219)) * years; let earth = sk-body(path, segs, 399, et);
+   let u = [jn-cosd(dec) * jn-cosd(ra) + earth[3] / 299792.458, jn-cosd(dec) * jn-sind(ra) + earth[4] / 299792.458, jn-sind(dec) + earth[5] / 299792.458];
+   jn-norm360(sk-of-date(u, sk-century(jd))[0] - 180.0);
+  }
+  // the mean ayanamsa by name: "lahiri" or "truecitra"
+  def sk-ayanamsa-of(path, segs, jd, mode) = (String) mode == "truecitra" ? sk-true-citra(path, segs, jd) : sk-ayanamsa(jd);
 
   // ---- the rising and culminating degrees ----
   def sk-gmst(jd) { let d = jd - 2451545.0; let t = d / 36525.0; 280.46061837 + 360.98564736629 * d + 0.000387933 * t * t - (t * t * t) / 38710000.0; }
   def sk-obliquity(t) = (84381.406 - 46.836769 * t - 0.0001831 * t * t + 0.0020034 * t * t * t) / 3600.0;
-  def sk-ascendant(jd, lat, lon) {
-   let th = jn-norm360(sk-gmst(jd) + lon); let eps = sk-obliquity(sk-century(jd)); let ay = sk-ayanamsa(jd);
+  // The horizon turns with the Earth's true pole, so the rising degree is read with the apparent sidereal
+  // time and the true obliquity, from the true equinox; the ayanamsa it meets carries the nutation too.
+  // [ascendant, midheaven, local apparent sidereal time], degrees from the true equinox of date
+  def sk-rising(jd, lat, lon) {
+   let t = sk-century(jd); let nut = sk-nutation(t); let eps = sk-obliquity(t) + nut[1];
+   let th = jn-norm360(sk-gmst(jd) + nut[0] * jn-cosd(eps) + lon);
    let asc = jn-deg(jn-atan2(jn-cosd(th), 0.0 - (jn-sind(th) * jn-cosd(eps) + (jn-sind(lat) / jn-cosd(lat)) * jn-sind(eps))));
-   let mc = jn-deg(jn-atan2(jn-sind(th), jn-cosd(th) * jn-cosd(eps)));
-   [jn-norm360(asc - ay), jn-norm360(mc - ay)];
+   [jn-norm360(asc), jn-norm360(jn-deg(jn-atan2(jn-sind(th), jn-cosd(th) * jn-cosd(eps)))), th];
   }
+  // [sidereal ascendant, sidereal midheaven] under Lahiri
+  def sk-ascendant(jd, lat, lon) {
+   let r = sk-rising(jd, lat, lon); let ay = sk-ayanamsa-true(jd);
+   [jn-norm360(r[0] - ay), jn-norm360(r[1] - ay)];
+  }
+
+  // ---- sunrise and sunset ----
+  // the Sun's centre above the horizon, degrees, seen from the Earth's centre
+  def sk-sun-altitude(path, segs, jd, lat, lon) {
+   let t = sk-century(jd); let nut = sk-nutation(t); let eps = sk-obliquity(t) + nut[1];
+   let lam = sk-tropical(path, segs, 10, jd)[0] + nut[0]; let sd = jn-sind(eps) * jn-sind(lam);
+   let hour = sk-gmst(jd) + nut[0] * jn-cosd(eps) + lon - jn-deg(jn-atan2(jn-sind(lam) * jn-cosd(eps), jn-cosd(lam)));
+   jn-deg(jn-asin(jn-sind(lat) * sd + jn-cosd(lat) * math_sqrt(1.0 - sd * sd) * jn-cosd(hour)));
+  }
+  // The moment near `guess` when the Sun's upper limb meets the horizon through mean refraction (centre at
+  // -50 arcmin), by the secant rule; nothing() when no crossing lies within half a day of the guess.
+  def sk-sun-gap(path, segs, jd, lat, lon) = sk-sun-altitude(path, segs, jd, lat, lon) + 0.8333;
+  def sk-sun-cross(path, segs, lat, lon, guess, a, fa, b, fb, more) {
+   if (b - guess > 0.5) || (guess - b > 0.5) || ((Comparable) fa == fb) then nothing()
+   else if more <= 0 || (fb < 0.00001 && fb > 0.0 - 0.00001) then b
+   else { let next = b - fb * (b - a) / (fb - fa); sk-sun-cross(path, segs, lat, lon, guess, b, fb, next, sk-sun-gap(path, segs, next, lat, lon), more - 1); };
+  }
+  def sk-sun-event(path, segs, lat, lon, guess) =
+   sk-sun-cross(path, segs, lat, lon, guess, guess, sk-sun-gap(path, segs, guess, lat, lon), guess + 0.01, sk-sun-gap(path, segs, guess + 0.01, lat, lon), 8);
  }
  0;
 }

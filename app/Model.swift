@@ -27,6 +27,12 @@ struct Birth: Codable, Identifiable, Hashable {
     }
 
     var julianDay: Double? { moment.map { $0.timeIntervalSince1970 / 86400 + 2440587.5 } }
+
+    /// The civil clock's hours east of UTC at the birth moment.
+    var zoneHours: Double? {
+        guard let moment, let tz = timeZone else { return nil }
+        return Double(tz.secondsFromGMT(for: moment)) / 3600
+    }
 }
 
 /// Where a longitude falls, as the engine reads it. Signs and nakshatras count from 0.
@@ -40,6 +46,9 @@ struct Placement: Codable {
     var pada: Int
     var nak_lord: String
     var navamsa: Int
+    var rasi_lord: String
+    var sub_lord: String
+    var sub_sub: String
 }
 
 struct Graha: Codable, Identifiable {
@@ -47,6 +56,8 @@ struct Graha: Codable, Identifiable {
     var name: String
     var speed: Double
     var retro: Bool
+    var status: String?
+    var combust: Bool?
     var lon: Double
     var sign: Int
     var sign_name: String
@@ -56,6 +67,9 @@ struct Graha: Codable, Identifiable {
     var pada: Int
     var nak_lord: String
     var navamsa: Int
+    var rasi_lord: String
+    var sub_lord: String
+    var sub_sub: String
 }
 
 struct Period: Codable, Identifiable {
@@ -67,26 +81,83 @@ struct Period: Codable, Identifiable {
     func holds(_ jd: Double) -> Bool { start <= jd && jd < end }
 }
 
+/// One bhava's beginning, middle and ending, sidereal degrees.
+struct Bhava: Codable {
+    var start: Double
+    var mid: Double
+    var end: Double
+    func holds(_ lon: Double) -> Bool {
+        let span = (end - start + 360).truncatingRemainder(dividingBy: 360)
+        return (lon - start + 360).truncatingRemainder(dividingBy: 360) < span
+    }
+}
+
+/// The day's limbs at birth. Tithi counts 0...29 from Shukla Pratipada, yoga 0...26, karana 0...59.
+struct Day: Codable {
+    var tithi: Int
+    var yoga: Int
+    var karana: Int
+    var sunrise_before: Double?
+    var sunrise: Double?
+    var sunset: Double?
+    var sunrise_after: Double?
+}
+
 struct Chart: Codable {
     var jd: Double
     var ayanamsa: Double
+    var ayanamsa_mode: String
     var delta_t: Double
     var node: String
+    var sidereal_time: Double
+    var sun_tropical: Double
     var asc: Placement
     var mc: Placement
     var grahas: [Graha]
+    var outer: [Graha]
+    var bhrigu: Placement
+    var bhavas: [Bhava]
+    var day: Day
     var dasha: [Period]
+
+    func graha(_ id: String) -> Graha? { grahas.first { $0.id == id } }
 }
 
 enum Names {
     static let signs = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"]
     static let signCodes = ["Ar", "Ta", "Ge", "Cn", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi"]
+    static let signsShort = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
+    static let signsWestern = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
     static let lords = ["Su": "Sun", "Mo": "Moon", "Ma": "Mars", "Me": "Mercury", "Ju": "Jupiter", "Ve": "Venus", "Sa": "Saturn", "Ra": "Rahu", "Ke": "Ketu"]
+    static let ayanamsas = ["lahiri": "Lahiri", "truecitra": "True Chitra"]
+    static let tithis = ["Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi"]
+    static let yogas = ["Vishkambha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda", "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva", "Vyaghata", "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyana", "Parigha", "Shiva", "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti"]
+    static let movingKaranas = ["Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti"]
+
+    static func paksha(_ tithi: Int) -> String { tithi < 15 ? "Shukla" : "Krishna" }
+    static func tithi(_ index: Int) -> String {
+        index == 14 ? "Shukla Poornima" : index == 29 ? "Krishna Amavasya" : "\(paksha(index)) \(tithis[index % 15])"
+    }
+    static func karana(_ index: Int) -> String {
+        switch index {
+        case 0: return "Kimstughna"
+        case 57: return "Shakuni"
+        case 58: return "Chatushpada"
+        case 59: return "Naga"
+        default: return movingKaranas[(index - 1) % 7]
+        }
+    }
 
     /// 16.3381 -> 16°20′17″
     static func dms(_ degrees: Double) -> String {
         let total = Int((degrees * 3600).rounded(.down))
         return String(format: "%d°%02d′%02d″", total / 3600, (total / 60) % 60, total % 60)
+    }
+
+    /// 4.3735 -> 04:22:25, to the nearest second; a negative value keeps its sign.
+    static func colons(_ value: Double) -> String {
+        let total = Int((abs(value) * 3600).rounded())
+        return String(format: "%@%02d:%02d:%02d", value < 0 ? "-" : "", total / 3600, (total / 60) % 60, total % 60)
     }
 
     static func date(julianDay: Double) -> Date { Date(timeIntervalSince1970: (julianDay - 2440587.5) * 86400) }

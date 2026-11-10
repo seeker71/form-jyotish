@@ -1,11 +1,13 @@
 //////////////////////////////////////////////////////////////////////
-// chart.bml — a birth chart read from the sky: rasi, nakshatra, navamsa and the Vimshottari dasha.
+// chart.bml — a birth chart read from the sky: rasi, nakshatra, navamsa, sub-lords, dignity, bhavas,
+// the day's panchanga and the Vimshottari dasha.
 //
-//   jc-chart(path, jd, lat, lon, node)   the whole chart as one JSON text
+//   jc-chart(path, jd, lat, lon, node, mode, zone)   the whole chart as one JSON text
 //
 // jd is the birth moment as a UTC Julian day, lat and lon in degrees (north and east positive), node is
-// "mean" or "true". Signs and nakshatras are numbered from 0 (Mesha, Ashwini); padas from 1.
-// Dasha moments are UTC Julian days; a dasha year is 365.25 days.
+// "mean" or "true", mode is the ayanamsa ("lahiri" or "truecitra"), zone the civil clock's hours east of
+// UTC (it only says which sunrise belongs to the birth's day). Signs and nakshatras are numbered from 0
+// (Mesha, Ashwini); padas from 1. Moments are UTC Julian days; a dasha year is 365.25 days.
 //////////////////////////////////////////////////////////////////////
 import engine/num.bml;
 import engine/spk.bml;
@@ -18,8 +20,17 @@ section [form.bml] {
    "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"];
   // the Vimshottari order from Ashwini's lord, with each lord's years
   def jc-lords() = [["Ke", 7], ["Ve", 20], ["Su", 6], ["Mo", 10], ["Ma", 7], ["Ra", 18], ["Ju", 16], ["Sa", 19], ["Me", 17]];
-  // [code, name, SPK body]
+  // [code, name, SPK body]; the seven are numbered 0 to 6 in this order below
   def jc-grahas() = [["Su", "Surya", 10], ["Mo", "Chandra", 301], ["Ma", "Mangala", 4], ["Me", "Budha", 1], ["Ju", "Guru", 5], ["Ve", "Shukra", 2], ["Sa", "Shani", 6]];
+  def jc-outer() = [["Ur", "Uranus", 7], ["Ne", "Neptune", 8], ["Pl", "Pluto", 9]];
+  // each sign's lord, as a graha number
+  def jc-sign-lords() = [2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4];
+  def jc-exalted() = [0, 1, 9, 5, 3, 11, 6];
+  // natural friendship, row toward column: 1 friend, 0 neutral, -1 enemy
+  def jc-natural() = [[0, 1, 1, 0, 1, -1, -1], [1, 0, 0, 1, 0, 0, 0], [1, 1, 0, -1, 1, 0, 0], [1, -1, 0, 0, 0, 1, 0],
+   [1, 1, 1, -1, 0, -1, 0], [-1, -1, 0, 1, 0, 0, 1], [-1, -1, -1, 1, 0, 1, 0]];
+  // degrees from the Sun within which a graha is combust: [direct, retrograde]
+  def jc-combust() = [[0.0, 0.0], [12.0, 12.0], [17.0, 17.0], [14.0, 12.0], [11.0, 11.0], [10.0, 8.0], [15.0, 15.0]];
 
   // ---- JSON text ----
   def jc-q(s) = "\"" + s + "\"";
@@ -28,53 +39,104 @@ section [form.bml] {
   def jc-obj(pairs) = "{" + jc-join(pairs, ",") + "}";
   def jc-arr(items) = "[" + jc-join(items, ",") + "]";
   def jc-num(v) = value_str(v);
+  def jc-opt(v) = nothing?(v) ? "null" : jc-num(v);
+  def jc-bool(v) = v ? "true" : "false";
+  def jc-abs(x) = x < 0.0 ? 0.0 - x : x;
 
   // ---- where a longitude falls ----
+  // the sub-lord: a span divided in Vimshottari shares from `lord`; answers [lord, fraction through its share]
+  def jc-sub(lord, f, left) { let share = jc-lords()[lord][1] / 120.0; f < share || left <= 0 ? [lord, f / share] : jc-sub(jc-next(lord), f - share, left - 1); }
+  def jc-next(lord) = (lord + 1) % 9;
   def jc-place(lon) {
-   let sign = floor(lon / 30.0); let nak = floor(lon / (360.0 / 27.0)); let ninth = floor(lon / (360.0 / 108.0));
+   let span = 360.0 / 27.0; let sign = floor(lon / 30.0); let nak = floor(lon / span); let ninth = floor(lon / (360.0 / 108.0));
+   let part = jc-sub(nak % 9, (lon - nak * span) / span, 8); let fine = jc-sub(part[0], part[1], 8);
    [jc-pair("lon", jc-num(lon)), jc-pair("sign", jc-num(sign)), jc-pair("sign_name", jc-q(jc-signs()[sign])), jc-pair("deg", jc-num(lon - 30.0 * sign)),
     jc-pair("nak", jc-num(nak)), jc-pair("nak_name", jc-q(jc-naks()[nak])), jc-pair("pada", jc-num(ninth % 4 + 1)),
-    jc-pair("nak_lord", jc-q(jc-lords()[nak % 9][0])), jc-pair("navamsa", jc-num(ninth % 12))];
+    jc-pair("nak_lord", jc-q(jc-lords()[nak % 9][0])), jc-pair("navamsa", jc-num(ninth % 12)),
+    jc-pair("rasi_lord", jc-q(jc-grahas()[jc-sign-lords()[sign]][0])), jc-pair("sub_lord", jc-q(jc-lords()[part[0]][0])), jc-pair("sub_sub", jc-q(jc-lords()[fine[0]][0]))];
   }
-  def jc-graha(code, name, lon, later) {
+  def jc-moving(code, name, lon, later, rest) {
    let speed = jn-norm180(later - lon) * 24.0;
-   jc-obj(append([jc-pair("id", jc-q(code)), jc-pair("name", jc-q(name)), jc-pair("speed", jc-num(speed)), jc-pair("retro", speed < 0.0 ? "true" : "false")], jc-place(lon)));
+   jc-obj(append(append([jc-pair("id", jc-q(code)), jc-pair("name", jc-q(name)), jc-pair("speed", jc-num(speed)), jc-pair("retro", jc-bool(speed < 0.0))], rest), jc-place(lon)));
   }
-  def jc-planets(path, segs, jd) = jc-grahas() |> map(g => jc-graha(g[0], g[1], sk-sidereal(path, segs, g[2], jd), sk-sidereal(path, segs, g[2], jd + 1.0 / 24.0)));
-  def jc-nodes(path, segs, jd, node) {
-   let rahu = sk-node(path, segs, jd, node); let later = sk-node(path, segs, jd + 1.0 / 24.0, node);
-   [jc-graha("Ra", "Rahu", rahu, later), jc-graha("Ke", "Ketu", jn-norm360(rahu + 180.0), jn-norm360(later + 180.0))];
+
+  // ---- dignity: exaltation, own sign, or the compound of natural and temporal friendship with the sign's lord ----
+  def jc-status(i, now) {
+   let sign = floor(now[i] / 30.0); let lord = jc-sign-lords()[sign]; let high = jc-exalted()[i];
+   sign == high ? "Exalt." : sign == (high + 6) % 12 ? "Debil." : lord == i ? "Own" : jc-compound(jc-natural()[i][lord] + jc-temporal((floor(now[lord] / 30.0) - sign + 12) % 12));
+  }
+  def jc-temporal(d) = (d >= 1 && d <= 3) || d >= 9 ? 1 : 0 - 1;
+  def jc-compound(n) = n >= 2 ? "Grt.Fr." : n == 1 ? "Friend" : n == 0 ? "Neutr." : n == 0 - 1 ? "Enemy" : "Grt.En.";
+  def jc-burnt(i, now, later) {
+   let limits = jc-combust()[i]; let retro = jn-norm180(later[i] - now[i]) < 0.0;
+   i > 0 && jc-abs(jn-norm180(now[i] - now[0])) < (retro ? limits[1] : limits[0]);
+  }
+  def jc-seven(i, now, later) {
+   i >= 7 ? [] : cons(jc-moving(jc-grahas()[i][0], jc-grahas()[i][1], now[i], later[i],
+    [jc-pair("status", jc-q(jc-status(i, now))), jc-pair("combust", jc-bool(jc-burnt(i, now, later)))]), jc-seven(i + 1, now, later));
+  }
+  def jc-nodes(rahu, later) = [jc-moving("Ra", "Rahu", rahu, later, []), jc-moving("Ke", "Ketu", jn-norm360(rahu + 180.0), jn-norm360(later + 180.0), [])];
+  def jc-lons(path, segs, rows, jd, ay) = rows |> map(g => jn-norm360(sk-tropical(path, segs, g[2], jd)[0] - ay));
+  def jc-far(rows, now, later) = nil?(rows) ? [] : cons(jc-moving(rows[0][0], rows[0][1], now[0], later[0], []), jc-far(rows[1:], now[1:], later[1:]));
+
+  // ---- bhavas by Sripati: the quadrants between lagna and midheaven in thirds give each bhava's middle ----
+  def jc-mids(asc, mc) {
+   let a = jn-norm360(asc - mc) / 3.0; let b = jn-norm360(mc + 180.0 - asc) / 3.0;
+   let half = [asc, asc + b, asc + 2.0 * b, mc + 180.0, mc + 180.0 + a, mc + 180.0 + 2.0 * a];
+   append(half, half |> map(x => x + 180.0)) |> map(x => jn-norm360(x));
+  }
+  def jc-between(a, b) = jn-norm360(a + jn-norm360(b - a) / 2.0);
+  def jc-bhavas(mids, i) {
+   i >= 12 ? [] : cons(jc-obj([jc-pair("start", jc-num(jc-between(mids[(i + 11) % 12], mids[i]))), jc-pair("mid", jc-num(mids[i])),
+    jc-pair("end", jc-num(jc-between(mids[i], mids[(i + 1) % 12])))]), jc-bhavas(mids, i + 1));
   }
 
   // ---- Vimshottari ----
   def jc-period(lord, start, end, rest) = jc-obj(append([jc-pair("lord", jc-q(jc-lords()[lord][0])), jc-pair("start", jc-num(start)), jc-pair("end", jc-num(end))], rest));
   def jc-antars(maha, lord, i, start) {
    let days = (jc-lords()[maha][1] * jc-lords()[lord][1] * 365.25) / 120.0;
-   i >= 9 ? [] : cons(jc-period(lord, start, start + days, []), jc-antars(maha, (lord + 1) % 9, i + 1, start + days));
+   i >= 9 ? [] : cons(jc-period(lord, start, start + days, []), jc-antars(maha, jc-next(lord), i + 1, start + days));
   }
   def jc-mahas(lord, i, start) {
    let days = jc-lords()[lord][1] * 365.25;
-   i >= 9 ? [] : cons(jc-period(lord, start, start + days, [jc-pair("antar", jc-arr(jc-antars(lord, lord, 0, start)))]), jc-mahas((lord + 1) % 9, i + 1, start + days));
+   i >= 9 ? [] : cons(jc-period(lord, start, start + days, [jc-pair("antar", jc-arr(jc-antars(lord, lord, 0, start)))]), jc-mahas(jc-next(lord), i + 1, start + days));
   }
   def jc-dasha(moon, jd) {
    let span = 360.0 / 27.0; let nak = floor(moon / span); let lord = nak % 9;
    jc-arr(jc-mahas(lord, 0, jd - ((moon - nak * span) / span) * jc-lords()[lord][1] * 365.25));
   }
 
+  // ---- the day: tithi (0 to 29 from Shukla Pratipada), yoga (0 to 26), karana (0 to 59), sunrise and sunset ----
+  def jc-day(path, segs, jd, lat, lon, zone, sun, moon) {
+   let midnight = floor(jd + zone / 24.0 - 0.5) + 0.5 - zone / 24.0; let apart = jn-norm360(moon - sun);
+   jc-obj([jc-pair("tithi", jc-num(floor(apart / 12.0))), jc-pair("yoga", jc-num(floor(jn-norm360(sun + moon) / (360.0 / 27.0)))), jc-pair("karana", jc-num(floor(apart / 6.0))),
+    jc-pair("sunrise_before", jc-opt(sk-sun-event(path, segs, lat, lon, midnight - 0.75))), jc-pair("sunrise", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 0.25))),
+    jc-pair("sunset", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 0.75))), jc-pair("sunrise_after", jc-opt(sk-sun-event(path, segs, lat, lon, midnight + 1.25)))]);
+  }
+
   def jc-error(why) = jc-obj([jc-pair("error", jc-q(why))]);
-  def jc-chart(path, jd, lat, lon, node) {
+  def jc-chart(path, jd, lat, lon, node, mode, zone) {
    let segs = js-segments(path);
    nil?(segs) ? jc-error("the ephemeris could not be read at " + path) :
-   nothing?(js-find(segs, 3, 0, sk-et(jd))) || nothing?(js-find(segs, 3, 0, sk-et(jd + 1.0 / 24.0))) ? jc-error("this moment lies outside the ephemeris (1850 to 2149)") :
+   nothing?(js-find(segs, 3, 0, sk-et(jd - 2.0))) || nothing?(js-find(segs, 3, 0, sk-et(jd + 2.0))) ? jc-error("this moment lies outside the ephemeris (1850 to 2149)") :
    lat >= 89.9 || lat <= 0.0 - 89.9 ? jc-error("no ascendant is read this close to a pole") :
-   jc-chart-read(path, segs, jd, lat, lon, node);
+   jc-chart-read(path, segs, jd, lat, lon, node, mode, zone);
   }
-  def jc-chart-read(path, segs, jd, lat, lon, node) {
-   let rising = sk-ascendant(jd, lat, lon); let moon = sk-sidereal(path, segs, 301, jd);
-   jc-obj([jc-pair("jd", jc-num(jd)), jc-pair("ayanamsa", jc-num(sk-ayanamsa(jd))), jc-pair("delta_t", jc-num(sk-delta-t(jd))), jc-pair("node", jc-q(node)),
-    jc-pair("asc", jc-obj(jc-place(rising[0]))), jc-pair("mc", jc-obj(jc-place(rising[1]))),
-    jc-pair("grahas", jc-arr(append(jc-planets(path, segs, jd), jc-nodes(path, segs, jd, node)))),
-    jc-pair("dasha", jc-dasha(moon, jd))]);
+  def jc-chart-read(path, segs, jd, lat, lon, node, mode, zone) {
+   let soon = jd + 1.0 / 24.0; let ay = sk-ayanamsa-of(path, segs, jd, mode); let ay1 = sk-ayanamsa-of(path, segs, soon, mode);
+   let dpsi = sk-nutation(sk-century(jd))[0]; let rise = sk-rising(jd, lat, lon);
+   let now = jc-lons(path, segs, jc-grahas(), jd, ay); let later = jc-lons(path, segs, jc-grahas(), soon, ay1);
+   let rahu = jn-norm360(sk-node-of-date(path, segs, jd, node) - ay); let rahu1 = jn-norm360(sk-node-of-date(path, segs, soon, node) - ay1);
+   let asc = jn-norm360(rise[0] - ay - dpsi); let mc = jn-norm360(rise[1] - ay - dpsi);
+   jc-obj([jc-pair("jd", jc-num(jd)), jc-pair("ayanamsa", jc-num(ay + dpsi)), jc-pair("ayanamsa_mode", jc-q(mode)), jc-pair("delta_t", jc-num(sk-delta-t(jd))), jc-pair("node", jc-q(node)),
+    jc-pair("sidereal_time", jc-num(rise[2])), jc-pair("sun_tropical", jc-num(jn-norm360(now[0] + ay + dpsi))),
+    jc-pair("asc", jc-obj(jc-place(asc))), jc-pair("mc", jc-obj(jc-place(mc))),
+    jc-pair("grahas", jc-arr(append(jc-seven(0, now, later), jc-nodes(rahu, rahu1)))),
+    jc-pair("outer", jc-arr(jc-far(jc-outer(), jc-lons(path, segs, jc-outer(), jd, ay), jc-lons(path, segs, jc-outer(), soon, ay1)))),
+    jc-pair("bhrigu", jc-obj(jc-place(jc-between(rahu, now[1])))),
+    jc-pair("bhavas", jc-arr(jc-bhavas(jc-mids(asc, mc), 0))),
+    jc-pair("day", jc-day(path, segs, jd, lat, lon, zone, now[0], now[1])),
+    jc-pair("dasha", jc-dasha(now[1], jd))]);
   }
  }
  0;

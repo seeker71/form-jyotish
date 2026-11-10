@@ -1,0 +1,25 @@
+// Witness: the engine's sidereal reading against Swiss Ephemeris 2.10.04, the library Shri Jyoti Star stands on.
+//
+// Reference: astro.com's swetest for 1 January 2000, 12:00 UT, New Delhi, read 2026-11-10:
+//   `-b1.1.2000 -ut12:00 -sid1  -house77.209,28.6139,P`: ayanamsa 23°51'11.6009", Sun 256°30'56.5063", Moon 199°28'13.9043", Ascendant 76°20'17.1259"
+//   `-b1.1.2000 -ut12:00 -sid27 -house77.209,28.6139,P`: ayanamsa 23°50'10.1333", Sun 256°31'57.9739", Moon 199°29'15.3719"
+//   ./fkwu witness/swiss-run.bml   ->  one verdict line; "green" when every reading is within 0.5 arcsec
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+section [form.bml] {
+ def ws-dms(d, m, s) = d + m / 60.0 + s / 3600.0;
+ def ws-abs(x) = x < 0.0 ? 0.0 - x : x;
+ def ws-run(path, jd, lat, lon) {
+  let segs = js-segments(path); let citra = sk-true-citra(path, segs, jd);
+  let pairs = [[sk-sidereal(path, segs, 10, jd), ws-dms(256.0, 30.0, 56.5063)], [sk-sidereal(path, segs, 301, jd), ws-dms(199.0, 28.0, 13.9043)],
+   [sk-ascendant(jd, lat, lon)[0], ws-dms(76.0, 20.0, 17.1259)], [sk-ayanamsa-true(jd), ws-dms(23.0, 51.0, 11.6009)],
+   [citra + sk-nutation(sk-century(jd))[0], ws-dms(23.0, 50.0, 10.1333)],
+   [jn-norm360(sk-tropical(path, segs, 10, jd)[0] - citra), ws-dms(256.0, 31.0, 57.9739)],
+   [jn-norm360(sk-tropical(path, segs, 301, jd)[0] - citra), ws-dms(199.0, 29.0, 15.3719)]];
+  let gaps = pairs |> map(p => ws-abs(jn-norm180(p[0] - p[1]) * 3600.0));
+  let held = len(gaps |> filter(g => g < 0.5));
+  "swiss witness: " + (held == len(gaps) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(gaps)) + " within 0.5 arcsec (Lahiri: Sun, Moon, lagna, ayanamsa; True Chitra: ayanamsa, Sun, Moon), gaps " + value_str(gaps);
+ }
+ print_str(ws-run("data/de440s.bsp", 2451545.0, 28.6139, 77.209));
+}

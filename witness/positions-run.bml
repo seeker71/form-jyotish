@@ -17,7 +17,7 @@ section [form.bml] {
  def wp-abs(x) = x < 0.0 ? 0.0 - x : x;
  def wp-max(xs) = nil?(xs) ? 0.0 : (xs[0] > wp-max(xs[1:]) ? xs[0] : wp-max(xs[1:]));
  def wp-run(path, jd) {
-  let segs = js-segments(path); let shift = wp-nutation(sk-century(jd));
+  let segs = js-segments(path); let shift = sk-nutation(sk-century(jd))[0];
   let gaps = wp-rows() |> map(r => wp-abs(jn-norm180(sk-tropical(path, segs, r[1], jd)[0] + shift - r[2]) * 3600.0));
   let held = len(gaps |> filter(g => g < 0.3));
   "positions witness: " + (held == len(gaps) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(gaps)) + " within 0.3 arcsec, widest gap " + value_str(wp-max(gaps)) + " arcsec";
