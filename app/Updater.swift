@@ -65,38 +65,41 @@ final class Updater: ObservableObject {
     }
 
     /// Ask GitHub for the latest release and fetch it when it is newer than this build.
+    /// Ask for the latest build. The asking, fetching and checking are done by a second process (this app
+    /// started as `--update-helper`), so an update arrives whether or not this window is answering.
     /// `byHand` is the Check for updates button: it says what it found even when that is nothing new.
     func check(byHand: Bool = false) {
-        guard let current = Updater.build else {
+        guard let current = Updater.build, let program = Bundle.main.executableURL else {
             if byHand { state = .failed("This copy runs from source and does not update itself.") }
             return
         }
-        if byHand { state = .checking }
-        if let waiting = Updater.build(of: Updater.staged), waiting > current { state = .ready(waiting) }
-        Task {
-            do {
-                var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(Updater.repository)/releases/latest")!)
-                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-                let (data, _) = try await URLSession.shared.data(for: request)
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                guard let latest = Int(release.tag_name.dropFirst("build-".count)), release.tag_name.hasPrefix("build-") else { return }
-                if let held = Updater.build(of: Updater.staged), held > current, held >= latest { state = .ready(held); return }
-                guard latest > current else { if byHand { state = .current(current) }; return }
-                guard let zip = release.assets.first(where: { $0.name == Updater.archive }),
-                      let digest = release.assets.first(where: { $0.name == Updater.archive + ".sha256" }) else {
-                    throw Problem("Build \(latest) carries no \(Updater.archive) with its digest.")
+        if let waiting = Updater.build(of: Updater.staged), waiting > current { state = .ready(waiting) } else if byHand { state = .checking }
+        let helper = Process()
+        helper.executableURL = program
+        helper.arguments = ["--update-helper"]
+        helper.terminationHandler = { _ in
+            let outcome = UpdateHelper.lastOutcome()
+            Task { @MainActor in
+                switch outcome {
+                case .staged(let build): self.state = .ready(build)
+                case .current(let build): if byHand { self.state = .current(build) }
+                case .failed(let why): self.state = .failed(why)
+                case .unreachable(let why): if byHand { self.state = .failed("GitHub could not be reached: \(why)") }
                 }
-                state = .fetching(latest)
-                try await fetch(zip: zip.browser_download_url, digest: digest.browser_download_url, build: latest)
-                state = .ready(latest)
-            } catch let problem as Problem {
-                state = .failed(problem.message)
-            } catch {
-                // offline, or GitHub did not answer: nothing to say, the next start asks again
-                if byHand, case .checking = state { state = .failed("GitHub could not be reached: \(error.localizedDescription)") }
-                if case .fetching = state { state = .failed("The update could not be fetched: \(error.localizedDescription)") }
             }
         }
+        do { try helper.run() } catch { if byHand { state = .failed("The update helper could not be started: \(error.localizedDescription)") } }
+    }
+}
+
+/// The update's own work, free of the window: ask GitHub for the latest release, fetch it when it is newer,
+/// check it against its published digest, unpack it, and leave it ready for the next start.
+enum UpdateHelper {
+    enum Outcome: Codable, Equatable {
+        case current(Int)
+        case staged(Int)
+        case failed(String)
+        case unreachable(String)
     }
 
     private struct Release: Decodable {
@@ -104,31 +107,75 @@ final class Updater: ObservableObject {
         var tag_name: String
         var assets: [Asset]
     }
-    private struct Problem: Error { var message: String; init(_ message: String) { self.message = message } }
 
-    private func fetch(zip: URL, digest: URL, build: Int) async throws {
-        let files = FileManager.default
-        try? files.removeItem(at: Updater.folder)
-        try files.createDirectory(at: Updater.folder, withIntermediateDirectories: true)
-        let (expectedData, _) = try await URLSession.shared.data(from: digest)
-        let expected = String(decoding: expectedData, as: UTF8.self).split(whereSeparator: { $0 == " " || $0 == "\n" }).first.map(String.init) ?? ""
-        let (downloaded, _) = try await URLSession.shared.download(from: zip)
-        let archive = Updater.folder.appendingPathComponent(Updater.archive)
-        try files.moveItem(at: downloaded, to: archive)
-        let actual = SHA256.hash(data: try Data(contentsOf: archive, options: .mappedIfSafe)).map { String(format: "%02x", $0) }.joined()
-        guard actual == expected.lowercased(), !expected.isEmpty else {
-            try? files.removeItem(at: Updater.folder)
-            throw Problem("Build \(build) did not match its published digest and was discarded.")
+    private static let repository = "seeker71/form-jyotish", archive = "FormJyotish.zip"
+    private static var home: URL { FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("FormJyotish") }
+    private static var folder: URL { home.appendingPathComponent("update") }
+    private static var arriving: URL { home.appendingPathComponent("update-arriving") }
+    private static var note: URL { home.appendingPathComponent("update-outcome.json") }
+
+    private static func build(of app: URL) -> Int? {
+        guard let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist")),
+              info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else { return nil }
+        return (info["CFBundleVersion"] as? String).flatMap(Int.init)
+    }
+
+    static func lastOutcome() -> Outcome {
+        (try? JSONDecoder().decode(Outcome.self, from: Data(contentsOf: note))) ?? .unreachable("the helper left no word")
+    }
+
+    /// Run the whole update and leave its outcome in a note the app reads.
+    @discardableResult static func run() -> Outcome {
+        let outcome = work()
+        try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        try? JSONEncoder().encode(outcome).write(to: note)
+        return outcome
+    }
+
+    private static func work() -> Outcome {
+        guard Bundle.main.bundleURL.pathExtension == "app", let current = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String).flatMap(Int.init) else {
+            return .failed("This copy runs from source and does not update itself.")
         }
-        let unzip = Process()
-        unzip.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-        unzip.arguments = ["-x", "-k", archive.path, Updater.folder.path]
-        try unzip.run()
-        unzip.waitUntilExit()
-        try? files.removeItem(at: archive)
-        guard unzip.terminationStatus == 0, Updater.build(of: Updater.staged) == build else {
-            try? files.removeItem(at: Updater.folder)
-            throw Problem("Build \(build) could not be unpacked as Form Jyotish and was discarded.")
+        let files = FileManager.default
+        let release: Release
+        do {
+            release = try JSONDecoder().decode(Release.self, from: Data(contentsOf: URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!))
+        } catch { return .unreachable(error.localizedDescription) }
+        guard release.tag_name.hasPrefix("build-"), let latest = Int(release.tag_name.dropFirst("build-".count)) else { return .failed("The latest release carries no build number.") }
+        if let held = build(of: folder.appendingPathComponent("FormJyotish.app")), held > current, held >= latest { return .staged(held) }
+        guard latest > current else { return .current(current) }
+        guard let zip = release.assets.first(where: { $0.name == archive }), let digest = release.assets.first(where: { $0.name == archive + ".sha256" }) else {
+            return .failed("Build \(latest) carries no \(archive) with its digest.")
+        }
+        do {
+            // fetched and unpacked aside, then moved into place whole: the app never meets half an update
+            try? files.removeItem(at: arriving)
+            try files.createDirectory(at: arriving, withIntermediateDirectories: true)
+            let expected = String(decoding: try Data(contentsOf: digest.browser_download_url), as: UTF8.self).split(whereSeparator: { $0 == " " || $0 == "\n" }).first.map(String.init) ?? ""
+            let bytes = try Data(contentsOf: zip.browser_download_url)
+            let actual = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+            guard actual == expected.lowercased(), !expected.isEmpty else {
+                try? files.removeItem(at: arriving)
+                return .failed("Build \(latest) did not match its published digest and was discarded.")
+            }
+            let packed = arriving.appendingPathComponent(archive)
+            try bytes.write(to: packed)
+            let unzip = Process()
+            unzip.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            unzip.arguments = ["-x", "-k", packed.path, arriving.path]
+            try unzip.run()
+            unzip.waitUntilExit()
+            try? files.removeItem(at: packed)
+            guard unzip.terminationStatus == 0, build(of: arriving.appendingPathComponent("FormJyotish.app")) == latest else {
+                try? files.removeItem(at: arriving)
+                return .failed("Build \(latest) could not be unpacked as Form Jyotish and was discarded.")
+            }
+            try? files.removeItem(at: folder)
+            try files.moveItem(at: arriving, to: folder)
+            return .staged(latest)
+        } catch {
+            try? files.removeItem(at: arriving)
+            return .unreachable(error.localizedDescription)
         }
     }
 }
