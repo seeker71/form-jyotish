@@ -43,11 +43,12 @@ final class Feed {
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
-    static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits"]
+    static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits", "Annual"]
     static let standardLayout: [String: [String]] = [
         "Guide": ["guide", "reading", "houses", "glossary", "sources"],
         "Jaimini": ["karakas", "arudhas", "chara-dasha"],
-        "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "timeline"],
+        "Annual": ["annual", "chart:0", "dasha-context"],
+        "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "edges", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["dasha-context", "timeline", "dashas", "other-dashas"],
         "Strength": ["shadbala", "ashtakavarga", "avasthas"],
