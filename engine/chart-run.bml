@@ -1,5 +1,5 @@
 // The engine's door. One line on stdin:
-//   "<UTC Julian day> <latitude> <longitude east> [mean|true] [lahiri|truecitra] [clock hours east of UTC]"
+//   "<UTC Julian day> <latitude> <longitude east> [mean|true] [lahiri|truecitra|raman] [clock hours east of UTC]"
 // One JSON line on stdout: the chart, or {"error": "..."}. Run from the repo root:
 //   printf '2451545.0 28.6139 77.2090 mean lahiri 5.5\n' | ./fkwu engine/chart-run.bml
 import engine/num.bml;
@@ -12,9 +12,9 @@ import engine/chart.bml;
 section [form.bml] {
  def jr-words(s, at) { let sp = str_find(s, " ", at); sp < 0 ? [substring(s, at, len(s))] : cons(substring(s, at, sp), jr-words(s, sp + 1)); }
  def jr-run(ws) {
-  len(ws) < 3 ? jc-error("expected: <UTC Julian day> <latitude> <longitude east> [mean|true] [lahiri|truecitra] [clock hours east of UTC]") :
+  len(ws) < 3 ? jc-error("expected: <UTC Julian day> <latitude> <longitude east> [mean|true] [lahiri|truecitra|raman] [clock hours east of UTC]") :
   jc-chart("data/de440s.bsp", str_to_float(ws[0]), str_to_float(ws[1]), str_to_float(ws[2]), len(ws) > 3 && (String) ws[3] == "true" ? "true" : "mean",
-   len(ws) > 4 && (String) ws[4] == "truecitra" ? "truecitra" : "lahiri", len(ws) > 5 ? str_to_float(ws[5]) : 0.0);
+   len(ws) > 4 && (String) ws[4] == "truecitra" ? "truecitra" : len(ws) > 4 && (String) ws[4] == "raman" ? "raman" : "lahiri", len(ws) > 5 ? str_to_float(ws[5]) : 0.0);
  }
  print_str(jr-run(jr-words(read_line() ?? "", 0) |> filter(w => len(w) > 0)));
 }

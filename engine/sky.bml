@@ -132,8 +132,10 @@ section [form.bml] {
    let u = [jn-cosd(dec) * jn-cosd(ra) + earth[3] / 299792.458, jn-cosd(dec) * jn-sind(ra) + earth[4] / 299792.458, jn-sind(dec) + earth[5] / 299792.458];
    jn-norm360(sk-of-date(u, sk-century(jd))[0] - 180.0);
   }
-  // the mean ayanamsa by name: "lahiri" or "truecitra"
-  def sk-ayanamsa-of(path, segs, jd, mode) = (String) mode == "truecitra" ? sk-true-citra(path, segs, jd) : sk-ayanamsa(jd);
+  // the mean ayanamsa by name: "lahiri", "truecitra" or "raman"
+  def sk-ayanamsa-of(path, segs, jd, mode) = (String) mode == "truecitra" ? sk-true-citra(path, segs, jd) : (String) mode == "raman" ? sk-ayanamsa-raman(jd) : sk-ayanamsa(jd);
+  // B.V. Raman's ayanamsa: 21 deg 00' 52" at 1900.0, moving with the general precession
+  def sk-ayanamsa-raman(jd) = 21.014444 + sk-prec-p(sk-century(jd)) - sk-prec-p(0.0 - 1.000014);
   // Krishnamurti's ayanamsa: 22.363889 degrees at JD 2415020.0 (1900), carried by the general precession
   def sk-ayanamsa-kp(jd) = 22.363889 + sk-prec-p(sk-century(jd)) - sk-prec-p(0.0 - 1.000014);
 

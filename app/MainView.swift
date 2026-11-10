@@ -165,6 +165,7 @@ struct Palette: View {
         list += [
             Command(id: "ay-lahiri", title: "Lahiri ayanamsa", keywords: "chitrapaksha", run: { store.ayanamsa = "lahiri" }),
             Command(id: "ay-truecitra", title: "True Chitra ayanamsa", keywords: "citra spica", run: { store.ayanamsa = "truecitra" }),
+            Command(id: "ay-raman", title: "B.V. Raman ayanamsa", keywords: "raman notable horoscopes", run: { store.ayanamsa = "raman" }),
             Command(id: "node-mean", title: "Mean node", keywords: "rahu ketu", run: { store.node = "mean" }),
             Command(id: "node-true", title: "True node", keywords: "rahu ketu", run: { store.node = "true" }),
             Command(id: "t-now", title: "Go to now", keywords: "time transit today", run: { store.goNow() }),

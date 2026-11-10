@@ -1,5 +1,5 @@
 // The door for transit dates. One line on stdin:
-//   "<UTC Julian day to start from> <days> [mean|true] [lahiri|truecitra] [ten sidereal longitudes: the nine birth grahas, then the lagna]"
+//   "<UTC Julian day to start from> <days> [mean|true] [lahiri|truecitra|raman] [ten sidereal longitudes: the nine birth grahas, then the lagna]"
 // One JSON line on stdout: {"start", "end", "events": [{"jd", "kind", "graha", ...}]}, or {"error": "..."}.
 // The Moon's ingresses are read only for spans of 45 days or less. Run from the repo root:
 //   printf '2451545.0 365 mean lahiri\n' | ./fkwu engine/transit-run.bml
@@ -18,9 +18,9 @@ section [form.bml] {
    ",\"forward\":" + (e[4] > 0 ? "true" : "false") + "}";
  }
  def tx-run(ws) {
-  if len(ws) < 2 then "{\"error\":\"expected: <UTC Julian day> <days> [mean|true] [lahiri|truecitra] [ten birth longitudes]\"}" else {
+  if len(ws) < 2 then "{\"error\":\"expected: <UTC Julian day> <days> [mean|true] [lahiri|truecitra|raman] [ten birth longitudes]\"}" else {
    let start = str_to_float(ws[0]); let end = start + str_to_float(ws[1]); let segs = js-segments("data/de440s.bsp");
-   let node = len(ws) > 2 && (String) ws[2] == "true" ? "true" : "mean"; let mode = len(ws) > 3 && (String) ws[3] == "truecitra" ? "truecitra" : "lahiri";
+   let node = len(ws) > 2 && (String) ws[2] == "true" ? "true" : "mean"; let mode = len(ws) > 3 && (String) ws[3] == "truecitra" ? "truecitra" : len(ws) > 3 && (String) ws[3] == "raman" ? "raman" : "lahiri";
    let natal = len(ws) >= 14 ? ws[4:] |> map(w => str_to_float(w)) : [];
    nil?(segs) || nothing?(js-find(segs, 3, 0, sk-et(start - 3.0))) || nothing?(js-find(segs, 3, 0, sk-et(end + 3.0))) ? "{\"error\":\"this span lies outside the ephemeris (1850 to 2149)\"}" :
     "{\"start\":" + value_str(start) + ",\"end\":" + value_str(end) + ",\"events\":[" +

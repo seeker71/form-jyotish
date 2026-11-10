@@ -20,7 +20,7 @@ struct FormJyotishApp: App {
         }
     }
 
-    /// `FormJyotish --report out.pdf [--ayanamsa lahiri|truecitra] [--node mean|true]`:
+    /// `FormJyotish --report out.pdf [--ayanamsa lahiri|truecitra|raman] [--node mean|true]`:
     /// write the first saved chart's report without opening a window, then leave.
     private static func writeReport(to path: String, arguments: [String]) -> Never {
         func option(_ name: String) -> String? {

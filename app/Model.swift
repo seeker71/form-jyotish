@@ -238,7 +238,7 @@ enum Names {
     static let vargaCodes = ["D1", "D2", "D3", "D4", "D7", "D9", "D10", "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60"]
     static let lordsThree = ["Su": "Sun", "Mo": "Mon", "Ma": "Mar", "Me": "Mer", "Ju": "Jup", "Ve": "Ven", "Sa": "Sat", "Ra": "Rah", "Ke": "Ket"]
     static let weekdayLords = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"]
-    static let ayanamsas = ["lahiri": "Lahiri", "truecitra": "True Chitra"]
+    static let ayanamsas = ["lahiri": "Lahiri", "truecitra": "True Chitra", "raman": "B.V. Raman"]
     static let tithis = ["Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi"]
     static let yogas = ["Vishkambha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda", "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva", "Vyaghata", "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyana", "Parigha", "Shiva", "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti"]
     static let movingKaranas = ["Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti"]
