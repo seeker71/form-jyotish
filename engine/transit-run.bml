@@ -1,0 +1,31 @@
+// The door for transit dates. One line on stdin:
+//   "<UTC Julian day to start from> <days> [mean|true] [lahiri|truecitra] [ten sidereal longitudes: the nine birth grahas, then the lagna]"
+// One JSON line on stdout: {"start", "end", "events": [{"jd", "kind", "graha", ...}]}, or {"error": "..."}.
+// The Moon's ingresses are read only for spans of 45 days or less. Run from the repo root:
+//   printf '2451545.0 365 mean lahiri\n' | ./fkwu engine/transit-run.bml
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/transit.bml;
+section [form.bml] {
+ def tx-words(s, at) { let sp = str_find(s, " ", at); sp < 0 ? [substring(s, at, len(s))] : cons(substring(s, at, sp), tx-words(s, sp + 1)); }
+ def tx-q(s) = "\"" + s + "\"";
+ def tx-join(xs, sep) = nil?(xs) ? "" : nil?(xs[1:]) ? xs[0] : xs[0] + sep + tx-join(xs[1:], sep);
+ def tx-codes() = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke", "As"];
+ def tx-event(e) {
+  "{\"jd\":" + value_str(e[0]) + ",\"kind\":" + tx-q(e[1]) + ",\"graha\":" + tx-q(tx-codes()[e[2]]) +
+   ((String) e[1] == "ingress" ? ",\"sign\":" + value_str(e[3]) : (String) e[1] == "contact" ? ",\"natal\":" + tx-q(tx-codes()[e[3]]) : "") +
+   ",\"forward\":" + (e[4] > 0 ? "true" : "false") + "}";
+ }
+ def tx-run(ws) {
+  if len(ws) < 2 then "{\"error\":\"expected: <UTC Julian day> <days> [mean|true] [lahiri|truecitra] [ten birth longitudes]\"}" else {
+   let start = str_to_float(ws[0]); let end = start + str_to_float(ws[1]); let segs = js-segments("data/de440s.bsp");
+   let node = len(ws) > 2 && (String) ws[2] == "true" ? "true" : "mean"; let mode = len(ws) > 3 && (String) ws[3] == "truecitra" ? "truecitra" : "lahiri";
+   let natal = len(ws) >= 14 ? ws[4:] |> map(w => str_to_float(w)) : [];
+   nil?(segs) || nothing?(js-find(segs, 3, 0, sk-et(start - 3.0))) || nothing?(js-find(segs, 3, 0, sk-et(end + 3.0))) ? "{\"error\":\"this span lies outside the ephemeris (1850 to 2149)\"}" :
+    "{\"start\":" + value_str(start) + ",\"end\":" + value_str(end) + ",\"events\":[" +
+     tx-join(tr-events(["data/de440s.bsp", segs, node, mode], start, end, end - start <= 45.0, natal) |> map(e => tx-event(e)), ",") + "]}";
+  };
+ }
+ print_str(tx-run(tx-words(read_line() ?? "", 0) |> filter(w => len(w) > 0)));
+}

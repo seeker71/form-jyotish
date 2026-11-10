@@ -29,6 +29,7 @@ enum Help {
         case "grahas": return "One row per graha: its sign, its exact degree within the sign, its nakshatra (one of 27 lunar mansions) and how it is placed. Hover a column heading for what it means."
         case "timeline": return "Life as a sequence of graha periods. The top row is the mahadasha; the rows below divide it further. The blue line is the moment in the time bar. Narrow the span to see finer periods."
         case "dashas": return "The same periods as a list. Open a period with its arrow to see its nine parts; click a period to read it in the inspector."
+        case "transit-dates": return "What the sky does next, with exact times: a graha entering a sign, turning retrograde or direct, or crossing the degree of a birth graha. Each line says which house that is from the birth lagna and Moon. Click a line to move the whole desk to that moment."
         case "transits": return "Where each graha is at the moment in the time bar, and which house that is counted from the birth lagna and from the birth Moon."
         case "shadbala": return "Six kinds of strength, added up. A graha with 1.00 or more in the last row has the strength the tradition asks of it. Hover a row's name for what it measures."
         case "ashtakavarga": return "Each graha gives up to 8 points (bindus) to every sign. More points in a sign mean a graha passing through it, or placed in it, gives better results. The bottom row adds all seven."

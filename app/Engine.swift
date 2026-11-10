@@ -31,12 +31,14 @@ struct Engine {
         let files = FileManager.default
         let folder = files.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("FormJyotish/run")
         try files.createDirectory(at: folder.appendingPathComponent("engine"), withIntermediateDirectories: true)
-        let image = folder.appendingPathComponent("engine/chart-run.bml.fkb"), source = payload.appendingPathComponent("engine/chart-run.bml.fkb")
-        // two readings may arrive at once: the image is copied aside and moved into place in one step
-        if !files.contentsEqual(atPath: image.path, andPath: source.path) {
-            let aside = folder.appendingPathComponent("engine/arriving-\(UUID().uuidString)")
-            try files.copyItem(at: source, to: aside)
-            if files.fileExists(atPath: image.path) { _ = try files.replaceItemAt(image, withItemAt: aside) } else if (try? files.moveItem(at: aside, to: image)) == nil { try? files.removeItem(at: aside) }
+        // two readings may arrive at once: each image is copied aside and moved into place in one step
+        for door in ["chart-run", "transit-run"] {
+            let image = folder.appendingPathComponent("engine/\(door).bml.fkb"), source = payload.appendingPathComponent("engine/\(door).bml.fkb")
+            if !files.contentsEqual(atPath: image.path, andPath: source.path) {
+                let aside = folder.appendingPathComponent("engine/arriving-\(UUID().uuidString)")
+                try files.copyItem(at: source, to: aside)
+                if files.fileExists(atPath: image.path) { _ = try files.replaceItemAt(image, withItemAt: aside) } else if (try? files.moveItem(at: aside, to: image)) == nil { try? files.removeItem(at: aside) }
+            }
         }
         let data = folder.appendingPathComponent("data")
         if (try? files.destinationOfSymbolicLink(atPath: data.path)) != payload.appendingPathComponent("data").path {
@@ -76,6 +78,19 @@ struct Engine {
     }
 
     func chart(julianDay: Double, latitude: Double, longitude: Double, node: String, ayanamsa: String, zoneHours: Double) throws -> Chart {
+        try JSONDecoder().decode(Chart.self, from: run(door: "chart-run", line: String(format: "%.9f %.6f %.6f %@ %@ %.4f", julianDay, latitude, longitude, node, ayanamsa, zoneHours)))
+    }
+
+    /// The dated events of the sky from a moment on: sign ingresses, stations, and crossings of the birth points.
+    func transits(from julianDay: Double, days: Double, node: String, ayanamsa: String, natal: Chart) throws -> [TransitEvent] {
+        let points = (natal.grahas.map(\.lon) + [natal.asc.lon]).map { String(format: "%.6f", $0) }.joined(separator: " ")
+        struct Answer: Decodable { var events: [TransitEvent] }
+        let line = String(format: "%.6f %.3f %@ %@ ", julianDay, days, node, ayanamsa) + points
+        return try JSONDecoder().decode(Answer.self, from: run(door: "transit-run", line: line)).events.sorted { $0.jd < $1.jd }
+    }
+
+    /// One line into a door of the engine, one JSON line back.
+    private func run(door: String, line: String) throws -> Data {
         let carried = Engine.payload
         if carried == nil { try prepare() }
         let errors = FileManager.default.temporaryDirectory.appendingPathComponent("form-jyotish-\(UUID().uuidString).err")
@@ -85,11 +100,11 @@ struct Engine {
         let process = Process()
         if let carried {
             process.executableURL = carried.appendingPathComponent("fkwu")
-            process.arguments = ["engine/chart-run.bml.fkb"]
+            process.arguments = ["engine/\(door).bml.fkb"]
             process.currentDirectoryURL = try Engine.runFolder(for: carried)
         } else {
             process.executableURL = fkwu
-            process.arguments = ["engine/chart-run.bml"]
+            process.arguments = ["engine/\(door).bml"]
             process.currentDirectoryURL = root
         }
         let input = Pipe(), output = Pipe()
@@ -97,8 +112,7 @@ struct Engine {
         process.standardOutput = output
         process.standardError = try FileHandle(forWritingTo: errors)
         try process.run()
-        let line = String(format: "%.9f %.6f %.6f %@ %@ %.4f\n", julianDay, latitude, longitude, node, ayanamsa, zoneHours)
-        input.fileHandleForWriting.write(Data(line.utf8))
+        input.fileHandleForWriting.write(Data((line + "\n").utf8))
         try input.fileHandleForWriting.close()
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
@@ -106,12 +120,12 @@ struct Engine {
         let text = String(decoding: data, as: UTF8.self)
         guard let json = text.split(separator: "\n").first(where: { $0.hasPrefix("{") }) else {
             let said = (try? String(contentsOf: errors, encoding: .utf8))?.split(separator: "\n").first.map(String.init) ?? "no output"
-            throw EngineFailure(message: "The engine returned no chart (exit \(process.terminationStatus)): \(said)")
+            throw EngineFailure(message: "The engine returned nothing (exit \(process.terminationStatus)): \(said)")
         }
         let bytes = Data(json.utf8)
         if let refusal = try? JSONDecoder().decode([String: String].self, from: bytes), let why = refusal["error"] {
             throw EngineFailure(message: why)
         }
-        return try JSONDecoder().decode(Chart.self, from: bytes)
+        return bytes
     }
 }

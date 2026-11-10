@@ -51,7 +51,7 @@ final class Store: ObservableObject {
         "Strength": ["shadbala", "ashtakavarga", "avasthas"],
         "Yogas": ["yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
-        "Transits": ["chart:0", "transits", "timeline"],
+        "Transits": ["chart:0", "transits", "transit-dates", "timeline"],
     ]
 
     @Published var births: [Birth] = [] { didSet { save(); if births.first(where: { $0.id == current }) != oldValue.first(where: { $0.id == current }) { readNatal() } } }
@@ -86,13 +86,20 @@ final class Store: ObservableObject {
         file = folder.appendingPathComponent("charts.json")
         workspace = defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Overview"
         var saved = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
-        // a layout saved before the Chandra chart existed gains it once, beside the navamsa
-        if !defaults.bool(forKey: "addedMoonCard"), var overview = saved["Overview"], !overview.contains("moon") {
-            overview.insert("moon", at: (overview.firstIndex(of: "chart:5") ?? overview.firstIndex(of: "chart:0") ?? -1) + 1)
-            saved["Overview"] = overview
-            defaults.set(try? JSONEncoder().encode(saved), forKey: "layout")
+        // A saved layout gains each card that has since joined a workspace's standard set, once: the cards
+        // already offered are remembered, so a card the person removed stays removed.
+        let standard = Store.standardLayout.flatMap { name, cards in cards.map { name + "/" + $0 } }
+        let offered = Set(defaults.stringArray(forKey: "offeredCards") ?? (defaults.data(forKey: "layout") == nil ? standard : []))
+        for (name, cards) in Store.standardLayout {
+            for (place, card) in cards.enumerated() where !offered.contains(name + "/" + card) && !(saved[name] ?? cards).contains(card) {
+                var list = saved[name] ?? cards
+                let before = cards[..<place].last { list.contains($0) }
+                list.insert(card, at: before.flatMap { list.firstIndex(of: $0) }.map { $0 + 1 } ?? 0)
+                saved[name] = list
+            }
         }
-        defaults.set(true, forKey: "addedMoonCard")
+        defaults.set(standard, forKey: "offeredCards")
+        if defaults.data(forKey: "layout") != nil { defaults.set(try? JSONEncoder().encode(saved), forKey: "layout") }
         layout = saved
         node = defaults.string(forKey: "node") ?? "mean"
         ayanamsa = defaults.string(forKey: "ayanamsa") ?? "lahiri"

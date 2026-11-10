@@ -18,6 +18,7 @@ enum Catalog {
            CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
            CardInfo(id: "timeline", title: "Vimshottari timeline", keywords: "dasha graph periods zoom", wide: true),
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
+           CardInfo(id: "transit-dates", title: "Transit dates", keywords: "gochara ingress station retrograde sade sati exact dates events", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
            CardInfo(id: "ashtakavarga", title: "Ashtakavarga", keywords: "strength bindus bhinna sarva points", wide: true),
            CardInfo(id: "yogas", title: "Yogas", keywords: "combinations raja dhana dosha cancellation", wide: true),
@@ -122,6 +123,7 @@ struct Card: View {
                 case "aspects": AspectTable(chart: chart)
                 case "avasthas": AvasthaTable(chart: chart)
                 case "transits": TransitTable(natal: chart)
+                case "transit-dates": TransitDates(natal: chart)
                 case "kp-grahas": KPGrahas(kp: chart.kp)
                 case "kp-cusps": KPCusps(kp: chart.kp)
                 case "kp-houses": KPHouses(kp: chart.kp)

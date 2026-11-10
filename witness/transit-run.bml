@@ -1,0 +1,24 @@
+// Witness: two dated events against Swiss Ephemeris 2.10.04 (astro.com's swetest, Lahiri, read 2026-11-10).
+//
+//   Mars enters Simha: Swiss Ephemeris has Mars at 119°59'59.874" at 12 Nov 2026 14:48:30 UT (JD 2461357.117014),
+//     moving 27'39" a day, so it reaches 120° some 7 seconds later.
+//   Mercury turns direct: its speed is -0.18" a day at 13 Nov 2026 15:54:00 UT and +0.75" at 15:56:00,
+//     so it stands still near 15:54:23 UT (JD 2461358.162766).
+//   ./fkwu witness/transit-run.bml   ->  one verdict line; "green" when both fall within one minute
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/transit.bml;
+section [form.bml] {
+ def wr-abs(x) = x < 0.0 ? 0.0 - x : x;
+ def wr-find(es, kind, g) = nil?(es) ? nothing() : (String) es[0][1] == kind && es[0][2] == g ? es[0] : wr-find(es[1:], kind, g);
+ def wr-gap(e, jd) = nothing?(e) ? 999999.0 : wr-abs(e[0] - jd) * 86400.0;
+ def wr-run(path) {
+  let es = tr-events([path, js-segments(path), "mean", "lahiri"], 2461354.5, 2461384.5, false, []);
+  let mars = wr-find(es, "ingress", 2); let mercury = wr-find(es, "station", 3);
+  let gaps = [wr-gap(mars, 2461357.117095), wr-gap(mercury, 2461358.162766)];
+  let held = len(gaps |> filter(g => g < 60.0)) + (!nothing?(mars) && mars[3] == 4 ? 1 : 0) + (!nothing?(mercury) && mercury[3] == 1 ? 1 : 0);
+  "transit witness: " + (held == 4 ? "green" : "red") + " " + value_str(held) + " of 4 claims (Mars into Simha and Mercury direct, each within a minute and rightly named), gaps in seconds " + value_str(gaps);
+ }
+ print_str(wr-run("data/de440s.bsp"));
+}

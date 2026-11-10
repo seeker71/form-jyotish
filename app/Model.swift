@@ -120,6 +120,21 @@ struct KP: Codable {
     var fortuna: Placement
 }
 
+/// A dated event of the sky: a graha enters a sign, turns, or crosses a birth point.
+struct TransitEvent: Decodable, Identifiable {
+    var jd: Double
+    /// "ingress", "station" or "contact"
+    var kind: String
+    var graha: String
+    /// the sign entered, for an ingress
+    var sign: Int?
+    /// the birth point crossed, for a contact: a graha's code or "As"
+    var natal: String?
+    /// moving forward through the zodiac (after the event, for a station)
+    var forward: Bool
+    var id: String { "\(kind)-\(graha)-\(jd)" }
+}
+
 /// One named row of the shadbala, a value for each of the seven grahas in virupas. A name that opens with "=" is a sum.
 struct BalaRow: Codable, Identifiable {
     var name: String

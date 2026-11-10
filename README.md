@@ -40,6 +40,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   significators of houses and grahas, ruling planets and Fortuna. The significator sets are folded in the
   shell (`app/Reading.swift`) from what the engine returns.
 - Transits: the sky at any moment set in the houses of the birth lagna.
+- Transit dates: over a month to three years from any moment, each graha's sign ingresses, its stations
+  (turning retrograde or direct), and the exact crossings of the birth grahas and lagna by Mars, Jupiter,
+  Saturn and the nodes, each timed to under a minute and placed in its house from the birth lagna and
+  Moon; Saturn's ingresses name Sade Sati and its passage through the 4th and 8th from the Moon.
 - Aspects (which signs each graha looks at in full), the avasthas (baladi, jagradadi, deeptadi), and a first
   set of classical yogas, each stated with the rule it met: the mahapurusha yogas, raja and dhana yogas,
   viparita raja yogas, parivartana, the Moon's and the Sun's yogas, kartari, neecha-bhanga, and the doshas.
@@ -81,8 +85,10 @@ interpolated.
 | `engine/yoga.bml` | aspects and the classical yogas |
 | `engine/chart.bml` | the Jyotish reading and its JSON |
 | `engine/chart-run.bml` | the door: one line in, one JSON line out |
+| `engine/transit.bml`, `engine/transit-run.bml` | dated transit events, and their door |
 | `witness/positions-run.bml` | seven bodies against JPL Horizons, within 0.3 arcsec |
 | `witness/swiss-run.bml` | Sun, Moon, lagna and ayanamsa against Swiss Ephemeris, Lahiri and True Chitra, within 0.5 arcsec |
+| `witness/transit-run.bml` | an ingress and a station against Swiss Ephemeris, each within a minute |
 | `witness/strength-run.bml` | the strength module's invariants: ashtakavarga row sums, varga signs, natural order |
 | `app/` | the SwiftUI shell; `app/Report.swift` draws the report |
 

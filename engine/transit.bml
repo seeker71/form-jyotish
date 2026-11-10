@@ -1,0 +1,78 @@
+//////////////////////////////////////////////////////////////////////
+// transit.bml — the dated events of the sky over a span: sign ingresses, stations, and crossings of birth points.
+//
+//   tr-events(c, start, end, moon?, natal)   every event found, unordered:
+//        [jd, "ingress", graha, the sign entered, direction]
+//        [jd, "station", graha, the new direction, the new direction]
+//        [jd, "contact", graha, the birth point's index, direction]
+//
+// Grahas are numbered 0 to 8 (Sun Moon Mars Mercury Jupiter Venus Saturn Rahu Ketu); direction is 1 moving
+// forward and -1 moving backward. c is the reading's context: [ephemeris path, segments, node, ayanamsa].
+// natal holds the sidereal longitudes of the birth points (the nine grahas, then the lagna); Mars, Jupiter,
+// Saturn and the nodes are watched as they cross them. Ketu's ingresses fall with Rahu's and are not repeated.
+//
+// The span is halved until each piece is no longer than the graha's step; a sign changing across a piece
+// is an ingress, a direction changing between neighbouring pieces a station; each is then closed in on by
+// halving to well under a minute.
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+section [form.bml] {
+ class JyTransit {
+  def tr-ids() = [10, 301, 4, 1, 5, 2, 6];
+  // days between samples: fine enough that no graha changes sign or direction twice within one
+  def tr-steps() = [1.0, 0.25, 1.0, 0.5, 2.0, 1.0, 2.0, 2.0, 2.0];
+  def tr-at(c, g, jd) {
+   let ay = sk-ayanamsa-of(c[0], c[1], jd, c[3]);
+   g == 7 ? jn-norm360(sk-node-of-date(c[0], c[1], jd, c[2]) - ay) : g == 8 ? jn-norm360(sk-node-of-date(c[0], c[1], jd, c[2]) - ay + 180.0) :
+    jn-norm360(sk-tropical(c[0], c[1], tr-ids()[g], jd)[0] - ay);
+  }
+  def tr-sign(x) = floor(x / 30.0);
+  def tr-dir(a, b) = jn-norm180(b - a) < 0.0 ? 0 - 1 : 1;
+  def tr-side(x, p) = jn-norm180(x - p) < 0.0 ? 0 : 1;
+  def tr-abs(x) = x < 0.0 ? 0.0 - x : x;
+
+  // the moment in [a, b] when the graha leaves the sign `from`
+  def tr-cross(c, g, a, b, from, more) {
+   let m = (a + b) / 2.0;
+   more <= 0 ? b : tr-sign(tr-at(c, g, m)) == from ? tr-cross(c, g, m, b, from, more - 1) : tr-cross(c, g, a, m, from, more - 1);
+  }
+  // the moment in [a, b] when the graha reaches the longitude p; `side` is the side of p it stands on at a
+  def tr-meet(c, g, a, b, p, side, more) {
+   let m = (a + b) / 2.0;
+   more <= 0 ? b : tr-side(tr-at(c, g, m), p) == side ? tr-meet(c, g, m, b, p, side, more - 1) : tr-meet(c, g, a, m, p, side, more - 1);
+  }
+  // the moment in [a, b] when the graha's direction stops being `dir`
+  def tr-turn(c, g, a, b, dir, more) {
+   let m = (a + b) / 2.0;
+   more <= 0 ? b : tr-dir(tr-at(c, g, m - 0.01), tr-at(c, g, m + 0.01)) == dir ? tr-turn(c, g, m, b, dir, more - 1) : tr-turn(c, g, a, m, dir, more - 1);
+  }
+
+  def tr-contacts(c, g, a, la, b, lb, natal, k) {
+   if nil?(natal) then [] else {
+    let rest = tr-contacts(c, g, a, la, b, lb, natal[1:], k + 1); let p = natal[0];
+    // a graha standing on the point as the piece opens (the birth moment itself) is not a crossing
+    tr-side(la, p) != tr-side(lb, p) && tr-abs(jn-norm180(la - p)) > 0.00001 && tr-abs(jn-norm180(la - p)) < 20.0 && tr-abs(jn-norm180(lb - p)) < 20.0 ?
+     cons([tr-meet(c, g, a, b, p, tr-side(la, p), 22), "contact", g, k, tr-dir(la, lb)], rest) : rest;
+   };
+  }
+  def tr-piece(c, g, a, la, b, lb, natal) {
+   let entered = g != 8 && tr-sign(la) != tr-sign(lb) ? [[tr-cross(c, g, a, b, tr-sign(la), 22), "ingress", g, tr-sign(lb), tr-dir(la, lb)]] : [];
+   g == 2 || g == 4 || g >= 6 ? append(entered, tr-contacts(c, g, a, la, b, lb, natal, 0)) : entered;
+  }
+  // [direction at the span's opening, direction at its close, the events within]
+  def tr-scan(c, g, a, la, b, lb, h, natal) {
+   if b - a <= h then [tr-dir(la, lb), tr-dir(la, lb), tr-piece(c, g, a, la, b, lb, natal)] else {
+    let m = (a + b) / 2.0; let lm = tr-at(c, g, m);
+    let l = tr-scan(c, g, a, la, m, lm, h, natal); let r = tr-scan(c, g, m, lm, b, lb, h, natal);
+    let turned = g >= 2 && g <= 6 && l[1] != r[0] ? [[tr-turn(c, g, m - h, m + h, l[1], 22), "station", g, r[0], r[0]]] : [];
+    [l[0], r[1], append(l[2], append(turned, r[2]))];
+   };
+  }
+  def tr-graha(c, g, start, end, natal) = tr-scan(c, g, start, tr-at(c, g, start), end, tr-at(c, g, end), tr-steps()[g], natal)[2];
+  def tr-each(c, gs, start, end, natal) = nil?(gs) ? [] : append(tr-graha(c, gs[0], start, end, natal), tr-each(c, gs[1:], start, end, natal));
+  def tr-events(c, start, end, moon, natal) = tr-each(c, moon ? [0, 1, 2, 3, 4, 5, 6, 7, 8] : [0, 2, 3, 4, 5, 6, 7, 8], start, end, natal);
+ }
+ 0;
+}
