@@ -73,12 +73,12 @@ struct Workspace: View {
 
     var body: some View {
         // below this width the cards keep their shape and the workspace scrolls sideways
-        GeometryReader { geo in content(width: max(geo.size.width, Workspace.narrowest), sideways: geo.size.width < Workspace.narrowest) }
+        GeometryReader { geo in content(width: max(geo.size.width, Workspace.narrowest), height: geo.size.height, sideways: geo.size.width < Workspace.narrowest) }
     }
 
     static let narrowest: CGFloat = 560
 
-    private func content(width: CGFloat, sideways: Bool) -> some View {
+    private func content(width: CGFloat, height: CGFloat, sideways: Bool) -> some View {
         ScrollViewReader { reader in
         ScrollView(sideways ? [.vertical, .horizontal] : .vertical) {
             VStack(alignment: .leading, spacing: 14) {
@@ -96,8 +96,9 @@ struct Workspace: View {
                 }
                 ForEach(runs, id: \.self) { run in
                     if wide(run[0]) {
-                        // an enlarged chart is as wide as reads well, and no wider
-                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : 700)
+                        // an enlarged chart is as large as shows whole in the room on screen: its title and words
+                        // above it, the square chart under them, nothing cut off
+                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : max(300, min(700, height - (store.showHelp ? 150 : 100))))
                     } else {
                         let lines = rows(run, width: width), perRow = lines.first?.count ?? 1
                         ForEach(lines, id: \.self) { line in
