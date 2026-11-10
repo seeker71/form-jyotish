@@ -77,7 +77,13 @@ final class Store: ObservableObject {
     /// what is typed into the glossary's search
     @Published var glossary = ""
     /// charts drawn large, a row to themselves: the birth chart is, until told otherwise
-    @Published var enlarged: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "enlarged") ?? ["chart:0"]) { didSet { defaults.set(Array(enlarged), forKey: "enlarged") } }
+    @Published var enlarged: Set<String> = {
+        // the Rasi chart is at its largest by default; that default is laid over an earlier saved choice once
+        let defaults = UserDefaults.standard
+        var saved = Set(defaults.stringArray(forKey: "enlarged") ?? ["chart:0"])
+        if !defaults.bool(forKey: "rasiLargeByDefault") { saved.insert("chart:0"); defaults.set(true, forKey: "rasiLargeByDefault"); defaults.set(Array(saved), forKey: "enlarged") }
+        return saved
+    }() { didSet { defaults.set(Array(enlarged), forKey: "enlarged") } }
     func toggleEnlarged(_ id: String) { if enlarged.contains(id) { enlarged.remove(id) } else { enlarged.insert(id) } }
     /// what the palette opens with typed in: used by the palette's click witness
     var paletteSeed = ""
