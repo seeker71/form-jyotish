@@ -29,6 +29,7 @@ enum Help {
         case "karakas": return "Jaimini assigns the roles of life to grahas by rank: the graha furthest through its sign is the atmakaraka, the self, and so on down to the darakaraka, the partner. The roles change from chart to chart. Click a row to read about that graha."
         case "arudhas": return "An arudha pada is the image a house casts: count from the house to its lord, then as far again. It shows how a matter appears to the world, beside what it is. Click a row or a mark to pick that sign."
         case "match": return "Ashtakoota, also called guna milan: eight measures, 36 points, read from the two Moons' signs and nakshatras. Each row names what the measure looks at, what each person brings, and the points it gives."
+        case "events": return "Dated events of the life, each set against the periods running that day. This is how published readings test a chart against what happened, and how a birth time is checked."
         case "edges": return "Which placements stand close to the edge of a sign or nakshatra, what lies across the edge, and how small a change of birth time or ayanamsa would carry them over. Readings that rest on these placements deserve a second look."
         case "annual": return "Varshaphal: the chart of one year of life, cast for the Sun's return to its birth longitude at the birth place. Muntha moves one sign a year from the birth lagna and marks where the year's attention gathers."
         case "chara-dasha": return "A dasha of signs, not grahas. Each sign has its period, divided into twelve equal sub-periods. Open a period for its sub-periods; click one to go there."
@@ -62,6 +63,10 @@ enum Help {
     static let terms: [String: String] = [
             "Graha": "A planet in the Jyotish sense: the Sun, the Moon, five planets, and the Moon's two nodes Rahu and Ketu.",
             "Rasi": "The sign of the sidereal zodiac the graha is in.",
+            "Navamsa": "The graha's sign in the D9 chart, and whether it is exalted, in its own sign or debilitated there.",
+            "Hemmed": "Kartari: grahas in the signs on both sides. Benefics there support; malefics there press.",
+            "Roles": "What the graha becomes in this chart through the houses it rules: lagna lord, yogakaraka, maraka and so on.",
+            "Signifies": "What the graha stands for by nature in every chart: its karaka meanings.",
             "Long.": "Longitude: how far the graha has moved through its sign, in degrees and minutes out of 30 degrees. Click the row for the seconds.",
             "Nakshatra · pada": "The lunar mansion the graha is in, one of 27, and which of its four quarters.",
             "Lords": "The lord of the graha's sign, of its nakshatra, and of its sub-division, in that order.",

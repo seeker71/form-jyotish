@@ -87,6 +87,14 @@ extension Chart {
         else if [5, 9].contains(house) { supports.append("In a trine, the \(Chart.ordinal(house)) house") }
         else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }
         if g.navamsa == g.sign { supports.append("Vargottama: the same sign in the navamsa") }
+        if let standing = navamsaStanding(g) {
+            if standing.helps { supports.append("In the navamsa: \(standing.word), in \(Names.signs[g.navamsa])") }
+            else { strains.append("In the navamsa: \(standing.word), in \(Names.signs[g.navamsa]): its promise asks for inner work") }
+        }
+        if let hem = hemming(of: g.sign, except: g.id) {
+            let names = hem.who.map { Names.lords[$0] ?? $0 }.joined(separator: ", ")
+            if hem.helps { supports.append("Shubha-kartari: benefics on both sides (\(names))") } else { strains.append("Papa-kartari: malefics on both sides (\(names)): asks for clear boundaries") }
+        }
         if g.combust == true { strains.append("Combust: close to the Sun, working inwardly") }
         let seenBy = aspecting(sign: g.sign).filter { $0 != g.id }
         for code in seenBy where ["Ju", "Ve", "Me"].contains(code) { supports.append("Aspected by \(Names.lords[code] ?? code)") }

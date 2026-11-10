@@ -84,6 +84,10 @@ struct Inspector: View {
             fact("House", "\(house(g.sign, from: chart.asc.sign)) from the lagna, \(house(g.sign, from: moon)) from the Moon", about: Lore.explain(house: house(g.sign, from: chart.asc.sign), fromMoon: house(g.sign, from: moon)))
             fact("Nakshatra", "\(g.nak_name), pada \(g.pada)", about: Lore.explain(nakshatra: g.nak, pada: g.pada, of: who))
             if let status = g.status { fact("Dignity", status + (g.combust == true ? " · combust" : ""), about: Lore.explain(dignity: status, combust: g.combust == true, of: who, sign: g.sign)) }
+            fact("Navamsa", Names.signs[g.navamsa] + (chart.navamsaStanding(g).map { " · \($0.word)" } ?? "") + (g.navamsa == g.sign ? " · vargottama" : ""), about: chart.explainNavamsa(g))
+            if let hem = chart.hemming(of: g.sign, except: g.id) { fact("Hemmed", hem.word, about: chart.explainHemming(g)) }
+            if !chart.roles(of: g.id).isEmpty || g.id == "Ra" || g.id == "Ke" { fact("Roles", chart.roles(of: g.id).isEmpty ? "through its host" : chart.roles(of: g.id).joined(separator: ", "), about: chart.explainRoles(g.id)) }
+            if Lore.signifies[g.id] != nil { fact("Signifies", (Lore.signifies[g.id] ?? "").components(separatedBy: ", ").prefix(3).joined(separator: ", "), about: chart.explainSignifies(g.id)) }
             fact("Motion", String(format: "%+.4f° a day", g.speed) + (g.retro && g.id != "Ra" && g.id != "Ke" ? " · retrograde" : ""))
             if let index = chart.grahas.prefix(7).firstIndex(where: { $0.id == code }) {
                 fact("Shadbala", String(format: "%.2f rupas · %.2f × required", chart.rupas(index), chart.strengthRatio(index)))

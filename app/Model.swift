@@ -10,6 +10,8 @@ struct Birth: Codable, Identifiable, Hashable {
     var place = ""
     var latitude = 0.0
     var longitude = 0.0
+    /// dated events of the life, entered by the reader
+    var events: [LifeEvent]? = nil
 
     var timeZone: TimeZone? { TimeZone(identifier: zone) }
 
