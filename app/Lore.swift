@@ -10,15 +10,15 @@ enum Lore {
         "effort: courage, younger siblings, skills, short journeys",
         "home: mother, land, vehicles, inner peace",
         "creation: children, intelligence, learning, past merit",
-        "obstacles: illness, debts, opponents, service",
+        "service and repair: work, health routines, debts cleared, opponents met",
         "the other: marriage, partnership, trade",
-        "the hidden: longevity, sudden change, inheritance",
+        "depth and renewal: longevity, change, the hidden, shared resources",
         "fortune: dharma, father, teachers, long journeys",
         "action: career, standing, authority",
         "gains: income, elder siblings, friends, fulfilment",
-        "release: expense, loss, foreign lands, sleep, liberation",
+        "release: giving, rest, retreat, distant places, liberation",
     ]
-    static let houseNames = ["Self", "Resources", "Effort", "Home", "Creation", "Obstacles", "The other", "The hidden", "Fortune", "Action", "Gains", "Release"]
+    static let houseNames = ["Self", "Resources", "Effort", "Home", "Creation", "Service", "The other", "Renewal", "Fortune", "Action", "Gains", "Release"]
 
     /// how the houses group: the groups a reader weighs before anything else
     static func houseKind(_ house: Int) -> String {
@@ -26,7 +26,7 @@ enum Lore {
         case 1: return "an angle and a trine (kendra and trikona): the strongest place"
         case 4, 7, 10: return "an angle (kendra): grahas here act strongly"
         case 5, 9: return "a trine (trikona): the houses of fortune"
-        case 6, 8, 12: return "a difficult house (dusthana): grahas here are strained, though \(house == 6 ? "the 6th also grows with time (upachaya)" : "not without their uses")"
+        case 6, 8, 12: return "a dusthana, a house of effort and release: what is met here builds capacity\(house == 6 ? ", and the 6th also grows with time (upachaya)" : house == 8 ? ", through depth and renewal" : ", through letting go")"
         case 3, 11: return "a growing house (upachaya): results improve with effort and time"
         default: return "a neutral house: neither angle nor trine"
         }
@@ -53,7 +53,7 @@ enum Lore {
     ]
     static func nakshatra(_ index: Int) -> String { "Presided over by \(nakshatras[index].deity); its sign is \(nakshatras[index].symbol)." }
 
-    static let balance = "These are factors a reader weighs against each other. No single one decides a matter."
+    static let balance = "These are factors a reader weighs against each other; no single one decides a matter. A chart describes conditions. What is made of them remains with the person."
 }
 
 /// Facts read off a chart that the teaching views share: who rules which house, who sits where, and what
@@ -78,20 +78,20 @@ extension Chart {
         case "Own": supports.append("In its own sign")
         case "Grt.Fr.": supports.append("In the sign of a great friend")
         case "Friend": supports.append("In a friend's sign")
-        case "Debil.": strains.append("Debilitated in \(Names.signs[g.sign])")
-        case "Enemy": strains.append("In an enemy's sign")
-        case "Grt.En.": strains.append("In the sign of a great enemy")
+        case "Debil.": strains.append("Debilitated in \(Names.signs[g.sign]): its gifts come through effort")
+        case "Enemy": strains.append("In the sign of a graha it is at odds with")
+        case "Grt.En.": strains.append("In the sign of a graha it is much at odds with")
         default: break
         }
         if [1, 4, 7, 10].contains(house) { supports.append("In an angle, the \(Chart.ordinal(house)) house") }
         else if [5, 9].contains(house) { supports.append("In a trine, the \(Chart.ordinal(house)) house") }
-        else if [6, 8, 12].contains(house) { strains.append("In a difficult house, the \(Chart.ordinal(house))") }
+        else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }
         if g.navamsa == g.sign { supports.append("Vargottama: the same sign in the navamsa") }
-        if g.combust == true { strains.append("Combust: too close to the Sun") }
+        if g.combust == true { strains.append("Combust: close to the Sun, working inwardly") }
         let seenBy = aspecting(sign: g.sign).filter { $0 != g.id }
         for code in seenBy where ["Ju", "Ve", "Me"].contains(code) { supports.append("Aspected by \(Names.lords[code] ?? code)") }
-        for code in seenBy where ["Sa", "Ma"].contains(code) { strains.append("Aspected by \(Names.lords[code] ?? code)") }
-        for node in grahas.suffix(2) where node.sign == g.sign && node.id != g.id { strains.append("Shares its sign with \(node.name)") }
+        for code in seenBy where ["Sa", "Ma"].contains(code) { strains.append("Aspected by \(Names.lords[code] ?? code): asks for \(code == "Sa" ? "patience and structure" : "courage and directness")") }
+        for node in grahas.suffix(2) where node.sign == g.sign && node.id != g.id { strains.append("Shares its sign with \(node.name): \(node.id == "Ra" ? "amplified, unconventional" : "turned inward")") }
         if let index {
             let ratio = strengthRatio(index), bindus = ashtakavarga[index][g.sign]
             if ratio >= 1 { supports.append(String(format: "Shadbala %.2f times what is required", ratio)) } else { strains.append(String(format: "Shadbala %.2f of what is required", ratio)) }

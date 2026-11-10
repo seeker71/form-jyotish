@@ -70,8 +70,8 @@ struct ChartView: View {
     }
 
     private func label(_ mark: ChartMark, size: CGFloat) -> some View {
-        let pick: Pick = mark.code == "As" ? .sign(mark.sign ?? ascSign) : .graha(mark.code)
-        let chosen = store.pick?.graha == mark.code, near = store.hover?.graha == mark.code
+        let pick: Pick = mark.sign.map { .sign($0) } ?? (mark.code == "As" ? .sign(ascSign) : .graha(mark.code))
+        let chosen = mark.sign == nil && store.pick?.graha == mark.code, near = mark.sign == nil && store.hover?.graha == mark.code
         return Text(mark.label)
             .font(.system(size: size, weight: mark.transit ? .regular : .medium))
             .italic(mark.transit)
@@ -83,7 +83,7 @@ struct ChartView: View {
             .onTapGesture { store.pick = pick }
             .onHover { inside in store.hover = inside ? pick : (store.hover == pick ? nil : store.hover) }
             .accessibilityLabel("\(mark.transit ? "transit " : "")\(mark.label)")
-            .help(mark.code == "As" ? (Help.term("Lagna") ?? "") : (mark.transit ? "In the sky of the moment. " : "") + Help.graha(mark.code) + (mark.retro ? " Retrograde." : ""))
+            .help(mark.code == "As" ? (Help.term("Lagna") ?? "") : mark.sign != nil ? "The arudha pada \(mark.code): the image a house casts" : (mark.transit ? "In the sky of the moment. " : "") + Help.graha(mark.code) + (mark.retro ? " Retrograde." : ""))
     }
 
     private func labels(_ sign: Int, perRow: Int, size: CGFloat) -> some View {

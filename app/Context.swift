@@ -24,8 +24,8 @@ extension Lore {
         switch count {
         case 1: return "together in one sign, which joins their matters"
         case 7: return "opposite each other, which sets their matters face to face"
-        case 6, 8: return "6th and 8th from each other, a placing read as friction between the two periods"
-        case 2, 12: return "2nd and 12th from each other, a placing read as one giving and the other spending"
+        case 6, 8: return "6th and 8th from each other, a placing that asks the two periods to adjust to each other"
+        case 2, 12: return "2nd and 12th from each other, a placing of give and take between the two"
         case 5, 9: return "in trine to each other, a placing read as easy cooperation"
         case 3, 11: return "3rd and 11th from each other, a placing read as effort that brings gain"
         default: return "4th and 10th from each other, a placing read as action that builds"
@@ -89,9 +89,9 @@ struct DashaContext: View {
     private func passing(_ code: String, _ sky: Chart) -> String? {
         guard let g = sky.graha(code), let moon = chart.graha("Mo") else { return nil }
         let fromMoon = (g.sign - moon.sign + 12) % 12 + 1, bindus = chart.sarva[g.sign]
-        var text = "\(name(code)) is passing through \(Names.signs[g.sign])\(g.retro && code != "Ra" ? ", retrograde" : ""): the \(Chart.ordinal(chart.house(ofSign: g.sign))) from the lagna and the \(Chart.ordinal(fromMoon)) from the Moon, a sign holding \(bindus) bindus (\(bindus >= 30 ? "well supported" : bindus <= 24 ? "thinly supported" : "about average"))."
-        if code == "Sa", [12, 1, 2].contains(fromMoon) { text += " This is Sade Sati, Saturn's passage over the Moon." }
-        if code == "Sa", [4, 8].contains(fromMoon) { text += " Saturn in the \(Chart.ordinal(fromMoon)) from the Moon is a passage read as pressing." }
+        var text = "\(name(code)) is passing through \(Names.signs[g.sign])\(g.retro && code != "Ra" ? ", retrograde" : ""): the \(Chart.ordinal(chart.house(ofSign: g.sign))) from the lagna and the \(Chart.ordinal(fromMoon)) from the Moon, a sign holding \(bindus) bindus (\(bindus >= 30 ? "well supported" : bindus <= 24 ? "lightly supported" : "about average"))."
+        if code == "Sa", [12, 1, 2].contains(fromMoon) { text += " This is Sade Sati, Saturn's passage over the Moon: a season for maturing and consolidating." }
+        if code == "Sa", [4, 8].contains(fromMoon) { text += " Saturn in the \(Chart.ordinal(fromMoon)) from the Moon is a passage traditionally read as a time to simplify and build resilience." }
         return text
     }
 

@@ -87,7 +87,7 @@ struct Inspector: View {
                 ForEach(weighed.supports, id: \.self) { Label($0, systemImage: "plus.circle").font(.callout).foregroundStyle(.green).labelStyle(FactLabel()) }
             }
             if !weighed.strains.isEmpty {
-                section("What strains it")
+                section("What asks more of it")
                 ForEach(weighed.strains, id: \.self) { Label($0, systemImage: "minus.circle").font(.callout).foregroundStyle(.orange).labelStyle(FactLabel()) }
             }
             if !weighed.supports.isEmpty || !weighed.strains.isEmpty { note(Lore.balance) }
@@ -149,6 +149,9 @@ struct Inspector: View {
         if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)") }
         HStack { Text("Lord").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); chip(lord) }
         fact("Bindus", "\(chart.sarva[sign]) in the sarvashtakavarga (337 over twelve signs)")
+        fact("Sign aspects", chart.jaimini.glances[sign].map { Names.signs[$0] }.joined(separator: ", "))
+        let padas = (1...12).filter { chart.jaimini.arudhas[$0 - 1] == sign }
+        if !padas.isEmpty { fact("Arudhas here", padas.map { $0 == 1 ? "AL" : $0 == 12 ? "UL" : "A\($0)" }.joined(separator: ", ")) }
         if !chart.aspecting(sign: sign).isEmpty { HStack { Text("Aspected by").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); ForEach(chart.aspecting(sign: sign), id: \.self) { chip($0) } } }
         note("The \(Chart.ordinal(chart.house(ofSign: sign))) house covers \(Lore.houses[chart.house(ofSign: sign) - 1]). It is \(Lore.houseKind(chart.house(ofSign: sign))).")
         section(here.isEmpty ? "No graha stands here at birth" : "Here at birth")

@@ -89,6 +89,28 @@ struct Period: Codable, Identifiable {
     func holds(_ jd: Double) -> Bool { start <= jd && jd < end }
 }
 
+/// A period of a sign dasha, with its twelve sub-periods.
+struct SignPeriod: Codable, Identifiable {
+    var sign: Int
+    var years: Int?
+    var start: Double
+    var end: Double
+    var antar: [SignPeriod]?
+    var id: String { "\(sign)-\(start)" }
+    func holds(_ jd: Double) -> Bool { start <= jd && jd < end }
+}
+
+/// The Jaimini readings: the seven chara karakas from atma to dara, the twelve arudha padas, the atmakaraka's
+/// navamsa sign, what each sign aspects, and the Chara dasha.
+struct Jaimini: Codable {
+    var karakas: [String]
+    var arudhas: [Int]
+    var karakamsa: Int
+    var glances: [[Int]]
+    var forward: Bool
+    var chara: [SignPeriod]
+}
+
 /// A dasha system beside Vimshottari: its name, the years of its whole cycle, and its periods with their sub-periods.
 struct DashaSystem: Codable {
     var name: String
@@ -184,6 +206,7 @@ struct Chart: Codable {
     var day: Day
     var dasha: [Period]
     var dashas: [DashaSystem]
+    var jaimini: Jaimini
 
     func graha(_ id: String) -> Graha? { grahas.first { $0.id == id } }
 

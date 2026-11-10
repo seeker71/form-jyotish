@@ -10,6 +10,7 @@ enum Help {
         case "Vargas": return "The sixteen divisional charts. Each divides every sign into finer parts and shows one area of life in more detail."
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
         case "Strength": return "How strong each graha is (shadbala) and how much support each sign holds (ashtakavarga)."
+        case "Jaimini": return "The sage Jaimini's way of reading: significators chosen by degree, the image each house casts, signs that aspect signs, and periods of signs."
         case "KP": return "Krishnamurti Paddhati: positions under the KP ayanamsa, Placidus house cusps, and which houses each graha signifies."
         case "Yogas": return "The combinations the chart holds, each with the rule it met, and which graha looks at which sign."
         case "Transits": return "The sky of another moment laid over the birth chart. Move the time bar, or press Now."
@@ -22,6 +23,10 @@ enum Help {
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {
+        case "sources": return "What the app's numbers and rules rest on, and how it chooses its words."
+        case "karakas": return "Jaimini assigns the roles of life to grahas by rank: the graha furthest through its sign is the atmakaraka, the self, and so on down to the darakaraka, the partner. The roles change from chart to chart. Click a row to read about that graha."
+        case "arudhas": return "An arudha pada is the image a house casts: count from the house to its lord, then as far again. It shows how a matter appears to the world, beside what it is. Click a row or a mark to pick that sign."
+        case "chara-dasha": return "A dasha of signs, not grahas. Each sign has its period, divided into twelve equal sub-periods. Open a period for its sub-periods; click one to go there."
         case "glossary": return "Look up any word used in the app. Each entry says what it is in plain words and, where it applies, what it is in the open chart. Click an entry to pick it; a link opens the workspace where it lives."
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
@@ -99,16 +104,18 @@ enum Help {
             "Sign": "The sign that falls on the house, counted from the lagna's sign.",
             "Its lord, and where it stands": "The graha that rules the house's sign, the house that graha is in, and its dignity there. Where the lord goes, the house's matters follow.",
             "Grahas in it": "Grahas standing in the house colour its matters directly.",
-            "Aspected by": "Grahas looking at the house from elsewhere. Jupiter and Venus help; Saturn and Mars press.",
+            "Aspected by": "Grahas looking at the house from elsewhere. Jupiter and Venus ease; Saturn and Mars ask for effort.",
             "What supports it": "Facts of this chart that speak for the graha giving good results.",
-            "What strains it": "Facts of this chart that make the graha's results harder to come by.",
+            "What asks more of it": "Facts of this chart through which the graha gives by effort, patience or a change of approach.",
             "See it elsewhere": "The other views that examine the same thing.",
+            "Sign aspects": "In Jaimini's reading, signs aspect signs: movable signs the fixed ones (but the next), fixed signs the movable ones (but the one before), dual signs each other.",
+            "Arudhas here": "The arudha padas that fall in this sign: the images cast by those houses.",
             "Aspects": "The signs this graha looks at in full. Click a sign to read about it.",
             "Yogas it forms": "Named combinations this graha takes part in. Hover a name for the rule.",
             "Avasthas": "The graha's state: age, wakefulness, mood.",
-            "Baladi": "Age by degree within the sign: infant, youth, adult (strongest), old, dead (weakest).",
+            "Baladi": "Age by degree within the sign: infant, youth, adult (fullest), old, spent (quietest).",
             "Jagradadi": "Awake in its own or exalted sign, dreaming in a friend's or neutral's, asleep in an enemy's or its fall.",
-            "Deeptadi": "Mood by dignity: blazing when exalted, at ease in its own sign, down through content, calm, needy, distressed, to fallen; angry when combust.",
+            "Deeptadi": "Mood by dignity: blazing when exalted, at ease in its own sign, down through content, calm, wanting, burdened, to humbled; heated when combust.",
             "Its parts": "The period divided into nine, in the same order and proportions. Click a part to go to its start.",
             "Mahadasha": "A major period: 6 to 20 years ruled by one graha.", "Antardasha": "A sub-period within a mahadasha.",
             "Pratyantardasha": "A sub-period within an antardasha, weeks to months long.", "Sookshma dasha": "A sub-period within a pratyantardasha, days long.",
@@ -120,13 +127,13 @@ enum Help {
         switch code {
         case "Su": return "The Sun: the self, vitality, the father, authority and standing."
         case "Mo": return "The Moon: the mind and feelings, the mother, the public, daily life. Its nakshatra sets the dashas."
-        case "Ma": return "Mars: energy, courage, siblings, land, conflict and the will to act."
+        case "Ma": return "Mars: energy, courage, siblings, land, drive and the will to act."
         case "Me": return "Mercury: intellect, speech, learning, trade and skill with detail."
         case "Ju": return "Jupiter: wisdom, teachers, children, fortune and growth."
         case "Ve": return "Venus: love, marriage, comfort, the arts and vehicles."
-        case "Sa": return "Saturn: time, discipline, labour, delay, endurance and loss turned to depth."
-        case "Ra": return "Rahu, the Moon's north node: desire, the foreign, the unconventional, sudden gain."
-        case "Ke": return "Ketu, the Moon's south node: detachment, the past, insight, sudden loss."
+        case "Sa": return "Saturn: time, discipline, patient work, endurance and maturity."
+        case "Ra": return "Rahu, the Moon's north node: ambition, the foreign, the unconventional, appetite for experience."
+        case "Ke": return "Ketu, the Moon's south node: detachment, the past, insight, release."
         case "Ur", "Ne", "Pl": return "An outer planet. Classical Jyotish does not use it; it is shown for those who do."
         default: return ""
         }
@@ -134,8 +141,8 @@ enum Help {
 
     /// an avastha's Sanskrit name with its sense
     static func avastha(_ name: String) -> String {
-        let senses = ["Bala": "infant", "Kumara": "youth", "Yuva": "adult", "Vriddha": "old", "Mrita": "dead", "Jagrat": "awake", "Swapna": "dreaming", "Sushupti": "asleep",
-                      "Deepta": "blazing", "Swastha": "at ease", "Mudita": "content", "Shanta": "calm", "Deena": "needy", "Dukhita": "distressed", "Vikala": "crippled", "Khala": "fallen", "Kopa": "angry"]
+        let senses = ["Bala": "infant", "Kumara": "youth", "Yuva": "adult", "Vriddha": "old", "Mrita": "spent", "Jagrat": "awake", "Swapna": "dreaming", "Sushupti": "asleep",
+                      "Deepta": "blazing", "Swastha": "at ease", "Mudita": "content", "Shanta": "calm", "Deena": "wanting", "Dukhita": "burdened", "Vikala": "hindered", "Khala": "humbled", "Kopa": "heated"]
         return senses[name].map { "\(name) (\($0))" } ?? name
     }
 

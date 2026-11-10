@@ -36,6 +36,8 @@ the old one's place the next time the app starts (or at once with Restart now).
   and sunset.
 - The sixteen vargas of Parashara (D1 to D60) for the lagna and every graha.
 - Vimshottari to four levels: mahadasha, antardasha, pratyantardasha and sookshma dasha.
+- Jaimini: the seven chara karakas and the karakamsa, the twelve arudha padas (with a pada chart), sign
+  aspects, and the Chara dasha after K.N. Rao with its twelve equal sub-periods.
 - Nine more nakshatra dashas with their sub-periods: Ashtottari, Yogini, Shodashottari, Dwadashottari,
   Panchottari, Shatabdika, Chaturashiti-sama, Dwisaptati-sama and Shat-trimsha-sama, each shown with the
   condition under which the classics apply it and whether the chart meets it.
@@ -74,6 +76,11 @@ the old one's place the next time the app starts (or at once with Restart now).
   ideas, the grahas, signs, houses, nakshatras, the strength rows, dasha levels and KP terms), searchable,
   each in plain words and, where it applies, with what it is in the open chart. ⌘K answers "what is…" for
   the basic ideas and picks any graha, sign or house by name.
+- **Voice.** The app states the conditions a chart shows and the understandings the tradition attaches to
+  them. It keeps the tradition's words (dusthana, debilitated, malefic) and gives their constructive
+  reading: effort, depth, release, strength gained by use. What supports a graha and what asks more of it
+  stand side by side; what is made of them remains with the person. The Sources and voice card says what
+  the numbers and rules rest on.
 - **One pick.** Click a graha, a sign or a dasha period on any card; the inspector at the right explains
   it and every other card highlights the same thing.
 - **One time.** The bar at the bottom moves the whole desk: Birth, Now, step, play. Away from the birth,
@@ -100,12 +107,14 @@ interpolated.
 | `engine/sky.bml` | time scales, apparent positions, precession, ayanamsa, node, ascendant |
 | `engine/strength.bml` | the sixteen vargas, ashtakavarga and shadbala |
 | `engine/yoga.bml` | aspects and the classical yogas |
+| `engine/jaimini.bml` | chara karakas, arudha padas, sign aspects, the Chara dasha |
 | `engine/chart.bml` | the Jyotish reading and its JSON |
 | `engine/chart-run.bml` | the door: one line in, one JSON line out |
 | `engine/transit.bml`, `engine/transit-run.bml` | dated transit events, and their door |
 | `witness/positions-run.bml` | seven bodies against JPL Horizons, within 0.3 arcsec |
 | `witness/swiss-run.bml` | Sun, Moon, lagna and ayanamsa against Swiss Ephemeris, Lahiri and True Chitra, within 0.5 arcsec |
 | `witness/transit-run.bml` | an ingress and a station against Swiss Ephemeris, each within a minute |
+| `witness/dasha-run.bml`, `witness/jaimini-run.bml` | the nakshatra dashas' and the Jaimini readings' rules |
 | `witness/strength-run.bml` | the strength module's invariants: ashtakavarga row sums, varga signs, natural order |
 | `app/` | the SwiftUI shell; `app/Report.swift` draws the report |
 
@@ -141,5 +150,5 @@ changed in Settings. The built bundle carries `fkwu`, the engine's compiled imag
 
 ## Not yet here
 
-Bhava bala, the rasi dashas (Chara, Narayana and the rest) and Kalachakra, Jaimini, varshaphala, muhurta, yogas,
+Bhava bala, the other rasi dashas (Narayana, Sthira and the rest) and Kalachakra, Jaimini, varshaphala, muhurta, yogas,
 compatibility, interpretive text, and an atlas that works offline.

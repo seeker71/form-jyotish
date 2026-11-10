@@ -14,6 +14,7 @@ import engine/spk.bml;
 import engine/sky.bml;
 import engine/strength.bml;
 import engine/yoga.bml;
+import engine/jaimini.bml;
 section [form.bml] {
  class JyChart {
   def jc-signs() = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"];
@@ -177,6 +178,23 @@ section [form.bml] {
    jc-arr(cons(jd-ashtottari(moon, jd), jd-systems() |> map(s => jd-system(s[0], s[1], jd-first(s[2], s[3], nak, len(s[1])), gone, jd))));
   }
 
+  // ---- Jaimini: karakas, arudhas, sign aspects and the Chara dasha with its twelve equal sub-periods ----
+  def jj-subs(sign, step, k, start, days) = k >= 12 ? [] : cons(jc-obj([jc-pair("sign", jc-num((sign + (k + 1) * step) % 12)), jc-pair("start", jc-num(start)), jc-pair("end", jc-num(start + days))]), jj-subs(sign, step, k + 1, start + days, days));
+  def jj-periods(rows, step, start) {
+   if nil?(rows) then [] else {
+    let days = rows[0][1] * 365.25;
+    cons(jc-obj([jc-pair("sign", jc-num(rows[0][0])), jc-pair("years", jc-num(rows[0][1])), jc-pair("start", jc-num(start)), jc-pair("end", jc-num(start + days)),
+      jc-pair("antar", jc-arr(jj-subs(rows[0][0], step, 0, start, days / 12.0)))]), jj-periods(rows[1:], step, start + days));
+   };
+  }
+  def jj-jaimini(nine, asc, jd) {
+   let s = nine |> map(x => floor(x / 30.0)); let degs = nine |> map(x => x - 30.0 * floor(x / 30.0)); let order = jm-karakas(degs);
+   jc-obj([jc-pair("karakas", jc-arr(order |> map(i => jc-q(jc-nine()[i])))), jc-pair("arudhas", jc-arr(jm-arudhas(asc, s) |> map(x => jc-num(x)))),
+    jc-pair("karakamsa", jc-num(st-varga-signs(s[order[0]], degs[order[0]])[5])),
+    jc-pair("glances", jc-arr([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] |> map(g => jc-arr(jm-glances(g) |> map(x => jc-num(x)))))),
+    jc-pair("forward", jc-bool(jm-step(asc) == 1)), jc-pair("chara", jc-arr(jj-periods(jm-chara(asc, s, degs), jm-step(asc), jd)))]);
+  }
+
   def jc-error(why) = jc-obj([jc-pair("error", jc-q(why))]);
   def jc-chart(path, jd, lat, lon, node, mode, zone) {
    let segs = js-segments(path);
@@ -208,7 +226,8 @@ section [form.bml] {
     jc-pair("ashtakavarga", jc-arr(st-ashtakavarga(append(signs, [floor(asc / 30.0)])) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
     jc-pair("shadbala", jc-arr(st-shadbala(now, now |> map(x => jn-norm360(x + ay + dpsi)), asc, mc, jc-midnight-arc(rise[2], now[0] + ay + dpsi, jd), jd, ev,
       floor(jd + zone / 24.0 + 0.5), floor(jd + zone / 24.0 + 1.5) % 7, sk-century(jd)) |> map(r => jc-obj([jc-pair("name", jc-q(r[0])), jc-pair("values", jc-arr(r[1] |> map(x => jc-num(x))))])))),
-    jc-pair("dasha", jc-dasha(now[1], jd)), jc-pair("dashas", jd-dashas(now[1], jd))]);
+    jc-pair("dasha", jc-dasha(now[1], jd)), jc-pair("dashas", jd-dashas(now[1], jd)),
+    jc-pair("jaimini", jj-jaimini(append(now, [rahu, jn-norm360(rahu + 180.0)]), floor(asc / 30.0), jd))]);
   }
  }
  0;

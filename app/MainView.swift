@@ -20,6 +20,8 @@ struct MainView: View {
         } detail: {
             VStack(spacing: 0) {
                 updateBanner
+                WorkspaceTabs()
+                Divider()
                 HStack(spacing: 0) {
                     Workspace()
                     Divider()
@@ -27,13 +29,6 @@ struct MainView: View {
                 }
                 Divider()
                 TimeBar()
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Picker("Workspace", selection: $store.workspace) { ForEach(Store.workspaces, id: \.self) { Text($0).tag($0) } }
-                    .pickerStyle(.segmented).labelsHidden()
-                    .help("Each workspace gathers the cards for one kind of reading")
             }
         }
         .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }

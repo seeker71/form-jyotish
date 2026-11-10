@@ -1,0 +1,32 @@
+// Witness: the Jaimini readings hold their rules, for 1 January 2000, 12:00 UT, New Delhi.
+//
+//   chara karakas: the seven grahas, each once, in falling order of degrees within their signs
+//   arudha padas: none falls on its own house or on the seventh from it
+//   sign aspects: every sign aspects three others, never itself, and a movable sign never the sign next to it
+//   Chara dasha: twelve signs, each once, each given 1 to 12 years, the round then repeating
+//   ./fkwu witness/jaimini-run.bml   ->  one verdict line
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/strength.bml;
+import engine/jaimini.bml;
+section [form.bml] {
+ def wj-all(xs) = nil?(xs) ? true : xs[0] && wj-all(xs[1:]);
+ def wj-sum(xs) = nil?(xs) ? 0 : xs[0] + wj-sum(xs[1:]);
+ def wj-falling(xs) = nil?(xs) || nil?(xs[1:]) ? true : xs[0] >= xs[1][0] - 0.0 && wj-falling(xs[1:]);
+ def wj-ordered(ds) = nil?(ds) || nil?(ds[1:]) ? true : ds[0] >= ds[1] && wj-ordered(ds[1:]);
+ def wj-run(path, jd, lat, lon) {
+  let segs = js-segments(path); let ay = sk-ayanamsa(jd);
+  let seven = [10, 301, 4, 1, 5, 2, 6] |> map(id => jn-norm360(sk-tropical(path, segs, id, jd)[0] - ay)); let rahu = sk-node(path, segs, jd, "mean");
+  let nine = append(seven, [rahu, jn-norm360(rahu + 180.0)]); let s = nine |> map(x => floor(x / 30.0)); let degs = nine |> map(x => x - 30.0 * floor(x / 30.0));
+  let asc = floor(sk-ascendant(jd, lat, lon)[0] / 30.0); let order = jm-karakas(degs); let padas = jm-arudhas(asc, s); let round = jm-chara(asc, s, degs);
+  let houses = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  let claims = [len(order) == 7 && wj-sum(order) == 21 && wj-ordered(order |> map(i => degs[i])),
+   wj-all(houses |> map(h => jm-from((asc + h) % 12, padas[h]) != 0 && jm-from((asc + h) % 12, padas[h]) != 6)),
+   wj-all(houses |> map(g => len(jm-glances(g)) == 3 && st-has(jm-glances(g), g) == 0)) && st-has(jm-glances(0), 1) == 0,
+   len(round) == 24 && wj-sum(round |> map(r => r[0])) == 132 && wj-all(round |> map(r => r[1] >= 1 && r[1] <= 12)) && round[0][0] == asc && round[12][1] == round[0][1]];
+  let held = len(claims |> filter(c => c));
+  "jaimini witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims (karakas " + value_str(order) + ", padas " + value_str(padas) + ")";
+ }
+ print_str(wj-run("data/de440s.bsp", 2451545.0, 28.6139, 77.209));
+}

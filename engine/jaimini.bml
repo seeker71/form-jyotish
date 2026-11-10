@@ -1,0 +1,63 @@
+//////////////////////////////////////////////////////////////////////
+// jaimini.bml — the Jaimini readings: chara karakas, arudha padas, sign aspects and the Chara dasha.
+//
+// Grahas are numbered 0 to 8 (Sun Moon Mars Mercury Jupiter Venus Saturn Rahu Ketu); signs 0 to 11.
+//
+//   jm-karakas(degs)           the seven grahas ranked by degrees within their signs, highest first:
+//                              atma, amatya, bhratri, matri, putra, gnati and dara karaka
+//   jm-arudha(house, asc, s)   the arudha pada of a house (0 to 11): as far beyond its lord as the lord is
+//                              beyond the house; a pada falling on the house or its 7th moves to the 10th from there
+//   jm-glances(sign)           the signs a sign aspects: movable signs see the fixed ones but the next,
+//                              fixed signs the movable ones but the one before, dual signs each other
+//   jm-chara(asc, s, degs)     the Chara dasha as [sign, years] in order, two rounds
+//
+// The Chara dasha follows K.N. Rao's reading: the order runs forward when the ninth sign from the lagna
+// is one of Mesha, Vrishabha, Mithuna, Tula, Vrischika, Dhanu, and backward otherwise; a sign's years are
+// the count to its lord (forward for those six signs, backward for the rest), twelve when the lord is at
+// home. Vrischika is read through Mars or Ketu and Kumbha through Saturn or Rahu: the one not in the sign,
+// else the one with more grahas beside it, else the one further through its sign.
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+import engine/strength.bml;
+section [form.bml] {
+ class JyJaimini {
+  def jm-from(a, b) = (b - a + 12) % 12;
+  def jm-forward(sign) = st-has([0, 1, 2, 6, 7, 8], sign) == 1;
+
+  // ---- chara karakas ----
+  def jm-above(degs, i, js) = nil?(js) ? 0 : ((degs[js[0]] > degs[i] || ((Comparable) degs[js[0]] == degs[i] && js[0] < i)) ? 1 : 0) + jm-above(degs, i, js[1:]);
+  def jm-karakas(degs) { let ranks = st-seven() |> map(i => jm-above(degs, i, st-seven())); st-seven() |> map(r => st-index(ranks, r, 0)); }
+
+  // ---- arudha padas ----
+  def jm-arudha(house, asc, s) {
+   let sign = (asc + house) % 12; let at = s[st-sign-lords()[sign]]; let pada = (at + jm-from(sign, at)) % 12; let d = jm-from(sign, pada);
+   d == 0 ? (sign + 9) % 12 : d == 6 ? (sign + 3) % 12 : pada;
+  }
+  def jm-arudhas(asc, s) = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] |> map(h => jm-arudha(h, asc, s));
+
+  // ---- sign aspects ----
+  def jm-glances(sign) {
+   let kind = sign % 3;
+   [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] |> filter(t => t != sign && (kind == 0 ? t % 3 == 1 && t != (sign + 1) % 12 : kind == 1 ? t % 3 == 0 && t != (sign + 11) % 12 : t % 3 == 2));
+  }
+
+  // ---- Chara dasha ----
+  def jm-steps(sign, to) = jm-forward(sign) ? jm-from(sign, to) : jm-from(to, sign);
+  def jm-years-to(sign, to) = jm-steps(sign, to) == 0 ? 12 : jm-steps(sign, to);
+  def jm-beside(s, g, js) = nil?(js) ? 0 : (js[0] != g && s[js[0]] == s[g] ? 1 : 0) + jm-beside(s, g, js[1:]);
+  def jm-stronger(s, degs, a, b) {
+   let na = jm-beside(s, a, [0, 1, 2, 3, 4, 5, 6, 7, 8]); let nb = jm-beside(s, b, [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+   na > nb ? a : nb > na ? b : degs[a] >= degs[b] ? a : b;
+  }
+  def jm-two(sign, s, degs, a, b) {
+   s[a] == sign && s[b] == sign ? 12 : s[a] == sign ? jm-years-to(sign, s[b]) : s[b] == sign ? jm-years-to(sign, s[a]) : jm-years-to(sign, s[jm-stronger(s, degs, a, b)]);
+  }
+  def jm-years(sign, s, degs) = sign == 7 ? jm-two(sign, s, degs, 2, 8) : sign == 10 ? jm-two(sign, s, degs, 6, 7) : jm-years-to(sign, s[st-sign-lords()[sign]]);
+  // 1 when the order runs forward through the zodiac, 11 when backward
+  def jm-step(asc) = jm-forward((asc + 8) % 12) ? 1 : 11;
+  def jm-round(asc, s, degs, k) = k >= 12 ? [] : cons([(asc + k * jm-step(asc)) % 12, jm-years((asc + k * jm-step(asc)) % 12, s, degs)], jm-round(asc, s, degs, k + 1));
+  // the round of twelve signs comes again with the same years
+  def jm-chara(asc, s, degs) = append(jm-round(asc, s, degs, 0), jm-round(asc, s, degs, 0));
+ }
+ 0;
+}
