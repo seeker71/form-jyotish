@@ -120,6 +120,40 @@ enum UpdateHelper {
         return (info["CFBundleVersion"] as? String).flatMap(Int.init)
     }
 
+    private struct Stalled: LocalizedError { var errorDescription: String? { "the download did not finish in time" } }
+
+    /// One download, waited for at most three minutes. The session answers on its own queue, so the wait
+    /// holds whichever thread asks, the first thread of a starting app included.
+    private static func fetch(_ url: URL) throws -> Data {
+        var request = URLRequest(url: url, timeoutInterval: 60)
+        request.setValue("application/vnd.github+json, application/octet-stream", forHTTPHeaderField: "Accept")
+        let done = DispatchSemaphore(value: 0)
+        var result: Result<Data, Error> = .failure(Stalled())
+        let task = URLSession(configuration: .ephemeral).dataTask(with: request) { data, response, error in
+            if let error { result = .failure(error) }
+            else if let data, (response as? HTTPURLResponse)?.statusCode == 200 { result = .success(data) }
+            else { result = .failure(URLError(.badServerResponse)) }
+            done.signal()
+        }
+        task.resume()
+        if done.wait(timeout: .now() + 180) == .timedOut { task.cancel(); throw Stalled() }
+        return try result.get()
+    }
+
+    /// Start the helper as its own process and wait for it, at most `seconds`: how a starting app heals.
+    static func runApart(seconds: Double) -> Outcome {
+        guard let program = Bundle.main.executableURL else { return .failed("no program to start") }
+        try? FileManager.default.removeItem(at: note)
+        let helper = Process()
+        helper.executableURL = program
+        helper.arguments = ["--update-helper"]
+        let ended = DispatchSemaphore(value: 0)
+        helper.terminationHandler = { _ in ended.signal() }
+        do { try helper.run() } catch { return .failed(error.localizedDescription) }
+        if ended.wait(timeout: .now() + seconds) == .timedOut { helper.terminate(); return .unreachable("the update took too long") }
+        return lastOutcome()
+    }
+
     static func lastOutcome() -> Outcome {
         (try? JSONDecoder().decode(Outcome.self, from: Data(contentsOf: note))) ?? .unreachable("the helper left no word")
     }
@@ -139,7 +173,7 @@ enum UpdateHelper {
         let files = FileManager.default
         let release: Release
         do {
-            release = try JSONDecoder().decode(Release.self, from: Data(contentsOf: URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!))
+            release = try JSONDecoder().decode(Release.self, from: fetch(URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!))
         } catch { return .unreachable(error.localizedDescription) }
         guard release.tag_name.hasPrefix("build-"), let latest = Int(release.tag_name.dropFirst("build-".count)) else { return .failed("The latest release carries no build number.") }
         if let held = build(of: folder.appendingPathComponent("FormJyotish.app")), held > current, held >= latest { return .staged(held) }
@@ -151,8 +185,8 @@ enum UpdateHelper {
             // fetched and unpacked aside, then moved into place whole: the app never meets half an update
             try? files.removeItem(at: arriving)
             try files.createDirectory(at: arriving, withIntermediateDirectories: true)
-            let expected = String(decoding: try Data(contentsOf: digest.browser_download_url), as: UTF8.self).split(whereSeparator: { $0 == " " || $0 == "\n" }).first.map(String.init) ?? ""
-            let bytes = try Data(contentsOf: zip.browser_download_url)
+            let expected = String(decoding: try fetch(digest.browser_download_url), as: UTF8.self).split(whereSeparator: { $0 == " " || $0 == "\n" }).first.map(String.init) ?? ""
+            let bytes = try fetch(zip.browser_download_url)
             let actual = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
             guard actual == expected.lowercased(), !expected.isEmpty else {
                 try? files.removeItem(at: arriving)

@@ -14,7 +14,7 @@ struct FormJyotishApp: App {
             Updater.installStagedAndRelaunch()
             // The last run did not end cleanly (a force quit, a window that stopped answering): before any
             // window opens, ask for a newer build and take it. A build that cannot show itself still heals.
-            if UserDefaults.standard.bool(forKey: "running"), case .staged = UpdateHelper.run() { Updater.installStagedAndRelaunch() }
+            if UserDefaults.standard.bool(forKey: "running"), case .staged = UpdateHelper.runApart(seconds: 200) { Updater.installStagedAndRelaunch() }
         }
         if arguments.contains("--match-check") { print("match check: \(Match.check()) (23.5 expected)"); exit(Match.check() == 23.5 ? 0 : 1) }
         if let flag = arguments.firstIndex(of: "--report"), arguments.count > flag + 1 {
