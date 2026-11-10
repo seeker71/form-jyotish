@@ -12,6 +12,10 @@ import Foundation
 final class Updater: ObservableObject {
     enum State: Equatable {
         case idle
+        /// asked for by hand: looking
+        case checking
+        /// asked for by hand: this build is the latest
+        case current(Int)
         case fetching(Int)
         /// fetched and checked: installs at the next start
         case ready(Int)
@@ -61,8 +65,13 @@ final class Updater: ObservableObject {
     }
 
     /// Ask GitHub for the latest release and fetch it when it is newer than this build.
-    func check() {
-        guard let current = Updater.build else { return }
+    /// `byHand` is the Check for updates button: it says what it found even when that is nothing new.
+    func check(byHand: Bool = false) {
+        guard let current = Updater.build else {
+            if byHand { state = .failed("This copy runs from source and does not update itself.") }
+            return
+        }
+        if byHand { state = .checking }
         if let waiting = Updater.build(of: Updater.staged), waiting > current { state = .ready(waiting) }
         Task {
             do {
@@ -71,8 +80,8 @@ final class Updater: ObservableObject {
                 let (data, _) = try await URLSession.shared.data(for: request)
                 let release = try JSONDecoder().decode(Release.self, from: data)
                 guard let latest = Int(release.tag_name.dropFirst("build-".count)), release.tag_name.hasPrefix("build-") else { return }
-                if case .ready(let held) = state, held >= latest { return }
-                guard latest > current else { return }
+                if let held = Updater.build(of: Updater.staged), held > current, held >= latest { state = .ready(held); return }
+                guard latest > current else { if byHand { state = .current(current) }; return }
                 guard let zip = release.assets.first(where: { $0.name == Updater.archive }),
                       let digest = release.assets.first(where: { $0.name == Updater.archive + ".sha256" }) else {
                     throw Problem("Build \(latest) carries no \(Updater.archive) with its digest.")
@@ -84,6 +93,7 @@ final class Updater: ObservableObject {
                 state = .failed(problem.message)
             } catch {
                 // offline, or GitHub did not answer: nothing to say, the next start asks again
+                if byHand, case .checking = state { state = .failed("GitHub could not be reached: \(error.localizedDescription)") }
                 if case .fetching = state { state = .failed("The update could not be fetched: \(error.localizedDescription)") }
             }
         }

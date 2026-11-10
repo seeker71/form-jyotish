@@ -53,6 +53,9 @@ struct FormJyotishApp: App {
                 .onAppear { updater.check() }
                 .frame(minWidth: 1100, minHeight: 720)
         }
+        .commands {
+            CommandGroup(after: .appInfo) { Button("Check for Updates…") { updater.check(byHand: true) } }
+        }
         Settings { SettingsView() }
     }
 }

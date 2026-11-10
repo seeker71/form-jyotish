@@ -42,6 +42,10 @@ struct MainView: View {
     @ViewBuilder private var updateBanner: some View {
         switch updater.state {
         case .idle: EmptyView()
+        case .checking:
+            banner("Looking for a newer build…", action: nil)
+        case .current(let build):
+            banner("Build \(build) is the latest.", action: ("Dismiss", { updater.state = .idle }))
         case .fetching(let build):
             banner("An update is available (build \(build)). Fetching it now…", action: nil)
         case .ready(let build):
@@ -253,6 +257,7 @@ struct SettingsView: View {
 /// How every chart is drawn and reckoned: always in sight at the foot of the sidebar.
 struct ChartSettings: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var updater: Updater
 
     private func row<Content: View>(_ title: String, _ help: String, @ViewBuilder _ picker: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 1) {
@@ -265,6 +270,8 @@ struct ChartSettings: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Button { store.add() } label: { Label("New chart", systemImage: "plus") }
+            Button { updater.check(byHand: true) } label: { Label("Check for updates", systemImage: "arrow.down.circle") }
+                .help("Ask GitHub now whether a newer build is published. A newer build is fetched and installs at the next start.")
                 .help("Add a chart for another person or moment")
             Divider()
             row("Text size", "How large the charts, tables and words are drawn.") {
