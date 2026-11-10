@@ -1,0 +1,29 @@
+// Witness: the nakshatra dashas beside Vimshottari hold their rules, for a Moon in Swati (the 15th nakshatra,
+// as on 1 January 2000, 12:00 UT).
+//
+//   cycle lengths: Yogini 36, Shodashottari 116, Dwadashottari 112, Panchottari 105, Shatabdika 100,
+//     Chaturashiti-sama 84, Dwisaptati-sama 72, Shat-trimsha-sama 36 years
+//   first lords for Swati, counted by each system's rule by hand: Yogini Pingala (Sun), Shodashottari Venus,
+//     Dwadashottari Rahu, Panchottari Venus, Shatabdika Moon, Chaturashiti-sama Sun, Dwisaptati-sama Rahu,
+//     Shat-trimsha-sama Mercury; Ashtottari gives Swati to Mars's run
+//   ./fkwu witness/dasha-run.bml   ->  one verdict line
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/strength.bml;
+import engine/yoga.bml;
+import engine/chart.bml;
+section [form.bml] {
+ def wd-same(a, b) = nil?(a) ? nil?(b) : !nil?(b) && a[0] == b[0] && wd-same(a[1:], b[1:]);
+ def wd-same-text(a, b) = nil?(a) ? nil?(b) : !nil?(b) && (String) a[0] == (String) b[0] && wd-same-text(a[1:], b[1:]);
+ def wd-run(path, jd) {
+  let segs = js-segments(path); let moon = sk-sidereal(path, segs, 301, jd); let nak = floor(moon / (360.0 / 27.0));
+  let totals = jd-systems() |> map(s => jd-total(s[1]));
+  let firsts = jd-systems() |> map(s => s[1][jd-first(s[2], s[3], nak, len(s[1]))][0]);
+  let claims = [nak == 14, wd-same(totals, [36, 116, 112, 105, 100, 84, 72, 36]), wd-same-text(firsts, ["Su", "Ve", "Ra", "Ve", "Mo", "Su", "Ra", "Me"]),
+   jd-run([5, 9, 12, 16, 19, 22, 25, 2], [4, 3, 4, 3, 3, 3, 4, 3], nak, 0) == 2];
+  let held = len(claims |> filter(c => c));
+  "dasha witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims (Moon in nakshatra " + value_str(nak + 1) + "; first lords " + value_str(firsts) + ")";
+ }
+ print_str(wd-run("data/de440s.bsp", 2451545.0));
+}

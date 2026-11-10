@@ -36,6 +36,9 @@ the old one's place the next time the app starts (or at once with Restart now).
   and sunset.
 - The sixteen vargas of Parashara (D1 to D60) for the lagna and every graha.
 - Vimshottari to four levels: mahadasha, antardasha, pratyantardasha and sookshma dasha.
+- Nine more nakshatra dashas with their sub-periods: Ashtottari, Yogini, Shodashottari, Dwadashottari,
+  Panchottari, Shatabdika, Chaturashiti-sama, Dwisaptati-sama and Shat-trimsha-sama, each shown with the
+  condition under which the classics apply it and whether the chart meets it.
 - Krishnamurti Paddhati: positions under the KP ayanamsa, Placidus cusps, star, sub and sub-sub lords, the
   significators of houses and grahas, ruling planets and Fortuna. The significator sets are folded in the
   shell (`app/Reading.swift`) from what the engine returns.
@@ -138,5 +141,5 @@ changed in Settings. The built bundle carries `fkwu`, the engine's compiled imag
 
 ## Not yet here
 
-Bhava bala, the dasha systems beyond Vimshottari, Jaimini, varshaphala, muhurta, yogas,
+Bhava bala, the rasi dashas (Chara, Narayana and the rest) and Kalachakra, Jaimini, varshaphala, muhurta, yogas,
 compatibility, interpretive text, and an atlas that works offline.

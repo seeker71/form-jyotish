@@ -137,6 +137,46 @@ section [form.bml] {
     jc-pair("sunrise_before", jc-opt(ev[0])), jc-pair("sunrise", jc-opt(ev[2])), jc-pair("sunset", jc-opt(ev[3])), jc-pair("sunrise_after", jc-opt(ev[4]))]);
   }
 
+  // ---- the other nakshatra dashas ----
+  // Each runs its lords in a fixed order for fixed years; the Moon's nakshatra picks the lord life begins
+  // under, and the part of the nakshatra still ahead of the Moon is the part of that first period left.
+  // [name, [[lord, years]...], rule, n]: "from" counts from nakshatra n to the Moon's, "to" from the Moon's
+  // to nakshatra n, "add" adds n to the Moon's; the count, cast out by the number of lords, names the lord.
+  def jd-systems() = [
+   ["Yogini", [["Mo", 1], ["Su", 2], ["Ju", 3], ["Ma", 4], ["Me", 5], ["Sa", 6], ["Ve", 7], ["Ra", 8]], "add", 3],
+   ["Shodashottari", [["Su", 11], ["Ma", 12], ["Ju", 13], ["Sa", 14], ["Ke", 15], ["Mo", 16], ["Me", 17], ["Ve", 18]], "from", 7],
+   ["Dwadashottari", [["Su", 7], ["Ju", 9], ["Ke", 11], ["Me", 13], ["Ra", 15], ["Ma", 17], ["Sa", 19], ["Mo", 21]], "to", 26],
+   ["Panchottari", [["Su", 12], ["Me", 13], ["Sa", 14], ["Ma", 15], ["Ve", 16], ["Mo", 17], ["Ju", 18]], "from", 16],
+   ["Shatabdika", [["Su", 5], ["Mo", 5], ["Ve", 10], ["Me", 10], ["Ju", 20], ["Ma", 20], ["Sa", 30]], "from", 26],
+   ["Chaturashiti-sama", [["Su", 12], ["Mo", 12], ["Ma", 12], ["Me", 12], ["Ju", 12], ["Ve", 12], ["Sa", 12]], "from", 14],
+   ["Dwisaptati-sama", [["Su", 9], ["Mo", 9], ["Ma", 9], ["Me", 9], ["Ju", 9], ["Ve", 9], ["Sa", 9], ["Ra", 9]], "from", 18],
+   ["Shat-trimsha-sama", [["Mo", 1], ["Su", 2], ["Ju", 3], ["Ma", 4], ["Me", 5], ["Sa", 6], ["Ve", 7], ["Ra", 8]], "from", 21]];
+  def jd-first(rule, n, nak, count) = (String) rule == "add" ? (nak + n) % count : (String) rule == "to" ? ((n - nak + 27) % 27) % count : ((nak - n + 27) % 27) % count;
+  def jd-total(lords) = nil?(lords) ? 0 : lords[0][1] + jd-total(lords[1:]);
+  def jd-period(code, start, end, rest) = jc-obj(append([jc-pair("lord", jc-q(code)), jc-pair("start", jc-num(start)), jc-pair("end", jc-num(end))], rest));
+  def jd-antars(lords, total, i, k, start, whole) {
+   let days = (whole * lords[i][1]) / total;
+   k >= len(lords) ? [] : cons(jd-period(lords[i][0], start, start + days, []), jd-antars(lords, total, (i + 1) % len(lords), k + 1, start + days, whole));
+  }
+  def jd-mahas(lords, total, i, start, until) {
+   let days = lords[i][1] * 365.25;
+   start > until ? [] : cons(jd-period(lords[i][0], start, start + days, [jc-pair("antar", jc-arr(jd-antars(lords, total, i, 0, start, days)))]), jd-mahas(lords, total, (i + 1) % len(lords), start + days, until));
+  }
+  // first is the lord life begins under, passed the share `gone` of its period already behind the birth
+  def jd-system(name, lords, first, gone, jd) = jc-obj([jc-pair("name", jc-q(name)), jc-pair("years", jc-num(jd-total(lords))),
+   jc-pair("periods", jc-arr(jd-mahas(lords, jd-total(lords), first, jd - gone * lords[first][1] * 365.25, jd + 120.0 * 365.25)))]);
+  // Ashtottari gives each lord a run of three or four nakshatras from Ardra; the Moon's place within the
+  // whole run sets the balance. Abhijit is not counted apart.
+  def jd-run(starts, sizes, nak, g) = nil?(starts) ? 0 : (nak - starts[0] + 27) % 27 < sizes[0] ? g : jd-run(starts[1:], sizes[1:], nak, g + 1);
+  def jd-ashtottari(moon, jd) {
+   let span = 360.0 / 27.0; let starts = [5, 9, 12, 16, 19, 22, 25, 2]; let sizes = [4, 3, 4, 3, 3, 3, 4, 3]; let g = jd-run(starts, sizes, floor(moon / span), 0);
+   jd-system("Ashtottari", [["Su", 6], ["Mo", 15], ["Ma", 8], ["Me", 17], ["Sa", 10], ["Ju", 19], ["Ra", 12], ["Ve", 21]], g, jn-norm360(moon - starts[g] * span) / (sizes[g] * span), jd);
+  }
+  def jd-dashas(moon, jd) {
+   let span = 360.0 / 27.0; let nak = floor(moon / span); let gone = (moon - nak * span) / span;
+   jc-arr(cons(jd-ashtottari(moon, jd), jd-systems() |> map(s => jd-system(s[0], s[1], jd-first(s[2], s[3], nak, len(s[1])), gone, jd))));
+  }
+
   def jc-error(why) = jc-obj([jc-pair("error", jc-q(why))]);
   def jc-chart(path, jd, lat, lon, node, mode, zone) {
    let segs = js-segments(path);
@@ -168,7 +208,7 @@ section [form.bml] {
     jc-pair("ashtakavarga", jc-arr(st-ashtakavarga(append(signs, [floor(asc / 30.0)])) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
     jc-pair("shadbala", jc-arr(st-shadbala(now, now |> map(x => jn-norm360(x + ay + dpsi)), asc, mc, jc-midnight-arc(rise[2], now[0] + ay + dpsi, jd), jd, ev,
       floor(jd + zone / 24.0 + 0.5), floor(jd + zone / 24.0 + 1.5) % 7, sk-century(jd)) |> map(r => jc-obj([jc-pair("name", jc-q(r[0])), jc-pair("values", jc-arr(r[1] |> map(x => jc-num(x))))])))),
-    jc-pair("dasha", jc-dasha(now[1], jd))]);
+    jc-pair("dasha", jc-dasha(now[1], jd)), jc-pair("dashas", jd-dashas(now[1], jd))]);
   }
  }
  0;

@@ -48,7 +48,7 @@ final class Store: ObservableObject {
         "Guide": ["guide", "reading", "houses", "glossary"],
         "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
-        "Dasha": ["dasha-context", "timeline", "dashas"],
+        "Dasha": ["dasha-context", "timeline", "dashas", "other-dashas"],
         "Strength": ["shadbala", "ashtakavarga", "avasthas"],
         "Yogas": ["yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],

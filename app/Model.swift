@@ -89,6 +89,13 @@ struct Period: Codable, Identifiable {
     func holds(_ jd: Double) -> Bool { start <= jd && jd < end }
 }
 
+/// A dasha system beside Vimshottari: its name, the years of its whole cycle, and its periods with their sub-periods.
+struct DashaSystem: Codable {
+    var name: String
+    var years: Int
+    var periods: [Period]
+}
+
 /// One bhava's beginning, middle and ending, sidereal degrees.
 struct Bhava: Codable {
     var start: Double
@@ -176,6 +183,7 @@ struct Chart: Codable {
     var yogas: [Yoga]
     var day: Day
     var dasha: [Period]
+    var dashas: [DashaSystem]
 
     func graha(_ id: String) -> Graha? { grahas.first { $0.id == id } }
 
