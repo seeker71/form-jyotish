@@ -59,15 +59,26 @@ final class Updater: ObservableObject {
     /// when the app was replaced while open: by a copy dragged over it, or by a fresh build.
     static func onDisk() -> Int? { build(of: Bundle.main.bundleURL) }
 
-    /// Leave, and open the app that stands at `place` once this process has gone, so it starts as any app
-    /// does: in front, answering. This ending is a clean one: the new build opens where the desk stood.
+    /// Open the app that stands at `place` as a new instance, and leave. The opening is asked of the system
+    /// and seen through before this process goes, so nothing has to outlive it: a helper left waiting behind
+    /// can be swept away with the app that started it, and then nothing reopens. The new instance is told
+    /// whom it follows (`--after`) and waits for this process to be gone before it shows itself.
+    /// This ending is a clean one: the new build opens where the desk stood.
     private static func relaunch(_ place: URL) -> Never {
         let open = Process()
-        open.executableURL = URL(fileURLWithPath: "/bin/sh")
-        open.arguments = ["-c", "while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.1; done; open \"$0\"", place.path]
-        try? open.run()
+        open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        open.arguments = ["-n", place.path, "--args", "--after", "\(ProcessInfo.processInfo.processIdentifier)"]
         UserDefaults.standard.set(false, forKey: "running")
+        UserDefaults.standard.synchronize()
+        if (try? open.run()) != nil { open.waitUntilExit() }
         exit(0)
+    }
+
+    /// A new instance opened by `relaunch` waits here, at most five seconds, for the one before it to go.
+    static func waitForPredecessor(_ arguments: [String]) {
+        guard let flag = arguments.firstIndex(of: "--after"), arguments.count > flag + 1, let before = Int32(arguments[flag + 1]) else { return }
+        var tries = 0
+        while kill(before, 0) == 0 && tries < 100 { usleep(50_000); tries += 1 }
     }
 
     func restartNow() {

@@ -10,6 +10,7 @@ struct FormJyotishApp: App {
         let arguments = CommandLine.arguments
         // a newer build fetched during the last run takes this one's place before anything else happens
         if arguments.contains("--update-helper") { UpdateHelper.run(); exit(0) }
+        Updater.waitForPredecessor(arguments)
         if !arguments.contains("--report") && !arguments.contains("--match-check") {
             Updater.installStagedAndRelaunch()
             // The last run did not end cleanly (a force quit, a window that stopped answering): before any
