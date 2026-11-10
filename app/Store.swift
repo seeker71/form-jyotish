@@ -76,6 +76,8 @@ final class Store: ObservableObject {
     @Published var paletteShown = false
     /// what is typed into the glossary's search
     @Published var glossary = ""
+    /// what the palette opens with typed in: used by the palette's click witness
+    var paletteSeed = ""
     /// a word asked about from the command palette: explained in the inspector, wherever the desk stands
     @Published var lookedUp: String? = nil
     /// a card the workspace is asked to bring into view

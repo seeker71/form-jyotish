@@ -36,6 +36,8 @@ for arch in x86_64 arm64; do
   (cd "$probe" && printf '2451545.0 28.6139 77.2090 mean lahiri 5.5\n' | arch "-$arch" "../../$payload/$arch/fkwu" engine/chart-run.bml.fkb 2>/dev/null | grep -q '"grahas"') || { echo "the $arch image does not run from the payload"; exit 1; }
 done
 cp data/de440s.bsp "$app/Contents/Resources/payload/data/de440s.bsp"
+# the icon is drawn by tools/make-icon.swift and kept in art/
+cp art/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -43,6 +45,7 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <dict>
   <key>CFBundleName</key><string>Form Jyotish</string>
   <key>CFBundleIdentifier</key><string>org.coherence.FormJyotish</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleExecutable</key><string>FormJyotish</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.$build</string>

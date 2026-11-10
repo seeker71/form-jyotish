@@ -156,5 +156,5 @@ enum Help {
         return "A \(modes[sign % 3]) \(elements[sign % 4]) sign."
     }
 
-    static let timeBar = "Birth shows the birth chart alone. Now lays today's sky over it. The arrows step by the amount chosen between them; play keeps stepping. Rectify moves the birth time itself."
+    static let timeBar = "Birth shows the birth chart alone. Now lays today's sky over it. The arrows step by the amount chosen between them; play moves forward steadily at a pace suited to the step, faster or slower with the × beside it. Rectify moves the birth time itself."
 }

@@ -79,12 +79,30 @@ struct FormJyotishApp: App {
         }
     }
 
+    /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
+    /// event, and say whether the explanation came up.
+    private func probePalette() {
+        store.paletteSeed = "shad"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { store.paletteShown = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let spot = Palette.spots["what-Shadbala"] else { print("probe: the palette lists no What is Shadbala?"); exit(1) }
+            let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
+            for kind in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                if let event = NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { window.sendEvent(event) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                print("probe: clicked What is Shadbala? at \(Int(spot.midX)),\(Int(spot.midY)) -> explained \(store.lookedUp ?? "nothing"), palette \(store.paletteShown ? "still open" : "closed")")
+                exit(store.lookedUp == "Shadbala" ? 0 : 1)
+            }
+        }
+    }
+
     var body: some Scene {
         WindowGroup("Form Jyotish") {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

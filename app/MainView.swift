@@ -38,6 +38,7 @@ struct MainView: View {
             }
         }
         .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }
+        .overlay { if let term = store.lookedUp { Explained(term: term) } }
         .onAppear { store.readNatal() }
     }
 
@@ -86,7 +87,35 @@ struct TimeBar: View {
     @EnvironmentObject var store: Store
     @State private var step = 86400.0
     @State private var playing = false
-    private let tick = Timer.publish(every: 0.12, on: .main, in: .common).autoconnect()
+    /// how fast Play runs against its own pace for the chosen step
+    @State private var speed = 1.0
+    private let tick = Timer.publish(every: TimeBar.beat, on: .main, in: .common).autoconnect()
+    static let beat = 0.2
+
+    /// Play's own pace for each step, in seconds of chart time to one second of watching: fast enough that
+    /// something moves, slow enough to follow. A minute's step plays an hour a second; a year's, two years.
+    static func pace(step: Double, fine: Bool) -> Double {
+        // rectifying a birth time is close work: five steps a second
+        if fine { return step * 5 }
+        switch step {
+        case ..<5: return 10
+        case ..<30: return 60
+        case ..<120: return 3600
+        case ..<1800: return 1200
+        case ..<43200: return 86400
+        case ..<300000: return 14 * 86400
+        case ..<1500000: return 91 * 86400
+        case ..<15000000: return 31557600
+        default: return 2 * 31557600
+        }
+    }
+    static func paceWords(_ seconds: Double) -> String {
+        let units: [(Double, String)] = [(31557600, "year"), (2629800, "month"), (604800, "week"), (86400, "day"), (3600, "hour"), (60, "minute"), (1, "second")]
+        let (size, name) = units.first { seconds >= $0.0 * 0.99 } ?? (1, "second")
+        let count = seconds / size
+        let number = count == count.rounded() ? String(Int(count)) : String(format: "%.1f", count)
+        return "\(number) \(name)\(count == 1 ? "" : "s") a second"
+    }
 
     private static let steps: [(name: String, seconds: Double)] = [("1 minute", 60), ("1 hour", 3600), ("1 day", 86400), ("1 week", 604800), ("1 month", 2629800), ("1 year", 31557600)]
     private static let fineSteps: [(name: String, seconds: Double)] = [("1 second", 1), ("10 seconds", 10), ("1 minute", 60), ("4 minutes", 240)]
@@ -106,6 +135,9 @@ struct TimeBar: View {
         let steps = store.rectifying ? Self.fineSteps : Self.steps
         VStack(spacing: 4) {
         if store.showHelp { Text(Help.timeBar).font(.footnote).foregroundStyle(.secondary).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading) }
+        // the moment has a line of its own, so no control can crowd it out
+        Text(label).monospacedDigit().fontWeight(.medium).lineLimit(1).frame(maxWidth: .infinity, alignment: .center)
+            .help("The moment every card is showing, on the birthplace's clock")
         HStack(spacing: 8) {
             Button("Birth") { playing = false; store.goBirth() }.disabled(store.atBirth && !store.rectifying)
                 .help("Return to the birth chart alone")
@@ -119,9 +151,13 @@ struct TimeBar: View {
             Button { store.step(seconds: step) } label: { Image(systemName: "chevron.right") }.accessibilityLabel("Step forward").help("Step forward by the chosen amount (⌘→)")
                 .keyboardShortcut(.rightArrow, modifiers: .command)
             Button { playing.toggle() } label: { Image(systemName: playing ? "pause.fill" : "play.fill") }.accessibilityLabel(playing ? "Pause" : "Play")
-                .help(playing ? "Stop stepping" : "Keep stepping forward and watch the charts move")
-            Text(label).monospacedDigit().lineLimit(1).frame(maxWidth: .infinity, alignment: .center)
-                .help("The moment every card is showing, on the birthplace's clock")
+                .help(playing ? "Stop" : "Move forward steadily and watch the charts change: \(TimeBar.paceWords(TimeBar.pace(step: step, fine: store.rectifying) * speed))")
+            Picker("Play speed", selection: $speed) {
+                Text("¼×").tag(0.25); Text("½×").tag(0.5); Text("1×").tag(1.0); Text("2×").tag(2.0); Text("4×").tag(4.0); Text("10×").tag(10.0)
+            }
+            .labelsHidden().frame(width: 62)
+            .help("How fast Play runs. At 1× the pace suits the step: \(TimeBar.paceWords(TimeBar.pace(step: step, fine: store.rectifying))). Now: \(TimeBar.paceWords(TimeBar.pace(step: step, fine: store.rectifying) * speed)).")
+            Spacer(minLength: 4)
             if store.rectifying {
                 Button("Apply") { playing = false; store.applyRectify(); store.rectifying = false }.disabled(store.rectify == 0)
                     .help("Write this time into the birth data")
@@ -141,7 +177,7 @@ struct TimeBar: View {
         }
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
-        .onReceive(tick) { _ in if playing { store.step(seconds: step) } }
+        .onReceive(tick) { _ in if playing { store.step(seconds: TimeBar.pace(step: step, fine: store.rectifying) * speed * TimeBar.beat) } }
         .onChanged(of: store.rectifying) { step = store.rectifying ? 60 : 86400 }
     }
 }
@@ -153,6 +189,8 @@ struct Palette: View {
     var report: () -> Void
     @State private var query = ""
     @FocusState private var focused: Bool
+    /// where each listed command stands in the window: read by the palette's click witness
+    static var spots: [String: CGRect] = [:]
 
     private struct Command: Identifiable {
         let id: String
@@ -216,12 +254,18 @@ struct Palette: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(matches.prefix(14).enumerated()), id: \.element.id) { index, command in
-                            Button { run(command) } label: {
-                                HStack { Text(command.title); Spacer(); if index == 0 { Text("return").font(.caption).foregroundStyle(.secondary) } }
-                                    .padding(.horizontal, 12).padding(.vertical, 6).contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .background(index == 0 ? Color.accentColor.opacity(0.15) : .clear)
+                            // the whole row takes the click itself, so none falls through to the dimmed desk behind
+                            HStack { Text(command.title); Spacer(); if index == 0 { Text("return").font(.caption).foregroundStyle(.secondary) } }
+                                .padding(.horizontal, 12).padding(.vertical, 6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(index == 0 ? Color.accentColor.opacity(0.15) : Color.clear)
+                                .contentShape(Rectangle())
+                                .onTapGesture { run(command) }
+                                .accessibilityAddTraits(.isButton)
+                                .background(GeometryReader { geo in
+                                    let place = geo.frame(in: .global)
+                                    Color.clear.onAppear { Palette.spots[command.id] = place }.onChanged(of: place) { Palette.spots[command.id] = geo.frame(in: .global) }
+                                })
                         }
                         if matches.isEmpty { Text("Nothing matches. Try a card's name, a varga such as d10, or a setting.").foregroundStyle(.secondary).padding(12) }
                     }
@@ -231,9 +275,11 @@ struct Palette: View {
             .frame(width: 520)
             .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.15)))
+            // a click on the panel itself stays with the panel
+            .contentShape(RoundedRectangle(cornerRadius: 12)).onTapGesture { }
             .padding(.top, 60)
         }
-        .onAppear { focused = true }
+        .onAppear { focused = true; query = store.paletteSeed; store.paletteSeed = "" }
         .onExitCommand { shown = false }
     }
 }
@@ -339,6 +385,45 @@ struct Zoomed<Content: View>: View {
                 .environment(\.displayScale, displayScale * max(1, scale))
                 .scaleEffect(scale, anchor: .topLeading)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+        }
+    }
+}
+
+/// A word asked about, answered in the middle of the window where it cannot be missed.
+struct Explained: View {
+    @EnvironmentObject var store: Store
+    let term: String
+
+    var body: some View {
+        let entry = Glossary.entries(for: store.chart).first { $0.term == term }
+        ZStack {
+            Color.black.opacity(0.25).ignoresSafeArea().onTapGesture { store.lookedUp = nil }
+            VStack(alignment: .leading, spacing: 10) {
+                Text(term).font(.title2).fontWeight(.semibold)
+                if let entry {
+                    Text(entry.group).font(.caption).foregroundStyle(.secondary)
+                    Text(entry.words).font(.title3).fixedSize(horizontal: false, vertical: true)
+                    if !entry.here.isEmpty { Text(entry.here).foregroundStyle(Color.accentColor).fixedSize(horizontal: false, vertical: true) }
+                } else {
+                    Text("The glossary holds no entry under this name.").foregroundStyle(.secondary)
+                }
+                HStack(spacing: 10) {
+                    if let workspace = entry?.workspace { Button("Go to \(workspace)") { store.workspace = workspace; if let pick = entry?.pick { store.pick = pick }; store.lookedUp = nil } }
+                    else if let pick = entry?.pick { Button("Show in this chart") { store.pick = pick; store.lookedUp = nil } }
+                    Button("Open the glossary") {
+                        store.workspace = "Guide"; store.glossary = term; store.lookedUp = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { store.showCard = "glossary" }
+                    }
+                    Spacer()
+                    Button("Close") { store.lookedUp = nil }.keyboardShortcut(.cancelAction)
+                }
+                .padding(.top, 4)
+            }
+            .padding(20)
+            .frame(width: 520, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.15)))
+            .contentShape(RoundedRectangle(cornerRadius: 12)).onTapGesture { }
         }
     }
 }
