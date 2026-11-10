@@ -10,6 +10,7 @@ enum Help {
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
         case "Strength": return "How strong each graha is (shadbala) and how much support each sign holds (ashtakavarga)."
         case "KP": return "Krishnamurti Paddhati: positions under the KP ayanamsa, Placidus house cusps, and which houses each graha signifies."
+        case "Yogas": return "The combinations the chart holds, each with the rule it met, and which graha looks at which sign."
         case "Transits": return "The sky of another moment laid over the birth chart. Move the time bar, or press Now."
         default: return ""
         }
@@ -20,6 +21,9 @@ enum Help {
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {
+        case "yogas": return "Named combinations of grahas, grouped by kind. Each line states the rule that was met; schools differ on some rules, so read the rule, not only the name. Click a line to pick the grahas that form it."
+        case "aspects": return "Every graha looks fully at the 7th sign from itself; Mars also at the 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th. Pick a graha and the signs it aspects are tinted in the birth chart."
+        case "avasthas": return "The state each graha is in: its age by degree, its wakefulness by the sign it is in, and its mood by its dignity."
         case "moon": return "The birth chart counted from the Moon's sign in place of the lagna. Read beside the birth chart: what holds from both is firm. “As” still marks the lagna's sign."
         case "birth": return "Date as year-month-day, time on the 24-hour clock at the birthplace. Type a place and press Look up place to fill latitude, longitude and time zone. Every card recalculates as you type."
         case "grahas": return "One row per graha: its sign, its exact degree within the sign, its nakshatra (one of 27 lunar mansions) and how it is placed. Hover a column heading for what it means."
@@ -85,6 +89,12 @@ enum Help {
             "Its mahadasha": "The years of life ruled by this graha. Click to go there.",
             "Houses it signifies (KP)": "The houses whose matters this graha can bring about, by Krishnamurti's rules.",
             "In the sky of the moment": "Where this graha is at the moment shown in the time bar.",
+            "Aspects": "The signs this graha looks at in full. Click a sign to read about it.",
+            "Yogas it forms": "Named combinations this graha takes part in. Hover a name for the rule.",
+            "Avasthas": "The graha's state: age, wakefulness, mood.",
+            "Baladi": "Age by degree within the sign: infant, youth, adult (strongest), old, dead (weakest).",
+            "Jagradadi": "Awake in its own or exalted sign, dreaming in a friend's or neutral's, asleep in an enemy's or its fall.",
+            "Deeptadi": "Mood by dignity: blazing when exalted, at ease in its own sign, down through content, calm, needy, distressed, to fallen; angry when combust.",
             "Its parts": "The period divided into nine, in the same order and proportions. Click a part to go to its start.",
             "Mahadasha": "A major period: 6 to 20 years ruled by one graha.", "Antardasha": "A sub-period within a mahadasha.",
             "Pratyantardasha": "A sub-period within an antardasha, weeks to months long.", "Sookshma dasha": "A sub-period within a pratyantardasha, days long.",
@@ -107,6 +117,13 @@ enum Help {
         case "Ur", "Ne", "Pl": return "An outer planet. Classical Jyotish does not use it; it is shown for those who do."
         default: return ""
         }
+    }
+
+    /// an avastha's Sanskrit name with its sense
+    static func avastha(_ name: String) -> String {
+        let senses = ["Bala": "infant", "Kumara": "youth", "Yuva": "adult", "Vriddha": "old", "Mrita": "dead", "Jagrat": "awake", "Swapna": "dreaming", "Sushupti": "asleep",
+                      "Deepta": "blazing", "Swastha": "at ease", "Mudita": "content", "Shanta": "calm", "Deena": "needy", "Dukhita": "distressed", "Vikala": "crippled", "Khala": "fallen", "Kopa": "angry"]
+        return senses[name].map { "\(name) (\($0))" } ?? name
     }
 
     static func sign(_ sign: Int) -> String {

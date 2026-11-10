@@ -4,6 +4,19 @@ A Vedic astrology app for the Mac. The calculation is Form: BML cells run by the
 [coherence-kernel](../coherence-kernel)'s `fkwu`. A thin SwiftUI shell collects the birth data and draws
 what the engine returns.
 
+## Download
+
+[FormJyotish.zip](https://github.com/seeker71/form-jyotish/releases/latest/download/FormJyotish.zip) is the
+latest built app, for Apple Silicon Macs on macOS 14 or later. Unzip it and move Form Jyotish to the
+Applications folder. It carries its own engine and ephemeris; nothing else is needed.
+
+The app is not signed with an Apple Developer ID, so the first time it is opened macOS refuses it. Open
+System Settings, Privacy & Security, and choose Open Anyway beside its name.
+
+It keeps itself current: at each start it asks GitHub for the latest release, fetches a newer build in the
+background, checks it against its published SHA-256, and says so in a bar at the top. The new build takes
+the old one's place the next time the app starts (or at once with Restart now).
+
 ## What stands today
 
 - Apparent geocentric positions of Surya to Shani read from NASA JPL's DE440 ephemeris (`data/de440s.bsp`,
@@ -27,6 +40,9 @@ what the engine returns.
   significators of houses and grahas, ruling planets and Fortuna. The significator sets are folded in the
   shell (`app/Reading.swift`) from what the engine returns.
 - Transits: the sky at any moment set in the houses of the birth lagna.
+- Aspects (which signs each graha looks at in full), the avasthas (baladi, jagradadi, deeptadi), and a first
+  set of classical yogas, each stated with the rule it met: the mahapurusha yogas, raja and dhana yogas,
+  viparita raja yogas, parivartana, the Moon's and the Sun's yogas, kartari, neecha-bhanga, and the doshas.
 - Strength: ashtakavarga (each graha's bindus by sign, and the sarvashtakavarga) and the six-fold shadbala
   after B.V. Raman, row by row, with rupas and the share of what is required. Planetary war is not read.
 - A printed report (⌘K, "report"; or `FormJyotish --report out.pdf [--ayanamsa truecitra]`), 24
@@ -62,6 +78,7 @@ interpolated.
 | `engine/spk.bml` | the DAF/SPK reader: segments and Chebyshev states from the file's bytes |
 | `engine/sky.bml` | time scales, apparent positions, precession, ayanamsa, node, ascendant |
 | `engine/strength.bml` | the sixteen vargas, ashtakavarga and shadbala |
+| `engine/yoga.bml` | aspects and the classical yogas |
 | `engine/chart.bml` | the Jyotish reading and its JSON |
 | `engine/chart-run.bml` | the door: one line in, one JSON line out |
 | `witness/positions-run.bml` | seven bodies against JPL Horizons, within 0.3 arcsec |
@@ -91,10 +108,13 @@ curl -L -o data/de440s.bsp https://naif.jpl.nasa.gov/pub/naif/generic_kernels/sp
 printf '2451545.0 28.6139 77.2090 mean\n' | ../coherence-kernel/fkwu engine/chart-run.bml   # the engine alone
 ../coherence-kernel/fkwu witness/positions-run.bml </dev/null                               # the witness
 swift run                                                                                   # the app, from source
-./make-app.sh && open FormJyotish.app                                                       # the app, as a bundle
+./make-app.sh && open FormJyotish.app                                                       # the app, as a self-contained bundle
+./release.sh                                                                                # publish this commit as build N on GitHub
 ```
 
-The app finds this folder and the kernel at the paths it was built from; both can be changed in Settings.
+Run from source, the app finds this folder and the kernel at the paths it was built from; both can be
+changed in Settings. The built bundle carries `fkwu`, the engine's compiled image and the ephemeris under
+`Contents/Resources/payload` and needs neither.
 
 ## Not yet here
 

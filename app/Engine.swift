@@ -17,6 +17,35 @@ struct Engine {
 
     private var fkwu: URL { kernel.appendingPathComponent("fkwu") }
 
+    /// A built app carries its own engine: the `fkwu` runtime, the engine's compiled image and the ephemeris,
+    /// under Resources/payload. With that present, no kernel checkout and no source are needed.
+    static let payload: URL? = {
+        guard let found = Bundle.main.resourceURL?.appendingPathComponent("payload"),
+              FileManager.default.isExecutableFile(atPath: found.appendingPathComponent("fkwu").path) else { return nil }
+        return found
+    }()
+
+    /// Where the carried engine runs: a writable folder outside the bundle, so the runtime's scratch files
+    /// never touch the signed app. The image is copied in when it differs; the ephemeris is linked.
+    private static func runFolder(for payload: URL) throws -> URL {
+        let files = FileManager.default
+        let folder = files.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("FormJyotish/run")
+        try files.createDirectory(at: folder.appendingPathComponent("engine"), withIntermediateDirectories: true)
+        let image = folder.appendingPathComponent("engine/chart-run.bml.fkb"), source = payload.appendingPathComponent("engine/chart-run.bml.fkb")
+        // two readings may arrive at once: the image is copied aside and moved into place in one step
+        if !files.contentsEqual(atPath: image.path, andPath: source.path) {
+            let aside = folder.appendingPathComponent("engine/arriving-\(UUID().uuidString)")
+            try files.copyItem(at: source, to: aside)
+            if files.fileExists(atPath: image.path) { _ = try files.replaceItemAt(image, withItemAt: aside) } else if (try? files.moveItem(at: aside, to: image)) == nil { try? files.removeItem(at: aside) }
+        }
+        let data = folder.appendingPathComponent("data")
+        if (try? files.destinationOfSymbolicLink(atPath: data.path)) != payload.appendingPathComponent("data").path {
+            try? files.removeItem(at: data)
+            try files.createSymbolicLink(at: data, withDestinationURL: payload.appendingPathComponent("data"))
+        }
+        return folder
+    }
+
     /// The kernel compiles BML against its own `form/` and `runtime/` trees, read from the working
     /// directory; they stand in this repo as links to the kernel checkout.
     private func prepare() throws {
@@ -47,15 +76,22 @@ struct Engine {
     }
 
     func chart(julianDay: Double, latitude: Double, longitude: Double, node: String, ayanamsa: String, zoneHours: Double) throws -> Chart {
-        try prepare()
+        let carried = Engine.payload
+        if carried == nil { try prepare() }
         let errors = FileManager.default.temporaryDirectory.appendingPathComponent("form-jyotish-\(UUID().uuidString).err")
         FileManager.default.createFile(atPath: errors.path, contents: nil)
         defer { try? FileManager.default.removeItem(at: errors) }
 
         let process = Process()
-        process.executableURL = fkwu
-        process.arguments = ["engine/chart-run.bml"]
-        process.currentDirectoryURL = root
+        if let carried {
+            process.executableURL = carried.appendingPathComponent("fkwu")
+            process.arguments = ["engine/chart-run.bml.fkb"]
+            process.currentDirectoryURL = try Engine.runFolder(for: carried)
+        } else {
+            process.executableURL = fkwu
+            process.arguments = ["engine/chart-run.bml"]
+            process.currentDirectoryURL = root
+        }
         let input = Pipe(), output = Pipe()
         process.standardInput = input
         process.standardOutput = output

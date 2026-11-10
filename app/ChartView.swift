@@ -45,6 +45,8 @@ struct ChartView: View {
     var ascSign: Int
     /// marks by sign, 0 = Mesha
     var marks: [Int: [ChartMark]]
+    /// signs the picked graha aspects: tinted
+    var aspected: [Int] = []
 
     var body: some View {
         GeometryReader { geo in
@@ -63,6 +65,7 @@ struct ChartView: View {
     private func wash(_ sign: Int) -> Color {
         if store.pick == .sign(sign) { return Color.accentColor.opacity(0.22) }
         if store.hover == .sign(sign) { return Color.accentColor.opacity(0.09) }
+        if aspected.contains(sign) { return Color.orange.opacity(0.16) }
         return Color.primary.opacity(0.0001)
     }
 

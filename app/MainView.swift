@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 /// The window: saved charts at the side, a workspace of cards, the inspector, and one time bar under them all.
 struct MainView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var updater: Updater
     @State private var palette = false
 
     var body: some View {
@@ -19,6 +20,7 @@ struct MainView: View {
             .toolbar { Button { store.add() } label: { Label("New chart", systemImage: "plus") } }
         } detail: {
             VStack(spacing: 0) {
+                updateBanner
                 HStack(spacing: 0) {
                     Workspace()
                     Divider()
@@ -46,6 +48,29 @@ struct MainView: View {
         }
         .overlay { if palette { Palette(shown: $palette, report: exportReport) } }
         .onAppear { store.readNatal() }
+    }
+
+    /// What the updater has to say: a newer build on its way, ready, or refused.
+    @ViewBuilder private var updateBanner: some View {
+        switch updater.state {
+        case .idle: EmptyView()
+        case .fetching(let build):
+            banner("An update is available (build \(build)). Fetching it now…", action: nil)
+        case .ready(let build):
+            banner("Build \(build) is ready. It installs the next time Form Jyotish starts.", action: ("Restart now", { updater.restartNow() }))
+        case .failed(let why):
+            banner(why, action: ("Dismiss", { updater.state = .idle }))
+        }
+    }
+    private func banner(_ words: String, action: (String, () -> Void)?) -> some View {
+        HStack {
+            Image(systemName: "arrow.down.circle").foregroundStyle(Color.accentColor)
+            Text(words)
+            Spacer()
+            if let action { Button(action.0, action: action.1) }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.12))
     }
 
     private func exportReport() {
@@ -205,7 +230,10 @@ struct SettingsView: View {
         Form {
             TextField("form-jyotish folder", text: $enginePath)
             TextField("coherence-kernel folder", text: $kernelPath)
-            Text("The engine is Form: the kernel's fkwu runs engine/chart-run.bml from the form-jyotish folder.")
+            Text(Engine.payload == nil ? "The engine is Form: the kernel's fkwu runs engine/chart-run.bml from the form-jyotish folder."
+                 : "This app carries its own engine; the two folders above are used only when it is run from source.")
+                .font(.footnote).foregroundStyle(.secondary)
+            Text(Updater.build.map { "Build \($0). Updates come from github.com/\(Updater.repository) and install when the app restarts." } ?? "Run from source: no updates are fetched.")
                 .font(.footnote).foregroundStyle(.secondary)
         }
         .padding(20)

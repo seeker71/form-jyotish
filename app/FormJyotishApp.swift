@@ -4,9 +4,12 @@ import SwiftUI
 @main
 struct FormJyotishApp: App {
     @StateObject private var store = Store()
+    @StateObject private var updater = Updater()
 
     init() {
         let arguments = CommandLine.arguments
+        // a newer build fetched during the last run takes this one's place before anything else happens
+        if !arguments.contains("--report") { Updater.installStagedAndRelaunch() }
         if let flag = arguments.firstIndex(of: "--report"), arguments.count > flag + 1 {
             Self.writeReport(to: arguments[flag + 1], arguments: arguments)
         }
@@ -45,6 +48,8 @@ struct FormJyotishApp: App {
         WindowGroup("Form Jyotish") {
             MainView()
                 .environmentObject(store)
+                .environmentObject(updater)
+                .onAppear { updater.check() }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         Settings { SettingsView() }

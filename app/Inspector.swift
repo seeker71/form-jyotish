@@ -80,6 +80,7 @@ struct Inspector: View {
                 fact("Shadbala", String(format: "%.2f rupas · %.2f × required", chart.rupas(index), chart.strengthRatio(index)))
                 fact("Bindus", "\(chart.ashtakavarga[index][g.sign]) of 8 in its own ashtakavarga here")
             }
+            if let age = g.baladi, let wake = g.jagradadi, let mood = g.deeptadi { fact("Avasthas", "\(Help.avastha(age)) · \(Help.avastha(wake)) · \(Help.avastha(mood))") }
             section("Its lords")
             HStack { Text("Rasi").foregroundStyle(.secondary); chip(g.rasi_lord); Text("Star").foregroundStyle(.secondary); chip(g.nak_lord) }
             HStack { Text("Sub").foregroundStyle(.secondary); chip(g.sub_lord); Text("Sub-sub").foregroundStyle(.secondary); chip(g.sub_sub) }
@@ -87,6 +88,19 @@ struct Inspector: View {
                 section("In the sky of the moment")
                 fact("Rasi", "\(Names.signs[t.sign]) \(Names.dms(t.deg))" + (t.retro && t.id != "Ra" && t.id != "Ke" ? " ℞" : ""))
                 fact("House", "\(house(t.sign, from: chart.asc.sign)) from the lagna, \(house(t.sign, from: moon)) from the Moon")
+            }
+            let glances = chart.aspectedSigns(by: code), seenBy = chart.aspecting(sign: g.sign)
+            if !glances.isEmpty {
+                section("Aspects")
+                HStack { ForEach(glances, id: \.self) { signChip($0) } }
+            }
+            if !seenBy.isEmpty {
+                HStack { Text("Aspected by").foregroundStyle(.secondary); ForEach(seenBy, id: \.self) { chip($0) } }
+            }
+            let formed = chart.yogas.filter { $0.grahas.contains(code) }
+            if !formed.isEmpty {
+                section("Yogas it forms")
+                ForEach(formed) { yoga in Text(yoga.name).font(.callout).help(yoga.why) }
             }
             section("In the vargas")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), alignment: .leading)], alignment: .leading, spacing: 2) {
@@ -120,6 +134,7 @@ struct Inspector: View {
         if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)") }
         HStack { Text("Lord").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); chip(lord) }
         fact("Bindus", "\(chart.sarva[sign]) in the sarvashtakavarga (337 over twelve signs)")
+        if !chart.aspecting(sign: sign).isEmpty { HStack { Text("Aspected by").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); ForEach(chart.aspecting(sign: sign), id: \.self) { chip($0) } } }
         section(here.isEmpty ? "No graha stands here at birth" : "Here at birth")
         ForEach(here) { g in HStack { chip(g.id); Text(Names.dms(g.deg)).foregroundStyle(.secondary) } }
         if let sky = store.sky {

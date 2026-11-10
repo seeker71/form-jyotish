@@ -20,6 +20,9 @@ enum Catalog {
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
            CardInfo(id: "ashtakavarga", title: "Ashtakavarga", keywords: "strength bindus bhinna sarva points", wide: true),
+           CardInfo(id: "yogas", title: "Yogas", keywords: "combinations raja dhana dosha cancellation", wide: true),
+           CardInfo(id: "aspects", title: "Aspects", keywords: "drishti glance", wide: true),
+           CardInfo(id: "avasthas", title: "Avasthas", keywords: "states baladi jagradadi deeptadi mood", wide: true),
            CardInfo(id: "transits", title: "Transits", keywords: "gochara sky now table", wide: true),
            CardInfo(id: "kp-grahas", title: "KP grahas", keywords: "krishnamurti star sub lord", wide: true),
            CardInfo(id: "kp-cusps", title: "KP cusps (Placidus)", keywords: "krishnamurti houses bhava", wide: true),
@@ -105,9 +108,9 @@ struct Card: View {
         } else if let chart = store.chart {
             if id == "moon" {
                 // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house
-                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true))
+                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart))
             } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
-                ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga))
+                ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [])
             } else {
                 switch id {
                 case "grahas": GrahaTable(chart: chart)
@@ -115,6 +118,9 @@ struct Card: View {
                 case "dashas": DashaList(chart: chart)
                 case "shadbala": ShadbalaTable(chart: chart)
                 case "ashtakavarga": AshtakavargaTable(chart: chart)
+                case "yogas": YogaList(chart: chart)
+                case "aspects": AspectTable(chart: chart)
+                case "avasthas": AvasthaTable(chart: chart)
                 case "transits": TransitTable(natal: chart)
                 case "kp-grahas": KPGrahas(kp: chart.kp)
                 case "kp-cusps": KPCusps(kp: chart.kp)
@@ -127,6 +133,9 @@ struct Card: View {
             Text("No chart yet").foregroundStyle(.secondary)
         }
     }
+
+    /// the signs the picked graha aspects, tinted in the birth chart
+    private func aspected(_ chart: Chart) -> [Int] { store.pick?.graha.map { chart.aspectedSigns(by: $0) } ?? [] }
 
     /// Birth positions in a varga, with the sky's positions beside them while the desk stands away from the birth.
     private func marks(_ chart: Chart, _ varga: Int, lagnaLabel: Bool = false) -> [Int: [ChartMark]] {

@@ -46,6 +46,21 @@ section [form.bml] {
     (st-odd(s) ? 0 : 6) + st-part(d, 40), st-kind(s, 0, 4, 8) + st-part(d, 45), s + st-part(d, 60)] |> map(x => x % 12);
   }
 
+  // ---- avasthas: the states a graha is in ----
+  // baladi, by age: odd signs run infant, youth, adult, old, dead in sixths of the sign; even signs run the other way
+  def st-baladi(sign, deg) { let part = floor(deg / 6.0); ["Bala", "Kumara", "Yuva", "Vriddha", "Mrita"][st-odd(sign) ? part : 4 - part]; }
+  // jagradadi, by wakefulness: awake in its own or exalted sign, asleep in an enemy's or its fall, dreaming otherwise (natural friendship)
+  def st-jagradadi(i, sign) {
+   let lord = st-sign-lords()[sign];
+   lord == i || sign == st-exalted()[i] ? "Jagrat" : sign == (st-exalted()[i] + 6) % 12 || st-natural()[i][lord] < 0 ? "Sushupti" : "Swapna";
+  }
+  // deeptadi, by mood: exalted, own sign, fallen, combust, then the compound friendship with the sign's lord
+  def st-deeptadi(i, sign, signs, burnt) {
+   let lord = st-sign-lords()[sign];
+   sign == st-exalted()[i] ? "Deepta" : lord == i ? "Swastha" : sign == (st-exalted()[i] + 6) % 12 ? "Khala" : burnt ? "Kopa" :
+    ["Vikala", "Dukhita", "Deena", "Shanta", "Mudita"][st-compound(i, lord, signs) + 2];
+  }
+
   // ---- ashtakavarga ----
   // For each graha's own varga: the houses, counted from the Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn
   // and the lagna in turn, where that reference gives a bindu. The rows sum to 48 49 39 54 56 52 39.

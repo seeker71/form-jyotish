@@ -1,0 +1,129 @@
+//////////////////////////////////////////////////////////////////////
+// yoga.bml — graha aspects and the classical yogas a chart holds.
+//
+// Grahas are numbered 0 to 8: Sun Moon Mars Mercury Jupiter Venus Saturn Rahu Ketu. Signs are 0 to 11.
+//
+//   yg-aspects(s)          for each of the seven, the signs it aspects in full: the 7th from it;
+//                          Mars also the 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th
+//   yg-yogas(s, lons, asc) every yoga found: [name, group, the grahas that form it, the rule it met]
+//
+// s holds the nine grahas' signs, lons their sidereal longitudes, asc the lagna's sign. The rules are the
+// commonly taught forms; where schools differ the simpler form is read, and the rule is stated with the find.
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+import engine/strength.bml;
+section [form.bml] {
+ class JyYoga {
+  def yg-names() = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+  // houses counted from a sign: 0 is that sign itself
+  def yg-from(ref, sign) = (sign - ref + 12) % 12;
+  def yg-kendra(ref, sign) = yg-from(ref, sign) % 3 == 0;
+  def yg-in(xs, v) = st-has(xs, v) == 1;
+  def yg-there(s, who, sign) = who |> filter(i => s[i] == sign);
+  def yg-any(xs) = !nil?(xs);
+  def yg-all(xs) = nil?(xs) ? true : xs[0] && yg-all(xs[1:]);
+  def yg-lord(asc, house) = st-sign-lords()[(asc + house) % 12];
+  def yg-flat(xss) = nil?(xss) ? [] : append(xss[0], yg-flat(xss[1:]));
+  def yg-if(found, name, group, who, why) = found ? [[name, group, who, why]] : [];
+  def yg-pairs(xs) = nil?(xs) ? [] : append(xs[1:] |> map(b => [xs[0], b]), yg-pairs(xs[1:]));
+  def yg-own(i, sign) = st-sign-lords()[sign] == i;
+  def yg-exchange(s, a, b) = yg-own(b, s[a]) && yg-own(a, s[b]);
+
+  // ---- aspects ----
+  def yg-offsets(i) = i == 2 ? [6, 3, 7] : i == 4 ? [6, 4, 8] : i == 6 ? [6, 2, 9] : [6];
+  def yg-aspects(s) = st-seven() |> map(i => yg-offsets(i) |> map(o => (s[i] + o) % 12));
+
+  // ---- the five mahapurusha yogas ----
+  def yg-mahapurusha(s, asc) {
+   let hits = [[2, "Ruchaka"], [3, "Bhadra"], [4, "Hamsa"], [5, "Malavya"], [6, "Shasha"]] |> filter(r => (yg-own(r[0], s[r[0]]) || st-exalted()[r[0]] == s[r[0]]) && yg-kendra(asc, s[r[0]]));
+   hits |> map(r => [r[1] + " yoga", "Mahapurusha", [r[0]], yg-names()[r[0]] + " in its own or exalted sign, in an angle from the lagna"]);
+  }
+
+  // ---- yogas of the Moon and the Sun: who flanks them ----
+  def yg-lunar(s) {
+   let others = [2, 3, 4, 5, 6]; let second = yg-there(s, others, (s[1] + 1) % 12); let twelfth = yg-there(s, others, (s[1] + 11) % 12);
+   let propped = [0, 2, 3, 4, 5, 6] |> filter(i => yg-kendra(s[1], s[i]));
+   yg-any(second) && yg-any(twelfth) ? [["Durudhara yoga", "Moon", append(second, twelfth), "Grahas in both the 2nd and the 12th from the Moon"]] :
+   yg-any(second) ? [["Sunapha yoga", "Moon", second, "A graha other than the Sun in the 2nd from the Moon"]] :
+   yg-any(twelfth) ? [["Anapha yoga", "Moon", twelfth, "A graha other than the Sun in the 12th from the Moon"]] :
+   yg-any(propped) ? [["Kemadruma bhanga", "Cancellation", propped, "No graha flanks the Moon, but a graha stands in an angle from it, which cancels Kemadruma"]] :
+   [["Kemadruma yoga", "Dosha", [1], "No graha in the 2nd or 12th from the Moon, and none in an angle from it"]];
+  }
+  def yg-solar(s) {
+   let others = [2, 3, 4, 5, 6]; let second = yg-there(s, others, (s[0] + 1) % 12); let twelfth = yg-there(s, others, (s[0] + 11) % 12);
+   yg-any(second) && yg-any(twelfth) ? [["Ubhayachari yoga", "Sun", append(second, twelfth), "Grahas other than the Moon in both the 2nd and the 12th from the Sun"]] :
+   yg-any(second) ? [["Vesi yoga", "Sun", second, "A graha other than the Moon in the 2nd from the Sun"]] :
+   yg-any(twelfth) ? [["Vasi yoga", "Sun", twelfth, "A graha other than the Moon in the 12th from the Sun"]] : [];
+  }
+
+  // ---- conjunctions and placements ----
+  def yg-simple(s, asc) {
+   let near = [3, 4, 5] |> filter(i => yg-from(s[1], s[i]) >= 5 && yg-from(s[1], s[i]) <= 7);
+   let tenth = [3, 4, 5] |> filter(i => yg-from(asc, s[i]) == 9 || yg-from(s[1], s[i]) == 9);
+   yg-flat([
+    yg-if(yg-kendra(s[1], s[4]), "Gajakesari yoga", "Moon", [4, 1], "Jupiter in an angle from the Moon"),
+    yg-if(s[0] == s[3], "Budhaditya yoga", "Sun", [0, 3], "The Sun and Mercury in one sign"),
+    yg-if(s[1] == s[2], "Chandra-Mangala yoga", "Moon", [1, 2], "The Moon and Mars in one sign"),
+    yg-if(s[4] == s[7], "Guru-Chandala yoga", "Dosha", [4, 7], "Jupiter and Rahu in one sign"),
+    yg-if(len(near) == 3, "Adhi yoga", "Moon", near, "Mercury, Jupiter and Venus in the 6th, 7th and 8th from the Moon"),
+    yg-if(yg-any(tenth), "Amala yoga", "Status", tenth, "A natural benefic in the 10th from the lagna or from the Moon")]);
+  }
+  // the lagna hemmed in: benefics, or malefics, on both sides
+  def yg-kartari(s, asc) {
+   let fair = [1, 3, 4, 5]; let harsh = [0, 2, 6, 7, 8]; let before = (asc + 11) % 12; let after = (asc + 1) % 12;
+   append(yg-if(yg-any(yg-there(s, fair, before)) && yg-any(yg-there(s, fair, after)), "Shubha-kartari yoga", "Lagna", append(yg-there(s, fair, before), yg-there(s, fair, after)), "Benefics in both the 12th and the 2nd from the lagna"),
+    yg-if(yg-any(yg-there(s, harsh, before)) && yg-any(yg-there(s, harsh, after)), "Papa-kartari yoga", "Dosha", append(yg-there(s, harsh, before), yg-there(s, harsh, after)), "Malefics in both the 12th and the 2nd from the lagna"));
+  }
+
+  // ---- lords joined: raja and dhana yogas ----
+  def yg-joined(s, a, b) = s[a] == s[b] || yg-exchange(s, a, b) || yg-from(s[a], s[b]) == 6;
+  def yg-how(s, a, b) = s[a] == s[b] ? "together in one sign" : yg-exchange(s, a, b) ? "in each other's signs" : "facing each other";
+  def yg-raja(s, asc) {
+   let angles = [0, 3, 6, 9] |> map(h => yg-lord(asc, h)); let trines = [0, 4, 8] |> map(h => yg-lord(asc, h));
+   let hits = yg-pairs(st-seven()) |> filter(p => ((yg-in(angles, p[0]) && yg-in(trines, p[1])) || (yg-in(trines, p[0]) && yg-in(angles, p[1]))) && yg-joined(s, p[0], p[1]));
+   let makers = st-seven() |> filter(i => i != yg-lord(asc, 0) && yg-in([3, 6, 9] |> map(h => yg-lord(asc, h)), i) && yg-in([4, 8] |> map(h => yg-lord(asc, h)), i));
+   append(hits |> map(p => ["Raja yoga", "Status", p, "The lord of an angle and the lord of a trine, " + yg-names()[p[0]] + " and " + yg-names()[p[1]] + ", " + yg-how(s, p[0], p[1])]),
+    makers |> map(i => ["Yogakaraka", "Status", [i], yg-names()[i] + " rules both an angle and a trine from the lagna"]));
+  }
+  def yg-dhana(s, asc) {
+   let wealth = [1, 4, 8, 10] |> map(h => yg-lord(asc, h));
+   let hits = yg-pairs(st-seven()) |> filter(p => yg-in(wealth, p[0]) && yg-in(wealth, p[1]) && (s[p[0]] == s[p[1]] || yg-exchange(s, p[0], p[1])));
+   hits |> map(p => ["Dhana yoga", "Wealth", p, "Two lords among the 2nd, 5th, 9th and 11th, " + yg-names()[p[0]] + " and " + yg-names()[p[1]] + ", " + yg-how(s, p[0], p[1])]);
+  }
+  // the lords of the 6th, 8th and 12th kept within those houses
+  def yg-viparita(s, asc) {
+   let hits = [[5, "Harsha", "6th"], [7, "Sarala", "8th"], [11, "Vimala", "12th"]] |> filter(r => yg-in([5, 7, 11], yg-from(asc, s[yg-lord(asc, r[0])])));
+   hits |> map(r => [r[1] + " yoga", "Viparita raja", [yg-lord(asc, r[0])], "The lord of the " + r[2] + " stands in the 6th, 8th or 12th"]);
+  }
+
+  // ---- a fall cancelled ----
+  def yg-lifted(s, asc, i) {
+   let host = st-sign-lords()[s[i]]; let high = st-sign-lords()[st-exalted()[i]];
+   yg-kendra(asc, s[host]) || yg-kendra(s[1], s[host]) || yg-kendra(asc, s[high]) || yg-kendra(s[1], s[high]);
+  }
+  def yg-neecha(s, asc) {
+   let fallen = st-seven() |> filter(i => s[i] == (st-exalted()[i] + 6) % 12 && yg-lifted(s, asc, i));
+   fallen |> map(i => ["Neecha-bhanga raja yoga", "Cancellation", [i], yg-names()[i] + " is debilitated, but the lord of its sign or of its exaltation sign stands in an angle from the lagna or the Moon"]);
+  }
+
+  // ---- signs exchanged ----
+  def yg-exchange-kind(asc, a, b) = yg-in([5, 7, 11], a) || yg-in([5, 7, 11], b) ? "Dainya" : a == 2 || b == 2 ? "Khala" : "Maha";
+  def yg-parivartana(s, asc) {
+   let hits = yg-pairs(st-seven()) |> filter(p => yg-exchange(s, p[0], p[1]));
+   hits |> map(p => [yg-exchange-kind(asc, yg-from(asc, s[p[0]]), yg-from(asc, s[p[1]])) + "-parivartana yoga", "Exchange", p, yg-names()[p[0]] + " and " + yg-names()[p[1]] + " each stand in a sign the other rules"]);
+  }
+
+  // ---- doshas ----
+  def yg-doshas(s, lons, asc) {
+   let side = st-seven() |> map(i => jn-norm360(lons[i] - lons[7]) < 180.0); let risky = [0, 1, 3, 6, 7, 11];
+   yg-flat([
+    yg-if(yg-all(side) || yg-all(side |> map(x => !x)), "Kala-sarpa yoga", "Dosha", [7, 8], "All seven grahas stand on one side of the line from Rahu to Ketu"),
+    yg-if(yg-in(risky, yg-from(asc, s[2])), "Kuja dosha from the lagna", "Dosha", [2], "Mars in the 1st, 2nd, 4th, 7th, 8th or 12th from the lagna"),
+    yg-if(yg-in(risky, yg-from(s[1], s[2])), "Kuja dosha from the Moon", "Dosha", [2], "Mars in the 1st, 2nd, 4th, 7th, 8th or 12th from the Moon")]);
+  }
+
+  def yg-yogas(s, lons, asc) = yg-flat([yg-mahapurusha(s, asc), yg-raja(s, asc), yg-dhana(s, asc), yg-viparita(s, asc), yg-parivartana(s, asc),
+   yg-simple(s, asc), yg-lunar(s), yg-solar(s), yg-kartari(s, asc), yg-neecha(s, asc), yg-doshas(s, lons, asc)]);
+ }
+ 0;
+}

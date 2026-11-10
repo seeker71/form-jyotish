@@ -60,6 +60,10 @@ struct Graha: Codable, Identifiable {
     var retro: Bool
     var status: String?
     var combust: Bool?
+    /// the avasthas: by age, by wakefulness, by mood (the seven grahas only)
+    var baladi: String?
+    var jagradadi: String?
+    var deeptadi: String?
     var lon: Double
     var sign: Int
     var sign_name: String
@@ -125,6 +129,15 @@ struct BalaRow: Codable, Identifiable {
     var title: String { isSum ? String(name.dropFirst()) : name }
 }
 
+/// A yoga the chart holds: its name, its kind, the grahas that form it, and the rule it met.
+struct Yoga: Codable, Identifiable {
+    var name: String
+    var group: String
+    var grahas: [String]
+    var why: String
+    var id: String { name + grahas.joined() }
+}
+
 struct Chart: Codable {
     var jd: Double
     var ayanamsa: Double
@@ -143,10 +156,18 @@ struct Chart: Codable {
     /// bindus by graha (Sun to Saturn) and sign
     var ashtakavarga: [[Int]]
     var shadbala: [BalaRow]
+    /// the signs each of the seven grahas aspects in full
+    var aspects: [[Int]]
+    var yogas: [Yoga]
     var day: Day
     var dasha: [Period]
 
     func graha(_ id: String) -> Graha? { grahas.first { $0.id == id } }
+
+    /// the signs a graha aspects; none for the nodes and outer planets
+    func aspectedSigns(by code: String) -> [Int] { grahas.prefix(7).firstIndex { $0.id == code }.map { aspects[$0] } ?? [] }
+    /// the grahas among the seven that aspect a sign
+    func aspecting(sign: Int) -> [String] { grahas.prefix(7).enumerated().filter { aspects[$0.offset].contains(sign) }.map { $0.element.id } }
 
     /// rupas a graha needs to count as strong, Sun to Saturn
     static let requiredRupas = [6.5, 6.0, 5.0, 7.0, 6.5, 5.5, 5.0]
