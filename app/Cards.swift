@@ -14,7 +14,8 @@ enum Catalog {
     static let all: [CardInfo] =
         [CardInfo(id: "birth", title: "Birth data", keywords: "name date time place enter", wide: true)]
         + (0..<16).map { CardInfo(id: "chart:\($0)", title: $0 == 0 ? "Rasi chart" : "\(Names.vargaCodes[$0]) \(Names.vargas[$0])", keywords: "\(Names.vargaCodes[$0]) varga divisional chart", wide: false) }
-        + [CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
+        + [CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
+           CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
            CardInfo(id: "timeline", title: "Vimshottari timeline", keywords: "dasha graph periods zoom", wide: true),
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
@@ -55,7 +56,9 @@ struct Workspace: View {
                     if Catalog.info(run[0]).wide {
                         Card(id: run[0])
                     } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 250, maximum: 420), spacing: 14)], alignment: .leading, spacing: 14) {
+                        // up to three charts share one row whatever the width; a longer run flows into as many columns as fit
+                        LazyVGrid(columns: run.count <= 3 ? Array(repeating: GridItem(.flexible(minimum: 150, maximum: 420), spacing: 14, alignment: .top), count: run.count)
+                                                          : [GridItem(.adaptive(minimum: 240, maximum: 420), spacing: 14, alignment: .top)], alignment: .leading, spacing: 14) {
                             ForEach(run, id: \.self) { Card(id: $0) }
                         }
                     }
@@ -100,7 +103,10 @@ struct Card: View {
         if id == "birth" {
             BirthForm()
         } else if let chart = store.chart {
-            if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
+            if id == "moon" {
+                // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house
+                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true))
+            } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
                 ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga))
             } else {
                 switch id {
@@ -123,8 +129,8 @@ struct Card: View {
     }
 
     /// Birth positions in a varga, with the sky's positions beside them while the desk stands away from the birth.
-    private func marks(_ chart: Chart, _ varga: Int) -> [Int: [ChartMark]] {
-        var bySign: [Int: [ChartMark]] = [chart.asc.vargas[varga]: [ChartMark(code: "As", label: "As")]]
+    private func marks(_ chart: Chart, _ varga: Int, lagnaLabel: Bool = false) -> [Int: [ChartMark]] {
+        var bySign: [Int: [ChartMark]] = [chart.asc.vargas[varga]: [ChartMark(code: "As", label: "As", sign: lagnaLabel ? chart.asc.vargas[varga] : nil)]]
         for g in chart.grahas {
             let back = g.retro && g.id != "Ra" && g.id != "Ke", retro = back ? "℞" : ""
             bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id)\(retro) \(Int(g.deg))°" : g.id + retro, retro: back))

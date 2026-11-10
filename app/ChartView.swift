@@ -32,6 +32,8 @@ struct ChartMark: Identifiable {
     var transit = false
     /// retrograde: the label is underlined
     var retro = false
+    /// the sign a click on this mark picks, when it is not a graha (the lagna's own sign)
+    var sign: Int? = nil
     var id: String { (transit ? "t-" : "") + code }
 }
 
@@ -65,7 +67,7 @@ struct ChartView: View {
     }
 
     private func label(_ mark: ChartMark, size: CGFloat) -> some View {
-        let pick: Pick = mark.code == "As" ? .sign(ascSign) : .graha(mark.code)
+        let pick: Pick = mark.code == "As" ? .sign(mark.sign ?? ascSign) : .graha(mark.code)
         let chosen = store.pick?.graha == mark.code, near = store.hover?.graha == mark.code
         return Text(mark.label)
             .font(.system(size: size, weight: mark.transit ? .regular : .medium))

@@ -20,6 +20,7 @@ enum Help {
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {
+        case "moon": return "The birth chart counted from the Moon's sign in place of the lagna. Read beside the birth chart: what holds from both is firm. “As” still marks the lagna's sign."
         case "birth": return "Date as year-month-day, time on the 24-hour clock at the birthplace. Type a place and press Look up place to fill latitude, longitude and time zone. Every card recalculates as you type."
         case "grahas": return "One row per graha: its sign, its exact degree within the sign, its nakshatra (one of 27 lunar mansions) and how it is placed. Hover a column heading for what it means."
         case "timeline": return "Life as a sequence of graha periods. The top row is the mahadasha; the rows below divide it further. The blue line is the moment in the time bar. Narrow the span to see finer periods."

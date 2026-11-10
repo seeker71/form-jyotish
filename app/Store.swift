@@ -45,7 +45,7 @@ final class Feed {
 final class Store: ObservableObject {
     static let workspaces = ["Overview", "Vargas", "Dasha", "Strength", "KP", "Transits"]
     static let standardLayout: [String: [String]] = [
-        "Overview": ["birth", "chart:0", "chart:5", "grahas", "timeline"],
+        "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["timeline", "dashas"],
         "Strength": ["shadbala", "ashtakavarga"],
@@ -84,7 +84,15 @@ final class Store: ObservableObject {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         file = folder.appendingPathComponent("charts.json")
         workspace = defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Overview"
-        layout = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
+        var saved = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
+        // a layout saved before the Chandra chart existed gains it once, beside the navamsa
+        if !defaults.bool(forKey: "addedMoonCard"), var overview = saved["Overview"], !overview.contains("moon") {
+            overview.insert("moon", at: (overview.firstIndex(of: "chart:5") ?? overview.firstIndex(of: "chart:0") ?? -1) + 1)
+            saved["Overview"] = overview
+            defaults.set(try? JSONEncoder().encode(saved), forKey: "layout")
+        }
+        defaults.set(true, forKey: "addedMoonCard")
+        layout = saved
         node = defaults.string(forKey: "node") ?? "mean"
         ayanamsa = defaults.string(forKey: "ayanamsa") ?? "lahiri"
         style = ChartStyle(rawValue: defaults.string(forKey: "style") ?? "") ?? .south
