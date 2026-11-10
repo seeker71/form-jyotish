@@ -297,6 +297,9 @@ struct ChartSettings: View {
         VStack(alignment: .leading, spacing: 6) {
             Button { store.add() } label: { Label("New chart", systemImage: "plus") }
             Button { updater.check(byHand: true) } label: { Label("Check for updates", systemImage: "arrow.down.circle") }
+            // the running build, in plain sight beside the button that asks for a newer one
+            Text((Bundle.main.infoDictionary?["CFBundleVersion"] as? String).map { "This is build \($0)" } ?? "Running from source")
+                .font(.callout).foregroundStyle(.primary).help("The build of Form Jyotish that is running")
             notice
                 .help("Ask GitHub now whether a newer build is published. A newer build is fetched and installs at the next start.")
                 .help("Add a chart for another person or moment")
@@ -318,9 +321,6 @@ struct ChartSettings: View {
         }
         .controlSize(.small)
         .padding(.horizontal, 10).padding(.bottom, 8)
-        .overlay(alignment: .bottomTrailing) {
-            if let build = Updater.build { Text("Build \(build)").font(.caption2).foregroundStyle(.tertiary).padding(.trailing, 8).padding(.bottom, 4).help("The build of Form Jyotish that is running") }
-        }
     }
 }
 
