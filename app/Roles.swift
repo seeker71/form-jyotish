@@ -115,7 +115,26 @@ struct LifeEvent: Codable, Identifiable, Hashable {
 struct EventsCard: View {
     @EnvironmentObject var store: Store
     let chart: Chart
+    /// the slow grahas' places on each event's day, read from the engine once per date
+    @State private var skies: [String: String] = [:]
 
+    /// Where Saturn, Jupiter and Rahu stood that day, counted from the birth lagna and the birth Moon.
+    private func readSky(_ date: String, _ day: Double) {
+        guard skies[date] == nil, let birth = store.birth, let moon = chart.graha("Mo") else { return }
+        let engine = store.engine, node = store.node, ayanamsa = store.ayanamsa, natal = chart
+        let hours = Double(store.zone.secondsFromGMT(for: Names.date(julianDay: day))) / 3600
+        Task.detached {
+            guard let sky = try? engine.chart(julianDay: day, latitude: birth.latitude, longitude: birth.longitude, node: node, ayanamsa: ayanamsa, zoneHours: hours) else { return }
+            let words = ["Sa", "Ju", "Ra"].compactMap { code -> String? in
+                guard let g = sky.graha(code) else { return nil }
+                let fromMoon = (g.sign - moon.sign + 12) % 12 + 1
+                var text = "\(Names.lords[code] ?? code) in \(Names.signs[g.sign]), the \(Chart.ordinal(natal.house(ofSign: g.sign))) from the lagna and the \(Chart.ordinal(fromMoon)) from the Moon"
+                if code == "Sa", [12, 1, 2].contains(fromMoon) { text += " (Sade Sati)" }
+                return text
+            }.joined(separator: "; ")
+            await MainActor.run { skies[date] = "In the sky that day: " + words + "." }
+        }
+    }
     private func julianDay(_ text: String) -> Double? {
         let parts = text.split(separator: "-").compactMap { Int($0) }
         guard parts.count == 3, (1...12).contains(parts[1]), (1...31).contains(parts[2]) else { return nil }
@@ -152,11 +171,14 @@ struct EventsCard: View {
                                     Text("age \(Vimshottari.span(days: day - chart.jd))").foregroundStyle(.secondary)
                                     Button("Go there") { store.go(to: day) }.controlSize(.small).help("Move the whole desk to this day")
                                 }
-                                Text(running.prefix(2).map { p in
+                                // the antardasha's lord is said once when it is the mahadasha's own
+                                Text(running.prefix(2).enumerated().filter { $0.offset == 0 || $0.element.lord != running[0].lord }.map(\.element).map { p in
                                     let ruled = chart.housesRuled(by: p.lord), at = chart.graha(p.lord).map { chart.house(ofSign: $0.sign) }
                                     return "\(name(p.lord)) \(ruled.isEmpty ? "rules no house" : "rules the " + ruled.map(Chart.ordinal).joined(separator: " and "))\(at.map { ", stands in the \(Chart.ordinal($0))" } ?? "")"
                                 }.joined(separator: ". ") + ".")
                                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                if let sky = skies[event.date] { Text(sky).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                                Color.clear.frame(height: 0).onAppear { readSky(event.date, day) }.onChanged(of: event.date) { readSky(event.date, day) }
                             }
                         } else if !event.date.isEmpty {
                             Text("The date reads as year-month-day, such as 1999-06-21.").font(.callout).foregroundStyle(.orange)
