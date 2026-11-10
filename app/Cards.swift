@@ -20,6 +20,7 @@ enum Catalog {
            CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
            CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
            CardInfo(id: "timeline", title: "Vimshottari timeline", keywords: "dasha graph periods zoom", wide: true),
+           CardInfo(id: "dasha-context", title: "The running period in context", keywords: "dasha now current mahadasha antardasha lords meaning transit sade sati", wide: true),
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
            CardInfo(id: "transit-dates", title: "Transit dates", keywords: "gochara ingress station retrograde sade sati exact dates events", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
@@ -122,6 +123,7 @@ struct Card: View {
                 case "houses": HousesCard(chart: chart)
                 case "grahas": GrahaTable(chart: chart)
                 case "timeline": DashaTimeline(chart: chart)
+                case "dasha-context": DashaContext(chart: chart)
                 case "dashas": DashaList(chart: chart)
                 case "shadbala": ShadbalaTable(chart: chart)
                 case "ashtakavarga": AshtakavargaTable(chart: chart)
