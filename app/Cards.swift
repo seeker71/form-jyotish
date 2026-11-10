@@ -59,7 +59,20 @@ struct Workspace: View {
         return result
     }
 
+    /// Rows of charts side by side. Up to three share one row whatever the width; a longer run takes as many
+    /// to a row as the width holds. The count comes from one reading of the width, so the layout settles in
+    /// one pass on every macOS the app runs on.
+    private func rows(_ run: [String], width: CGFloat) -> [[String]] {
+        let fit = max(1, min(4, Int((width - 32 + 14) / (240 + 14))))
+        let perRow = run.count <= 3 ? run.count : fit
+        return stride(from: 0, to: run.count, by: perRow).map { Array(run[$0..<min($0 + perRow, run.count)]) }
+    }
+
     var body: some View {
+        GeometryReader { geo in content(width: geo.size.width) }
+    }
+
+    private func content(width: CGFloat) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 if let problem = store.problem { Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
@@ -78,10 +91,13 @@ struct Workspace: View {
                     if Catalog.info(run[0]).wide {
                         Card(id: run[0])
                     } else {
-                        // up to three charts share one row whatever the width; a longer run flows into as many columns as fit
-                        LazyVGrid(columns: run.count <= 3 ? Array(repeating: GridItem(.flexible(minimum: 150, maximum: 420), spacing: 14, alignment: .top), count: run.count)
-                                                          : [GridItem(.adaptive(minimum: 240, maximum: 420), spacing: 14, alignment: .top)], alignment: .leading, spacing: 14) {
-                            ForEach(run, id: \.self) { Card(id: $0) }
+                        let lines = rows(run, width: width), perRow = lines.first?.count ?? 1
+                        ForEach(lines, id: \.self) { line in
+                            HStack(alignment: .top, spacing: 14) {
+                                ForEach(line, id: \.self) { Card(id: $0).frame(maxWidth: 420) }
+                                // a short last row keeps the widths of the rows above it
+                                ForEach(0..<(perRow - line.count), id: \.self) { _ in Color.clear.frame(maxWidth: 420, maxHeight: 1) }
+                            }
                         }
                     }
                 }
