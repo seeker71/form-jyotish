@@ -95,7 +95,12 @@ final class Store: ObservableObject {
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("FormJyotish")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         file = folder.appendingPathComponent("charts.json")
-        workspace = defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Guide"
+        // A run that did not end cleanly (a force quit, a window that stopped answering) opens on the Guide,
+        // so no page can hold the app closed to its own update.
+        let endedCleanly = !defaults.bool(forKey: "running")
+        workspace = endedCleanly ? defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Guide" : "Guide"
+        defaults.set(true, forKey: "running")
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in UserDefaults.standard.set(false, forKey: "running") }
         var saved = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
         // A saved layout gains each card that has since joined a workspace's standard set, once: the cards
         // already offered are remembered, so a card the person removed stays removed.

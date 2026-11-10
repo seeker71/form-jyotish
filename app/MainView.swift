@@ -285,6 +285,9 @@ struct ChartSettings: View {
         .controlSize(.small)
         .padding(.horizontal, 10).padding(.bottom, 8)
         .background(.bar)
+        .overlay(alignment: .bottomTrailing) {
+            if let build = Updater.build { Text("Build \(build)").font(.caption2).foregroundStyle(.tertiary).padding(.trailing, 8).padding(.bottom, 4).help("The build of Form Jyotish that is running") }
+        }
     }
 }
 
