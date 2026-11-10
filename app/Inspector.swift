@@ -36,10 +36,18 @@ struct Inspector: View {
         .foregroundStyle(.secondary)
     }
 
-    private func fact(_ name: String, _ value: String) -> some View {
+    /// One fact: its name and its value. Both can be clicked: the name says what the term means, the value
+    /// what this particular reading means (`about`), or the term again where there is no more to say.
+    private func fact(_ name: String, _ value: String, about: Explanation? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(name).foregroundStyle(.secondary).frame(width: 84, alignment: .leading).help(Help.term(name) ?? "")
-            Text(value).textSelection(.enabled)
+            Text(name).foregroundStyle(.secondary).underline(true, color: Color.secondary.opacity(0.35)).frame(width: 84, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture { store.explanation = Lore.explain(term: name, chart: store.chart) }
+                .help("Click for what \(name.lowercased()) means")
+            Text(value).underline(about != nil, color: Color.accentColor.opacity(0.6))
+                .contentShape(Rectangle())
+                .onTapGesture { store.explanation = about ?? Lore.explain(term: name, chart: store.chart) }
+                .help(about == nil ? "Click for what \(name.lowercased()) means" : "Click for what this means")
         }
     }
 
@@ -71,10 +79,11 @@ struct Inspector: View {
             let moon = chart.graha("Mo")?.sign ?? 0
             Text("\(g.name) · \(Names.lords[g.id] ?? g.id)").font(.title3).fontWeight(.semibold).foregroundStyle(Tint.graha(g.id))
             note(Help.graha(g.id))
-            fact("Rasi", "\(Names.signs[g.sign]) \(Names.dms(g.deg))")
-            fact("House", "\(house(g.sign, from: chart.asc.sign)) from the lagna, \(house(g.sign, from: moon)) from the Moon")
-            fact("Nakshatra", "\(g.nak_name), pada \(g.pada)")
-            if let status = g.status { fact("Dignity", status + (g.combust == true ? " · combust" : "")) }
+            let who = Names.lords[g.id] ?? g.name
+            fact("Rasi", "\(Names.signs[g.sign]) \(Names.dms(g.deg))", about: Lore.explain(sign: g.sign, in: chart))
+            fact("House", "\(house(g.sign, from: chart.asc.sign)) from the lagna, \(house(g.sign, from: moon)) from the Moon", about: Lore.explain(house: house(g.sign, from: chart.asc.sign), fromMoon: house(g.sign, from: moon)))
+            fact("Nakshatra", "\(g.nak_name), pada \(g.pada)", about: Lore.explain(nakshatra: g.nak, pada: g.pada, of: who))
+            if let status = g.status { fact("Dignity", status + (g.combust == true ? " · combust" : ""), about: Lore.explain(dignity: status, combust: g.combust == true, of: who, sign: g.sign)) }
             fact("Motion", String(format: "%+.4f° a day", g.speed) + (g.retro && g.id != "Ra" && g.id != "Ke" ? " · retrograde" : ""))
             if let index = chart.grahas.prefix(7).firstIndex(where: { $0.id == code }) {
                 fact("Shadbala", String(format: "%.2f rupas · %.2f × required", chart.rupas(index), chart.strengthRatio(index)))
@@ -145,8 +154,8 @@ struct Inspector: View {
         let here = (chart.grahas + chart.outer).filter { $0.sign == sign }
         Text("\(Names.signs[sign]) · \(Names.signsWestern[sign])").font(.title3).fontWeight(.semibold)
         note(Lore.sign(sign))
-        fact("House", "\(house(sign, from: chart.asc.sign)) from the lagna, \(house(sign, from: moon)) from the Moon")
-        if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)") }
+        fact("House", "\(house(sign, from: chart.asc.sign)) from the lagna, \(house(sign, from: moon)) from the Moon", about: Lore.explain(house: house(sign, from: chart.asc.sign), fromMoon: house(sign, from: moon)))
+        if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)", about: Lore.explain(nakshatra: chart.asc.nak, pada: chart.asc.pada, of: "The lagna")) }
         HStack { Text("Lord").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); chip(lord) }
         fact("Bindus", "\(chart.sarva[sign]) in the sarvashtakavarga (337 over twelve signs)")
         fact("Sign aspects", chart.jaimini.glances[sign].map { Names.signs[$0] }.joined(separator: ", "))

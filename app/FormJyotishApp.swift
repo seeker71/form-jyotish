@@ -92,7 +92,7 @@ struct FormJyotishApp: App {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 print("probe: clicked What is Shadbala? at \(Int(spot.midX)),\(Int(spot.midY)) -> explained \(store.lookedUp ?? "nothing"), palette \(store.paletteShown ? "still open" : "closed")")
-                exit(store.lookedUp == "Shadbala" ? 0 : 1)
+                exit(store.explanation?.title == "Shadbala" ? 0 : 1)
             }
         }
     }

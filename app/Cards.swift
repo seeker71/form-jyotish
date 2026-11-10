@@ -50,10 +50,13 @@ enum Catalog {
 struct Workspace: View {
     @EnvironmentObject var store: Store
 
+    /// a card that takes a row to itself: by its nature, or a chart the reader has enlarged
+    private func wide(_ id: String) -> Bool { Catalog.info(id).wide || store.enlarged.contains(id) }
+
     private var runs: [[String]] {
         var result: [[String]] = []
         for id in store.cards {
-            if !Catalog.info(id).wide, let last = result.last, let first = last.first, !Catalog.info(first).wide { result[result.count - 1].append(id) }
+            if !wide(id), let last = result.last, let first = last.first, !wide(first) { result[result.count - 1].append(id) }
             else { result.append([id]) }
         }
         return result
@@ -92,8 +95,9 @@ struct Workspace: View {
                     .frame(maxWidth: .infinity).padding(40)
                 }
                 ForEach(runs, id: \.self) { run in
-                    if Catalog.info(run[0]).wide {
-                        Card(id: run[0]).id(run[0])
+                    if wide(run[0]) {
+                        // an enlarged chart is as wide as reads well, and no wider
+                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : 700)
                     } else {
                         let lines = rows(run, width: width), perRow = lines.first?.count ?? 1
                         ForEach(lines, id: \.self) { line in
@@ -124,6 +128,12 @@ struct Card: View {
             HStack {
                 Text(Catalog.info(id).title).font(.headline).help(Help.card(id))
                 Spacer()
+                if !Catalog.info(id).wide {
+                    Button { store.toggleEnlarged(id) } label: { Image(systemName: store.enlarged.contains(id) ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") }
+                        .buttonStyle(.plain).foregroundStyle(.secondary)
+                        .accessibilityLabel(store.enlarged.contains(id) ? "Make this chart smaller" : "Make this chart larger")
+                        .help(store.enlarged.contains(id) ? "Draw this chart at its usual size, beside the others" : "Draw this chart large, with larger letters, on a row of its own")
+                }
                 Menu {
                     Button("Move earlier") { store.moveCard(id, by: -1) }
                     Button("Move later") { store.moveCard(id, by: 1) }

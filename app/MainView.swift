@@ -38,7 +38,7 @@ struct MainView: View {
             }
         }
         .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }
-        .overlay { if let term = store.lookedUp { Explained(term: term) } }
+        .overlay { if let about = store.explanation { Explained(about: about) } }
         .onAppear { store.readNatal() }
     }
 
@@ -389,41 +389,3 @@ struct Zoomed<Content: View>: View {
     }
 }
 
-/// A word asked about, answered in the middle of the window where it cannot be missed.
-struct Explained: View {
-    @EnvironmentObject var store: Store
-    let term: String
-
-    var body: some View {
-        let entry = Glossary.entries(for: store.chart).first { $0.term == term }
-        ZStack {
-            Color.black.opacity(0.25).ignoresSafeArea().onTapGesture { store.lookedUp = nil }
-            VStack(alignment: .leading, spacing: 10) {
-                Text(term).font(.title2).fontWeight(.semibold)
-                if let entry {
-                    Text(entry.group).font(.caption).foregroundStyle(.secondary)
-                    Text(entry.words).font(.title3).fixedSize(horizontal: false, vertical: true)
-                    if !entry.here.isEmpty { Text(entry.here).foregroundStyle(Color.accentColor).fixedSize(horizontal: false, vertical: true) }
-                } else {
-                    Text("The glossary holds no entry under this name.").foregroundStyle(.secondary)
-                }
-                HStack(spacing: 10) {
-                    if let workspace = entry?.workspace { Button("Go to \(workspace)") { store.workspace = workspace; if let pick = entry?.pick { store.pick = pick }; store.lookedUp = nil } }
-                    else if let pick = entry?.pick { Button("Show in this chart") { store.pick = pick; store.lookedUp = nil } }
-                    Button("Open the glossary") {
-                        store.workspace = "Guide"; store.glossary = term; store.lookedUp = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { store.showCard = "glossary" }
-                    }
-                    Spacer()
-                    Button("Close") { store.lookedUp = nil }.keyboardShortcut(.cancelAction)
-                }
-                .padding(.top, 4)
-            }
-            .padding(20)
-            .frame(width: 520, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.15)))
-            .contentShape(RoundedRectangle(cornerRadius: 12)).onTapGesture { }
-        }
-    }
-}

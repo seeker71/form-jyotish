@@ -76,10 +76,15 @@ final class Store: ObservableObject {
     @Published var paletteShown = false
     /// what is typed into the glossary's search
     @Published var glossary = ""
+    /// charts drawn large, a row to themselves: the birth chart is, until told otherwise
+    @Published var enlarged: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "enlarged") ?? ["chart:0"]) { didSet { defaults.set(Array(enlarged), forKey: "enlarged") } }
+    func toggleEnlarged(_ id: String) { if enlarged.contains(id) { enlarged.remove(id) } else { enlarged.insert(id) } }
     /// what the palette opens with typed in: used by the palette's click witness
     var paletteSeed = ""
     /// a word asked about from the command palette: explained in the inspector, wherever the desk stands
-    @Published var lookedUp: String? = nil
+    @Published var lookedUp: String? = nil { didSet { if let lookedUp { explanation = Lore.explain(term: lookedUp, chart: chart) } } }
+    /// what a clicked fact means: shown on a card over the desk until closed
+    @Published var explanation: Explanation? = nil { didSet { if explanation == nil, lookedUp != nil { lookedUp = nil } } }
     /// a card the workspace is asked to bring into view
     @Published var showCard: String? = nil
     @Published var workspace: String { didSet { defaults.set(workspace, forKey: "workspace") } }

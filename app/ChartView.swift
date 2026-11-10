@@ -117,7 +117,7 @@ struct ChartView: View {
                         Path { p in p.move(to: CGPoint(x: 0, y: cell * 0.3)); p.addLine(to: CGPoint(x: cell * 0.3, y: 0)) }
                             .stroke(Color.accentColor, lineWidth: 2).allowsHitTesting(false)
                     }
-                    labels(sign, perRow: 2, size: max(9, side * 0.036)).padding(.top, side * 0.02)
+                    labels(sign, perRow: 2, size: max(10, side * 0.04)).padding(.top, side * 0.02)
                 }
                 .frame(width: cell, height: cell)
                 .offset(x: CGFloat(at.col) * cell, y: CGFloat(at.row) * cell)
@@ -174,7 +174,7 @@ struct ChartView: View {
                 let sign = (ascSign + house) % 12, centre = Self.northCentres[house], corner = Self.northCorners[house]
                 Text("\(sign + 1)").font(.system(size: max(8, side * 0.028))).foregroundStyle(.secondary).allowsHitTesting(false)
                     .position(x: (centre.x + (corner.x - centre.x) * 0.76) * side, y: (centre.y + (corner.y - centre.y) * 0.76) * side)
-                labels(sign, perRow: house % 3 == 0 ? 3 : [2, 4, 8, 10].contains(house) ? 1 : 2, size: max(9, side * (house % 3 == 0 ? 0.036 : 0.03)))
+                labels(sign, perRow: house % 3 == 0 ? 3 : [2, 4, 8, 10].contains(house) ? 1 : 2, size: max(10, side * (house % 3 == 0 ? 0.04 : 0.033)))
                     .position(x: centre.x * side, y: centre.y * side)
             }
             Text(title).font(.system(size: max(9, side * 0.03), weight: .semibold)).foregroundStyle(.secondary)
