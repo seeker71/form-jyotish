@@ -52,17 +52,27 @@ final class Updater: ObservableObject {
         } catch {
             return
         }
-        // the new build is opened once this process has gone, so it starts as any app does: in front, answering
+        relaunch(place)
+    }
+
+    /// The build of the copy that stands where this app was started from. It is ahead of the running window
+    /// when the app was replaced while open: by a copy dragged over it, or by a fresh build.
+    static func onDisk() -> Int? { build(of: Bundle.main.bundleURL) }
+
+    /// Leave, and open the app that stands at `place` once this process has gone, so it starts as any app
+    /// does: in front, answering. This ending is a clean one: the new build opens where the desk stood.
+    private static func relaunch(_ place: URL) -> Never {
         let open = Process()
         open.executableURL = URL(fileURLWithPath: "/bin/sh")
         open.arguments = ["-c", "while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.1; done; open \"$0\"", place.path]
         try? open.run()
-        // this ending is a clean one: the new build opens where the desk stood
         UserDefaults.standard.set(false, forKey: "running")
         exit(0)
     }
 
     func restartNow() {
+        // a newer copy already in place needs only the restart
+        if let current = Updater.build, let disk = Updater.onDisk(), disk > current { Updater.relaunch(Bundle.main.bundleURL) }
         Updater.installStagedAndRelaunch()
         state = .failed("The update could not be put in place. Move Form Jyotish to the Applications folder and start it again.")
     }
@@ -76,7 +86,9 @@ final class Updater: ObservableObject {
             if byHand { state = .failed("This copy runs from source and does not update itself.") }
             return
         }
-        if let waiting = Updater.build(of: Updater.staged), waiting > current { state = .ready(waiting) } else if byHand { state = .checking }
+        // what is newer is measured against the window that is running, not the copy on disk
+        if let disk = Updater.onDisk(), disk > current { state = .ready(disk) }
+        else if let waiting = Updater.build(of: Updater.staged), waiting > current { state = .ready(waiting) } else if byHand { state = .checking }
         let helper = Process()
         helper.executableURL = program
         helper.arguments = ["--update-helper"]
@@ -85,7 +97,9 @@ final class Updater: ObservableObject {
             Task { @MainActor in
                 switch outcome {
                 case .staged(let build): self.state = .ready(build)
-                case .current(let build): if byHand { self.state = .current(build) }
+                case .current(let build):
+                    // the helper speaks for the copy on disk: when that is ahead of this window, a restart is the update
+                    if build > current { self.state = .ready(build) } else if byHand { self.state = .current(current) }
                 case .failed(let why): self.state = .failed(why)
                 case .unreachable(let why): if byHand { self.state = .failed("GitHub could not be reached: \(why)") }
                 }
