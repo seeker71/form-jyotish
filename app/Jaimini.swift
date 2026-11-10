@@ -181,7 +181,10 @@ struct WorkspaceTabs: View {
                         .background(Capsule().fill(Color.accentColor.opacity(store.workspace == name ? 0.22 : 0)))
                         .contentShape(Capsule())
                         .help(Help.workspace(name))
-                        .background(GeometryReader { geo in Color.clear.onAppear { WorkspaceTabs.spots[name] = geo.frame(in: .global) } })
+                        .background(GeometryReader { geo in
+                            let place = geo.frame(in: .global)
+                            Color.clear.onAppear { WorkspaceTabs.spots[name] = place }.onChanged(of: place) { WorkspaceTabs.spots[name] = geo.frame(in: .global) }
+                        })
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 6)

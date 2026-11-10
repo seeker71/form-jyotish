@@ -8,6 +8,28 @@ struct Inspector: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                if let term = store.lookedUp, let entry = Glossary.entries(for: store.chart).first(where: { $0.term == term }) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(entry.term).font(.title3).fontWeight(.semibold)
+                            Spacer()
+                            Button { store.lookedUp = nil } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary).help("Close this explanation")
+                        }
+                        Text(entry.group).font(.caption).foregroundStyle(.secondary)
+                        Text(entry.words).fixedSize(horizontal: false, vertical: true)
+                        if !entry.here.isEmpty { Text(entry.here).font(.callout).foregroundStyle(Color.accentColor).fixedSize(horizontal: false, vertical: true) }
+                        HStack(spacing: 8) {
+                            if let pick = entry.pick { Button("Show in this chart") { store.pick = pick }.controlSize(.small) }
+                            Button("Open the glossary") {
+                                store.workspace = "Guide"; store.glossary = entry.term
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { store.showCard = "glossary" }
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.12)))
+                }
                 if let chart = store.chart {
                     switch store.pick {
                     case .graha(let code): grahaPanel(code, chart)

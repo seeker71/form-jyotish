@@ -54,16 +54,17 @@ struct FormJyotishApp: App {
     /// `FormJyotish --probe-tabs`: press each workspace tab with a real mouse event sent to the window, and say
     /// whether the workspace followed. A witness that the tabs answer clicks, not only accessibility presses.
     private func probeTabs() {
+        // with --probe-banner the update banner stands above the tabs, as it does after an update is fetched
+        if CommandLine.arguments.contains("--probe-banner") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { updater.state = .ready(999) } }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { print("probe: no window"); exit(1) }
             var held = 0
-            let spots = WorkspaceTabs.spots
             func press(_ index: Int) {
                 guard index < Store.workspaces.count else { print("probe: \(held) of \(Store.workspaces.count) tabs answered a click"); exit(held == Store.workspaces.count ? 0 : 1) }
                 let name = Store.workspaces[index]
-                guard let spot = spots[name] else { print("probe: \(name) reported no place"); press(index + 1); return }
-                // SwiftUI counts from the top of the room below the title bar; the window counts from its bottom edge
-                let point = NSPoint(x: spot.midX, y: window.contentLayoutRect.maxY - spot.midY)
+                guard let spot = WorkspaceTabs.spots[name] else { print("probe: \(name) reported no place"); press(index + 1); return }
+                // SwiftUI counts from the window's top edge once the window has settled; the window counts from its bottom
+                let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
                 for kind in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
                     if let event = NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { window.sendEvent(event) }
                 }
@@ -83,7 +84,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if CommandLine.arguments.contains("--probe-tabs") { probeTabs() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

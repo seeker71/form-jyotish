@@ -76,6 +76,7 @@ struct Workspace: View {
     static let narrowest: CGFloat = 560
 
     private func content(width: CGFloat, sideways: Bool) -> some View {
+        ScrollViewReader { reader in
         ScrollView(sideways ? [.vertical, .horizontal] : .vertical) {
             VStack(alignment: .leading, spacing: 14) {
                 if let problem = store.problem { Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
@@ -92,7 +93,7 @@ struct Workspace: View {
                 }
                 ForEach(runs, id: \.self) { run in
                     if Catalog.info(run[0]).wide {
-                        Card(id: run[0])
+                        Card(id: run[0]).id(run[0])
                     } else {
                         let lines = rows(run, width: width), perRow = lines.first?.count ?? 1
                         ForEach(lines, id: \.self) { line in
@@ -107,6 +108,8 @@ struct Workspace: View {
             }
             .padding(16)
             .frame(width: width, alignment: .leading)
+        }
+        .onChanged(of: store.showCard) { if let card = store.showCard { withAnimation { reader.scrollTo(card, anchor: .top) }; store.showCard = nil } }
         }
     }
 }

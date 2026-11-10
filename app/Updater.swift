@@ -52,10 +52,13 @@ final class Updater: ObservableObject {
         } catch {
             return
         }
+        // the new build is opened once this process has gone, so it starts as any app does: in front, answering
         let open = Process()
-        open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        open.arguments = ["-n", place.path]
+        open.executableURL = URL(fileURLWithPath: "/bin/sh")
+        open.arguments = ["-c", "while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.1; done; open \"$0\"", place.path]
         try? open.run()
+        // this ending is a clean one: the new build opens where the desk stood
+        UserDefaults.standard.set(false, forKey: "running")
         exit(0)
     }
 

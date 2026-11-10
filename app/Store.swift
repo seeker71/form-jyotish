@@ -76,6 +76,10 @@ final class Store: ObservableObject {
     @Published var paletteShown = false
     /// what is typed into the glossary's search
     @Published var glossary = ""
+    /// a word asked about from the command palette: explained in the inspector, wherever the desk stands
+    @Published var lookedUp: String? = nil
+    /// a card the workspace is asked to bring into view
+    @Published var showCard: String? = nil
     @Published var workspace: String { didSet { defaults.set(workspace, forKey: "workspace") } }
     @Published var layout: [String: [String]] { didSet { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } }
     /// how large the desk is drawn: 1 is the system's own text size

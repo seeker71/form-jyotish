@@ -24,7 +24,6 @@ struct MainView: View {
         } detail: {
             Zoomed(scale: store.textScale) { room in
                 VStack(spacing: 0) {
-                    updateBanner
                     WorkspaceTabs()
                     Divider()
                     HStack(spacing: 0) {
@@ -166,7 +165,7 @@ struct Palette: View {
         var list: [Command] = Store.workspaces.map { name in Command(id: "ws-\(name)", title: "Go to \(name)", keywords: "workspace", run: { store.workspace = name }) }
         list += Catalog.all.map { card in Command(id: "add-\(card.id)", title: "Add \(card.title)", keywords: card.keywords + " card", run: { store.addCard(card.id) }) }
         // looking something up: a term opens the glossary on it; a graha, sign or house is picked
-        list += Glossary.basics.map { entry in Command(id: "what-\(entry.term)", title: "What is \(entry.term)?", keywords: "glossary explain meaning define", run: { store.workspace = "Guide"; store.glossary = entry.term }) }
+        list += Glossary.basics.map { entry in Command(id: "what-\(entry.term)", title: "What is \(entry.term)?", keywords: "glossary explain meaning define", run: { store.lookedUp = entry.term }) }
         list += ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"].map { code in Command(id: "pick-\(code)", title: "Show \(Names.lords[code] ?? code)", keywords: "graha planet pick " + (store.chart?.graha(code)?.name ?? ""), run: { store.pick = .graha(code) }) }
         list += (0..<12).map { sign in Command(id: "pick-sign-\(sign)", title: "Show \(Names.signs[sign]) (\(Names.signsWestern[sign]))", keywords: "sign rasi pick", run: { store.pick = .sign(sign) }) }
         if let chart = store.chart {
@@ -269,6 +268,23 @@ struct ChartSettings: View {
         Binding(get: { store[keyPath: path] }, set: { if $0 != store[keyPath: path] { store[keyPath: path] = $0 } })
     }
 
+    /// What the updater has to say, here in the sidebar: the desk itself never moves for it.
+    @ViewBuilder private var notice: some View {
+        switch updater.state {
+        case .idle: EmptyView()
+        case .checking: Text("Looking for a newer build…").font(.caption).foregroundStyle(.secondary)
+        case .current(let build): Text("Build \(build) is the latest.").font(.caption).foregroundStyle(.secondary)
+        case .fetching(let build): Text("Fetching build \(build)…").font(.caption).foregroundStyle(.secondary)
+        case .ready(let build):
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Build \(build) is ready. It installs at the next start.").font(.caption).fixedSize(horizontal: false, vertical: true)
+                Button("Restart now") { updater.restartNow() }
+            }
+        case .failed(let why):
+            Text(why).font(.caption).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private func row<Content: View>(_ title: String, _ help: String, @ViewBuilder _ picker: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(title).font(.caption).foregroundStyle(.secondary)
@@ -281,6 +297,7 @@ struct ChartSettings: View {
         VStack(alignment: .leading, spacing: 6) {
             Button { store.add() } label: { Label("New chart", systemImage: "plus") }
             Button { updater.check(byHand: true) } label: { Label("Check for updates", systemImage: "arrow.down.circle") }
+            notice
                 .help("Ask GitHub now whether a newer build is published. A newer build is fetched and installs at the next start.")
                 .help("Add a chart for another person or moment")
             Divider()
