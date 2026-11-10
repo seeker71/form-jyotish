@@ -69,22 +69,16 @@ struct Workspace: View {
         return max(150, min(share, height - (store.showHelp ? 150 : 80)))
     }
 
-    /// How many charts share a row. Everything is read from the window: the smallest chart that still reads
-    /// well, the largest that shows whole, and between them the size the reader set with the slider. As many
-    /// charts stand side by side as can be at least that size.
+    /// How many charts share a row, read from the window alone: as many as can each be a size that reads
+    /// well. A wider window holds more of them; a narrow one stacks them.
     private func columns(for count: Int, width: CGFloat, height: CGFloat) -> Int {
-        let smallest: CGFloat = 185, largest = cardWidth(columns: 1, width: width, height: height)
-        let wanted = smallest + max(0, largest - smallest) * store.chartSize
-        var columns = min(count, 8)
-        while columns > 1 && cardWidth(columns: columns, width: width, height: height) < wanted - 0.5 { columns -= 1 }
-        return columns
+        let readable: CGFloat = 230
+        return max(1, min(count, Int((width - 32 + 14) / (readable + 14))))
     }
 
     private func rows(_ run: [String], columns: Int) -> [[String]] {
         stride(from: 0, to: run.count, by: columns).map { Array(run[$0..<min($0 + columns, run.count)]) }
     }
-
-    private var hasCharts: Bool { store.cards.contains { !Catalog.info($0).wide } }
 
     var body: some View {
         // below this width the cards keep their shape and the workspace scrolls sideways
@@ -101,15 +95,6 @@ struct Workspace: View {
                 if store.showHelp {
                     Label(Help.workspace(store.workspace), systemImage: "lightbulb").font(.callout).foregroundStyle(.secondary)
                 }
-                if hasCharts {
-                    HStack(spacing: 8) {
-                        Text("Chart size").font(.callout).foregroundStyle(.secondary)
-                        Image(systemName: "square.grid.3x3").foregroundStyle(.secondary)
-                        Slider(value: $store.chartSize, in: 0...1).frame(width: 180).accessibilityLabel("Chart size")
-                        Image(systemName: "square").foregroundStyle(.secondary)
-                    }
-                    .help("Drag left for more charts side by side, right for fewer and larger. The largest is the size that shows whole in this window; make the window bigger and the charts grow with it.")
-                }
                 if store.cards.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "rectangle.dashed").font(.largeTitle).foregroundStyle(.secondary)
@@ -120,7 +105,7 @@ struct Workspace: View {
                 }
                 ForEach(runs, id: \.self) { run in
                     if wide(run[0]) {
-                        // an enlarged chart is the largest that shows whole in the window
+                        // an enlarged chart is the largest that shows whole in the window: never wider or taller than the room drawn
                         Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : cardWidth(columns: 1, width: width, height: height))
                     } else {
                         let perRow = columns(for: run.count, width: width, height: height), each = cardWidth(columns: perRow, width: width, height: height)
