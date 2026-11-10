@@ -1,0 +1,56 @@
+//////////////////////////////////////////////////////////////////////
+// spk.bml — read a JPL planetary ephemeris (DAF/SPK, little-endian, type 2 Chebyshev) from its bytes.
+//
+// The file is read where it rests: the file record names the first summary record, each summary names
+// one segment (target, centre, the double-word addresses of its data), and a segment's last four doubles
+// say how its records are laid out. A state is one record's Chebyshev sums.
+//
+//   js-segments(path)          every segment: [target, centre, type, start, end, et0, et1]
+//   js-find(segs, t, c, et)    the segment that carries target t about centre c at et; nothing() if none
+//   js-state(path, seg, et)    [x, y, z, vx, vy, vz] in km and km/s, ICRF axes, et in TDB seconds past J2000
+//////////////////////////////////////////////////////////////////////
+section [form.bml] {
+ class JySpk {
+  def js-i32(s, at) = str_byte_at(s, at) + 256 * str_byte_at(s, at + 1) + 65536 * str_byte_at(s, at + 2) + 16777216 * str_byte_at(s, at + 3);
+  // an IEEE-754 double from eight little-endian bytes
+  def js-f64(s, at) {
+   let b7 = str_byte_at(s, at + 7); let b6 = str_byte_at(s, at + 6);
+   let exp = (b7 % 128) * 16 + b6 / 16;
+   let man = (b6 % 16) * 281474976710656 + str_byte_at(s, at + 5) * 1099511627776 + str_byte_at(s, at + 4) * 4294967296
+           + str_byte_at(s, at + 3) * 16777216 + str_byte_at(s, at + 2) * 65536 + str_byte_at(s, at + 1) * 256 + str_byte_at(s, at);
+   let mag = exp == 0 ? 0.0 : (1.0 + (1.0 * man) / 4503599627370496.0) * math_pow(2.0, 1.0 * (exp - 1023));
+   b7 >= 128 ? 0.0 - mag : mag;
+  }
+
+  def js-segments(path) = js-summary-records(path, js-i32(host_file_read_slice(path, 0, 1024), 76), []);
+  def js-summary-records(path, rec, acc) = rec <= 0 ? acc : js-summary-record(path, host_file_read_slice(path, (rec - 1) * 1024, 1024), acc);
+  def js-summary-record(path, s, acc) = js-summary-records(path, floor(js-f64(s, 0)), append(acc, js-summaries(s, 0, floor(js-f64(s, 16)))));
+  def js-summaries(s, i, n) = i >= n ? [] : cons(js-summary(s, 24 + 40 * i), js-summaries(s, i + 1, n));
+  def js-summary(s, at) = [js-i32(s, at + 16), js-i32(s, at + 20), js-i32(s, at + 28), js-i32(s, at + 32), js-i32(s, at + 36), js-f64(s, at), js-f64(s, at + 8)];
+
+  def js-find(segs, target, center, et) {
+   nil?(segs) ? nothing() :
+   segs[0][0] == target && segs[0][1] == center && segs[0][5] <= et && et <= segs[0][6] ? segs[0] : js-find(segs[1:], target, center, et);
+  }
+
+  // one Chebyshev series and its derivative in tau: [sum, dsum]
+  def js-cheb(rec, at, n, tau) = js-cheb-go(rec, at, n, tau, 1, 1.0, tau, 0.0, 1.0, js-f64(rec, at) + js-f64(rec, at + 8) * tau, js-f64(rec, at + 8));
+  def js-cheb-go(rec, at, n, tau, k, t0, t1, d0, d1, sum, dsum) {
+   if k + 1 >= n then [sum, dsum] else {
+    let t2 = 2.0 * tau * t1 - t0; let d2 = 2.0 * t1 + 2.0 * tau * d1 - d0; let c = js-f64(rec, at + 8 * (k + 1));
+    js-cheb-go(rec, at, n, tau, k + 1, t1, t2, d1, d2, sum + c * t2, dsum + c * d2);
+   };
+  }
+
+  def js-state(path, seg, et) {
+   let tail = host_file_read_slice(path, (seg[4] - 4) * 8, 32);
+   let init = js-f64(tail, 0); let intlen = js-f64(tail, 8); let rsize = floor(js-f64(tail, 16)); let n = floor(js-f64(tail, 24));
+   let raw = floor((et - init) / intlen); let i = raw < 0 ? 0 : raw >= n ? n - 1 : raw;
+   let rec = host_file_read_slice(path, (seg[3] - 1 + i * rsize) * 8, rsize * 8);
+   let ncoef = (rsize - 2) / 3; let radius = js-f64(rec, 8); let tau = (et - js-f64(rec, 0)) / radius;
+   let x = js-cheb(rec, 16, ncoef, tau); let y = js-cheb(rec, 16 + 8 * ncoef, ncoef, tau); let z = js-cheb(rec, 16 + 16 * ncoef, ncoef, tau);
+   [x[0], y[0], z[0], x[1] / radius, y[1] / radius, z[1] / radius];
+  }
+ }
+ 0;
+}

@@ -1,0 +1,26 @@
+// Witness: the engine's apparent geocentric longitudes against NASA JPL Horizons.
+//
+// Reference: Horizons observer table, geocentric (500@399), quantity 31 (ObsEcLon, ecliptic of date),
+// 1985-Jun-15 06:30 UT, read 2026-11-10. Horizons answers on the true equinox of date, so the leading
+// four terms of the nutation in longitude are added to the engine's mean-of-date reading before the two meet.
+//   ./fkwu witness/positions-run.bml   ->  one verdict line; "green" when every body is within 0.3 arcsec
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+section [form.bml] {
+ def wp-rows() = [["Sun", 10, 84.1017604], ["Moon", 301, 47.9039603], ["Mars", 4, 93.8781750], ["Mercury", 1, 93.3599429],
+  ["Jupiter", 5, 316.7932762], ["Venus", 2, 38.3775752], ["Saturn", 6, 232.7211170]];
+ def wp-nutation(t) {
+  let node = 125.04452 - 1934.136261 * t; let sun = 280.4665 + 36000.7698 * t; let moon = 218.3165 + 481267.8813 * t;
+  (0.0 - 17.20 * jn-sind(node) - 1.32 * jn-sind(2.0 * sun) - 0.23 * jn-sind(2.0 * moon) + 0.21 * jn-sind(2.0 * node)) / 3600.0;
+ }
+ def wp-abs(x) = x < 0.0 ? 0.0 - x : x;
+ def wp-max(xs) = nil?(xs) ? 0.0 : (xs[0] > wp-max(xs[1:]) ? xs[0] : wp-max(xs[1:]));
+ def wp-run(path, jd) {
+  let segs = js-segments(path); let shift = wp-nutation(sk-century(jd));
+  let gaps = wp-rows() |> map(r => wp-abs(jn-norm180(sk-tropical(path, segs, r[1], jd)[0] + shift - r[2]) * 3600.0));
+  let held = len(gaps |> filter(g => g < 0.3));
+  "positions witness: " + (held == len(gaps) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(gaps)) + " within 0.3 arcsec, widest gap " + value_str(wp-max(gaps)) + " arcsec";
+ }
+ print_str(wp-run("data/de440s.bsp", 2446231.7708333333));
+}

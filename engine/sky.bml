@@ -1,0 +1,108 @@
+//////////////////////////////////////////////////////////////////////
+// sky.bml — where the grahas stand, seen from the Earth's centre, in the sidereal zodiac.
+//
+// Time comes in as a Julian day in UTC. Positions are apparent: light-time and annual aberration are
+// applied, then the direction is turned from the ICRF equator to the J2000 ecliptic and precessed to the
+// mean ecliptic and equinox of the date (IAU 2006 angles). The ayanamsa is Lahiri (Chitrapaksha), carried
+// as its mean value: nutation enters a true longitude and a true ayanamsa alike and leaves their difference.
+//
+//   sk-et(jd)                       TDB seconds past J2000 for a UTC Julian day
+//   sk-ayanamsa(jd)                 Lahiri ayanamsa in degrees
+//   sk-tropical(path, segs, id, jd) [longitude, latitude] of date, degrees; id is an SPK body number
+//   sk-sidereal(path, segs, id, jd) sidereal longitude, degrees
+//   sk-node(path, segs, jd, kind)   Rahu's sidereal longitude; kind "mean" or "true"
+//   sk-ascendant(jd, lat, lon)      [sidereal ascendant, sidereal midheaven], degrees; lon east positive
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+import engine/spk.bml;
+section [form.bml] {
+ class JySky {
+  // ---- time ----
+  // TAI-UTC from 1972 on: [first UTC Julian day, seconds], newest first
+  def sk-leaps() = [[2457754.5, 37], [2457204.5, 36], [2456109.5, 35], [2454832.5, 34], [2453736.5, 33], [2451179.5, 32], [2450630.5, 31],
+   [2450083.5, 30], [2449534.5, 29], [2449169.5, 28], [2448804.5, 27], [2448257.5, 26], [2447892.5, 25], [2447161.5, 24], [2446247.5, 23],
+   [2445516.5, 22], [2445151.5, 21], [2444786.5, 20], [2444239.5, 19], [2443874.5, 18], [2443509.5, 17], [2443144.5, 16], [2442778.5, 15],
+   [2442413.5, 14], [2442048.5, 13], [2441683.5, 12], [2441499.5, 11], [2441317.5, 10]];
+  def sk-leap(rows, jd) = nil?(rows) ? nothing() : jd >= rows[0][0] ? rows[0][1] : sk-leap(rows[1:], jd);
+  // before 1972: Espenak and Meeus' polynomials for TT-UT by decimal year
+  def sk-delta-old(y) {
+   y >= 1961.0 ? sk-poly(y - 1975.0, [45.45, 1.067, 0.0 - 1.0 / 260.0, 0.0 - 1.0 / 718.0]) :
+   y >= 1941.0 ? sk-poly(y - 1950.0, [29.07, 0.407, 0.0 - 1.0 / 233.0, 1.0 / 2547.0]) :
+   y >= 1920.0 ? sk-poly(y - 1920.0, [21.20, 0.84493, 0.0 - 0.076100, 0.0020936]) :
+   y >= 1900.0 ? sk-poly(y - 1900.0, [0.0 - 2.79, 1.494119, 0.0 - 0.0598939, 0.0061966, 0.0 - 0.000197]) :
+   sk-poly(y - 1860.0, [7.62, 0.5737, 0.0 - 0.251754, 0.01680668, 0.0 - 0.0004473624, 1.0 / 233174.0]);
+  }
+  def sk-poly(t, cs) = nil?(cs) ? 0.0 : cs[0] + t * sk-poly(t, cs[1:]);
+  def sk-delta-t(jd) { let leap = sk-leap(sk-leaps(), jd); nothing?(leap) ? sk-delta-old(2000.0 + (jd - 2451545.0) / 365.25) : leap + 32.184; }
+  def sk-et(jd) = (jd - 2451545.0) * 86400.0 + sk-delta-t(jd);
+  def sk-century(jd) = sk-et(jd) / 3155760000.0;
+
+  // ---- vectors ----
+  def sk-add(a, b) = nil?(a) ? [] : cons(a[0] + b[0], sk-add(a[1:], b[1:]));
+  def sk-sub(a, b) = nil?(a) ? [] : cons(a[0] - b[0], sk-sub(a[1:], b[1:]));
+  def sk-norm(a) = math_sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+
+  // ---- barycentric states ----
+  def sk-seg-state(path, segs, target, center, et) = js-state(path, js-find(segs, target, center, et), et);
+  def sk-body(path, segs, id, et) {
+   id == 399 || id == 301 ? sk-add(sk-seg-state(path, segs, 3, 0, et), sk-seg-state(path, segs, id, 3, et)) : sk-seg-state(path, segs, id, 0, et);
+  }
+
+  // ---- apparent geocentric direction on the ICRF axes ----
+  def sk-light(path, segs, id, et, earth, lt, more) {
+   let d = sk-sub(sk-body(path, segs, id, et - lt), earth);
+   more <= 0 ? d : sk-light(path, segs, id, et, earth, sk-norm(d) / 299792.458, more - 1);
+  }
+  def sk-apparent(path, segs, id, et) {
+   let earth = sk-body(path, segs, 399, et); let d = sk-light(path, segs, id, et, earth, 0.0, 2); let r = sk-norm(d);
+   [d[0] / r + earth[3] / 299792.458, d[1] / r + earth[4] / 299792.458, d[2] / r + earth[5] / 299792.458];
+  }
+
+  // ---- equator J2000 -> ecliptic J2000 -> mean ecliptic of date ----
+  def sk-eps0() = 23.439279444444445;
+  def sk-to-ecliptic(v) { let c = jn-cosd(sk-eps0()); let s = jn-sind(sk-eps0()); [v[0], v[1] * c + v[2] * s, v[2] * c - v[1] * s]; }
+  def sk-prec-p(t) = (5028.796195 * t + 1.1054348 * t * t) / 3600.0;
+  def sk-prec-eta(t) = (46.998973 * t - 0.0334926 * t * t) / 3600.0;
+  def sk-prec-pi(t) = (629546.7936 - 867.95758 * t + 0.157992 * t * t) / 3600.0;
+  // [longitude, latitude] of date from longitude and latitude on the J2000 ecliptic, degrees
+  def sk-precess(lon, lat, t) {
+   let eta = sk-prec-eta(t); let big = sk-prec-pi(t);
+   let a = jn-cosd(eta) * jn-cosd(lat) * jn-sind(big - lon) - jn-sind(eta) * jn-sind(lat);
+   let b = jn-cosd(lat) * jn-cosd(big - lon);
+   let c = jn-cosd(eta) * jn-sind(lat) + jn-sind(eta) * jn-cosd(lat) * jn-sind(big - lon);
+   [jn-norm360(sk-prec-p(t) + big - jn-deg(jn-atan2(a, b))), jn-deg(jn-asin(c))];
+  }
+  def sk-of-date(v, t) { let e = sk-to-ecliptic(v); sk-precess(jn-deg(jn-atan2(e[1], e[0])), jn-deg(jn-asin(e[2] / sk-norm(e))), t); }
+
+  def sk-tropical(path, segs, id, jd) = sk-of-date(sk-apparent(path, segs, id, sk-et(jd)), sk-century(jd));
+
+  // ---- Lahiri ayanamsa: 23.245524743 degrees at JD 2435553.5 TT, carried by the general precession ----
+  def sk-ayanamsa(jd) = 23.245524743 + sk-prec-p(sk-century(jd)) - sk-prec-p(0.0 - 0.437823409);
+  def sk-sidereal(path, segs, id, jd) = jn-norm360(sk-tropical(path, segs, id, jd)[0] - sk-ayanamsa(jd));
+
+  // ---- the Moon's node ----
+  def sk-node-mean(t) = 125.0445479 - 1934.1362891 * t + 0.0020754 * t * t + (t * t * t) / 467441.0 - (t * t * t * t) / 60616000.0;
+  // the osculating node: where the plane of the Moon's motion about the Earth, at this instant, crosses the ecliptic northward
+  def sk-node-true(path, segs, et, t) {
+   let m = sk-sub(sk-seg-state(path, segs, 301, 3, et), sk-seg-state(path, segs, 399, 3, et));
+   let r = sk-to-ecliptic([m[0], m[1], m[2]]); let v = sk-to-ecliptic([m[3], m[4], m[5]]);
+   let hx = r[1] * v[2] - r[2] * v[1]; let hy = r[2] * v[0] - r[0] * v[2];
+   sk-precess(jn-deg(jn-atan2(hx, 0.0 - hy)), 0.0, t)[0];
+  }
+  def sk-node(path, segs, jd, kind) {
+   let t = sk-century(jd);
+   jn-norm360(((String) kind == "true" ? sk-node-true(path, segs, sk-et(jd), t) : sk-node-mean(t)) - sk-ayanamsa(jd));
+  }
+
+  // ---- the rising and culminating degrees ----
+  def sk-gmst(jd) { let d = jd - 2451545.0; let t = d / 36525.0; 280.46061837 + 360.98564736629 * d + 0.000387933 * t * t - (t * t * t) / 38710000.0; }
+  def sk-obliquity(t) = (84381.406 - 46.836769 * t - 0.0001831 * t * t + 0.0020034 * t * t * t) / 3600.0;
+  def sk-ascendant(jd, lat, lon) {
+   let th = jn-norm360(sk-gmst(jd) + lon); let eps = sk-obliquity(sk-century(jd)); let ay = sk-ayanamsa(jd);
+   let asc = jn-deg(jn-atan2(jn-cosd(th), 0.0 - (jn-sind(th) * jn-cosd(eps) + (jn-sind(lat) / jn-cosd(lat)) * jn-sind(eps))));
+   let mc = jn-deg(jn-atan2(jn-sind(th), jn-cosd(th) * jn-cosd(eps)));
+   [jn-norm360(asc - ay), jn-norm360(mc - ay)];
+  }
+ }
+ 0;
+}

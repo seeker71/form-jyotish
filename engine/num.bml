@@ -1,0 +1,50 @@
+//////////////////////////////////////////////////////////////////////
+// num.bml — angles and trigonometry in double precision.
+//
+// The kernel carries sqrt, pow, exp, log and floor; sine, cosine and arctangent are folded here from
+// their series, each until one more term no longer moves the sum.
+//
+//   jn-rad(d) jn-deg(r)       degrees <-> radians
+//   jn-norm360(d)             a degree reading folded into [0, 360)
+//   jn-sin(x) jn-cos(x)       x in radians, any size
+//   jn-atan(x) jn-atan2(y,x)  radians; atan2 answers in (-pi, pi]
+//   jn-asin(x)                radians
+//   jn-sind(d) jn-cosd(d)     the same over degrees
+//////////////////////////////////////////////////////////////////////
+section [form.bml] {
+ class JyNum {
+  def jn-rad(d) = d * 0.017453292519943295;
+  def jn-deg(r) = r * 57.29577951308232;
+  def jn-norm360(d) = d - 360.0 * floor(d / 360.0);
+  // fold into [-180, 180): the signed difference of two longitudes
+  def jn-norm180(d) = d - 360.0 * floor((d + 180.0) / 360.0);
+  def jn-wrap(x) = x - 6.283185307179586 * floor((x + 3.141592653589793) / 6.283185307179586);
+
+  def jn-series(x2, k, term, total) {
+   let next = ((0.0 - x2) * term) / ((1.0 * (k + 1)) * (k + 2));
+   (Comparable) (total + next) == total ? total : jn-series(x2, k + 2, next, total + next);
+  }
+  def jn-sin(x) { let r = jn-wrap(x); jn-series(r * r, 1, r, r); }
+  def jn-cos(x) { let r = jn-wrap(x); jn-series(r * r, 0, 1.0, 1.0); }
+  def jn-sind(d) = jn-sin(jn-rad(d));
+  def jn-cosd(d) = jn-cos(jn-rad(d));
+
+  // atan: |x| > 1 reads its reciprocal; two half-angle steps bring the rest under tan(pi/16)
+  def jn-atan-series(x2, k, power, total) {
+   let p = (0.0 - x2) * power; let next = p / (1.0 * k);
+   (Comparable) (total + next) == total ? total : jn-atan-series(x2, k + 2, p, total + next);
+  }
+  def jn-atan-small(x) = jn-atan-series(x * x, 3, x, x);
+  def jn-atan-half(x) = x / (1.0 + math_sqrt(1.0 + x * x));
+  def jn-atan-pos(x) = x > 1.0 ? 1.5707963267948966 - jn-atan-pos(1.0 / x) : 4.0 * jn-atan-small(jn-atan-half(jn-atan-half(x)));
+  def jn-atan(x) = x < 0.0 ? 0.0 - jn-atan-pos(0.0 - x) : jn-atan-pos(x);
+  def jn-atan2(y, x) {
+   x > 0.0 ? jn-atan(y / x) :
+   x < 0.0 ? (y < 0.0 ? jn-atan(y / x) - 3.141592653589793 : jn-atan(y / x) + 3.141592653589793) :
+   y > 0.0 ? 1.5707963267948966 :
+   y < 0.0 ? 0.0 - 1.5707963267948966 : 0.0;
+  }
+  def jn-asin(x) = jn-atan2(x, math_sqrt(1.0 - x * x));
+ }
+ 0;
+}

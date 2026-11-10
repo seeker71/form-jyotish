@@ -1,0 +1,10 @@
+.build/
+/form
+/runtime
+/data/*.bsp
+*.app/
+.DS_Store
+.fkwu-*
+*.fkb
+*.lowfk
+*.sym

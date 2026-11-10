@@ -1,0 +1,81 @@
+//////////////////////////////////////////////////////////////////////
+// chart.bml — a birth chart read from the sky: rasi, nakshatra, navamsa and the Vimshottari dasha.
+//
+//   jc-chart(path, jd, lat, lon, node)   the whole chart as one JSON text
+//
+// jd is the birth moment as a UTC Julian day, lat and lon in degrees (north and east positive), node is
+// "mean" or "true". Signs and nakshatras are numbered from 0 (Mesha, Ashwini); padas from 1.
+// Dasha moments are UTC Julian days; a dasha year is 365.25 days.
+//////////////////////////////////////////////////////////////////////
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+section [form.bml] {
+ class JyChart {
+  def jc-signs() = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"];
+  def jc-naks() = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha",
+   "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+   "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"];
+  // the Vimshottari order from Ashwini's lord, with each lord's years
+  def jc-lords() = [["Ke", 7], ["Ve", 20], ["Su", 6], ["Mo", 10], ["Ma", 7], ["Ra", 18], ["Ju", 16], ["Sa", 19], ["Me", 17]];
+  // [code, name, SPK body]
+  def jc-grahas() = [["Su", "Surya", 10], ["Mo", "Chandra", 301], ["Ma", "Mangala", 4], ["Me", "Budha", 1], ["Ju", "Guru", 5], ["Ve", "Shukra", 2], ["Sa", "Shani", 6]];
+
+  // ---- JSON text ----
+  def jc-q(s) = "\"" + s + "\"";
+  def jc-pair(k, v) = jc-q(k) + ":" + v;
+  def jc-join(xs, sep) = nil?(xs) ? "" : nil?(xs[1:]) ? xs[0] : xs[0] + sep + jc-join(xs[1:], sep);
+  def jc-obj(pairs) = "{" + jc-join(pairs, ",") + "}";
+  def jc-arr(items) = "[" + jc-join(items, ",") + "]";
+  def jc-num(v) = value_str(v);
+
+  // ---- where a longitude falls ----
+  def jc-place(lon) {
+   let sign = floor(lon / 30.0); let nak = floor(lon / (360.0 / 27.0)); let ninth = floor(lon / (360.0 / 108.0));
+   [jc-pair("lon", jc-num(lon)), jc-pair("sign", jc-num(sign)), jc-pair("sign_name", jc-q(jc-signs()[sign])), jc-pair("deg", jc-num(lon - 30.0 * sign)),
+    jc-pair("nak", jc-num(nak)), jc-pair("nak_name", jc-q(jc-naks()[nak])), jc-pair("pada", jc-num(ninth % 4 + 1)),
+    jc-pair("nak_lord", jc-q(jc-lords()[nak % 9][0])), jc-pair("navamsa", jc-num(ninth % 12))];
+  }
+  def jc-graha(code, name, lon, later) {
+   let speed = jn-norm180(later - lon) * 24.0;
+   jc-obj(append([jc-pair("id", jc-q(code)), jc-pair("name", jc-q(name)), jc-pair("speed", jc-num(speed)), jc-pair("retro", speed < 0.0 ? "true" : "false")], jc-place(lon)));
+  }
+  def jc-planets(path, segs, jd) = jc-grahas() |> map(g => jc-graha(g[0], g[1], sk-sidereal(path, segs, g[2], jd), sk-sidereal(path, segs, g[2], jd + 1.0 / 24.0)));
+  def jc-nodes(path, segs, jd, node) {
+   let rahu = sk-node(path, segs, jd, node); let later = sk-node(path, segs, jd + 1.0 / 24.0, node);
+   [jc-graha("Ra", "Rahu", rahu, later), jc-graha("Ke", "Ketu", jn-norm360(rahu + 180.0), jn-norm360(later + 180.0))];
+  }
+
+  // ---- Vimshottari ----
+  def jc-period(lord, start, end, rest) = jc-obj(append([jc-pair("lord", jc-q(jc-lords()[lord][0])), jc-pair("start", jc-num(start)), jc-pair("end", jc-num(end))], rest));
+  def jc-antars(maha, lord, i, start) {
+   let days = (jc-lords()[maha][1] * jc-lords()[lord][1] * 365.25) / 120.0;
+   i >= 9 ? [] : cons(jc-period(lord, start, start + days, []), jc-antars(maha, (lord + 1) % 9, i + 1, start + days));
+  }
+  def jc-mahas(lord, i, start) {
+   let days = jc-lords()[lord][1] * 365.25;
+   i >= 9 ? [] : cons(jc-period(lord, start, start + days, [jc-pair("antar", jc-arr(jc-antars(lord, lord, 0, start)))]), jc-mahas((lord + 1) % 9, i + 1, start + days));
+  }
+  def jc-dasha(moon, jd) {
+   let span = 360.0 / 27.0; let nak = floor(moon / span); let lord = nak % 9;
+   jc-arr(jc-mahas(lord, 0, jd - ((moon - nak * span) / span) * jc-lords()[lord][1] * 365.25));
+  }
+
+  def jc-error(why) = jc-obj([jc-pair("error", jc-q(why))]);
+  def jc-chart(path, jd, lat, lon, node) {
+   let segs = js-segments(path);
+   nil?(segs) ? jc-error("the ephemeris could not be read at " + path) :
+   nothing?(js-find(segs, 3, 0, sk-et(jd))) || nothing?(js-find(segs, 3, 0, sk-et(jd + 1.0 / 24.0))) ? jc-error("this moment lies outside the ephemeris (1850 to 2149)") :
+   lat >= 89.9 || lat <= 0.0 - 89.9 ? jc-error("no ascendant is read this close to a pole") :
+   jc-chart-read(path, segs, jd, lat, lon, node);
+  }
+  def jc-chart-read(path, segs, jd, lat, lon, node) {
+   let rising = sk-ascendant(jd, lat, lon); let moon = sk-sidereal(path, segs, 301, jd);
+   jc-obj([jc-pair("jd", jc-num(jd)), jc-pair("ayanamsa", jc-num(sk-ayanamsa(jd))), jc-pair("delta_t", jc-num(sk-delta-t(jd))), jc-pair("node", jc-q(node)),
+    jc-pair("asc", jc-obj(jc-place(rising[0]))), jc-pair("mc", jc-obj(jc-place(rising[1]))),
+    jc-pair("grahas", jc-arr(append(jc-planets(path, segs, jd), jc-nodes(path, segs, jd, node)))),
+    jc-pair("dasha", jc-dasha(moon, jd))]);
+  }
+ }
+ 0;
+}
