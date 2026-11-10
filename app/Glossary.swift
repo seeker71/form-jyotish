@@ -23,6 +23,7 @@ enum Glossary {
         ("House (bhava)", "An area of life. In the simplest and oldest reckoning each sign is one house, counted from the lagna's sign.", "Guide"),
         ("Nakshatra", "One of 27 lunar mansions of 13\u{00B0}20\u{2032} each, older than the signs. The Moon's nakshatra at birth sets the dasha sequence.", "Overview"),
         ("Pada", "A quarter of a nakshatra, 3\u{00B0}20\u{2032} wide. The 108 padas match the 108 navamsas.", "Overview"),
+        ("Ashtakoota", "The eight measures (kootas) by which two charts are compared for partnership, 36 points in all, read from the two Moons: Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot and Nadi. Also called guna milan.", nil),
         ("Varshaphal", "The annual chart of the Tajika tradition: the sky at the moment the Sun returns to the longitude it held at birth, read for the year from that birthday to the next.", nil),
         ("Muntha", "A point that starts in the birth lagna and moves one sign for each year of life. Its house in the annual chart marks where that year's attention gathers.", nil),
         ("Ayanamsa", "The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars, about 24 degrees now and slowly growing. Lahiri is India's official value. B.V. Raman's is about 1 degree 27 minutes smaller: choose it to follow the charts in his books, where it can move a graha near a sign's edge into the next sign and shifts dasha dates by up to two years.", nil),

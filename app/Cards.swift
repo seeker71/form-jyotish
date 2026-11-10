@@ -14,7 +14,8 @@ enum Catalog {
     static let all: [CardInfo] =
         [CardInfo(id: "birth", title: "Birth data", keywords: "name date time place enter", wide: true)]
         + (0..<16).map { CardInfo(id: "chart:\($0)", title: $0 == 0 ? "Rasi chart" : "\(Names.vargaCodes[$0]) \(Names.vargas[$0])", keywords: "\(Names.vargaCodes[$0]) varga divisional chart", wide: false) }
-        + [CardInfo(id: "edges", title: "Near an edge", keywords: "boundary cusp sandhi gandanta sensitive birth time ayanamsa sign change junction", wide: true),
+        + [CardInfo(id: "match", title: "Match: two charts by the eight kootas", keywords: "relationship compatibility marriage guna milan ashtakoota kundli matching partner synastry koota", wide: true),
+           CardInfo(id: "edges", title: "Near an edge", keywords: "boundary cusp sandhi gandanta sensitive birth time ayanamsa sign change junction", wide: true),
            CardInfo(id: "annual", title: "Annual chart (Varshaphal)", keywords: "varshaphal tajika solar return year muntha varsha birthday", wide: true),
            CardInfo(id: "sources", title: "Sources and voice", keywords: "references texts parashara raman rao method trust how", wide: true),
            CardInfo(id: "karakas", title: "Chara karakas", keywords: "jaimini atmakaraka amatyakaraka darakaraka karakamsa significators", wide: true),
@@ -137,6 +138,7 @@ struct Card: View {
                 switch id {
                 case "karakas": KarakaCard(chart: chart)
                 case "edges": EdgesCard(chart: chart)
+                case "match": MatchCard(chart: chart)
                 case "annual": AnnualCard(chart: chart)
                 case "arudhas": ArudhaCard(chart: chart)
                 case "chara-dasha": CharaDashaCard(chart: chart)

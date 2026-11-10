@@ -10,6 +10,7 @@ struct FormJyotishApp: App {
         let arguments = CommandLine.arguments
         // a newer build fetched during the last run takes this one's place before anything else happens
         if !arguments.contains("--report") { Updater.installStagedAndRelaunch() }
+        if arguments.contains("--match-check") { print("match check: \(Match.check()) (23.5 expected)"); exit(Match.check() == 23.5 ? 0 : 1) }
         if let flag = arguments.firstIndex(of: "--report"), arguments.count > flag + 1 {
             Self.writeReport(to: arguments[flag + 1], arguments: arguments)
         }
