@@ -8,6 +8,7 @@ struct ContentView: View {
     @AppStorage("node") private var node = "mean"
     @AppStorage("style") private var style = ChartStyle.south.rawValue
     @AppStorage("ayanamsa") private var ayanamsa = "lahiri"
+    @AppStorage("section") private var section = "Grahas"
 
     private var engine: Engine { Engine(root: URL(fileURLWithPath: enginePath), kernel: URL(fileURLWithPath: kernelPath)) }
     private var chartStyle: ChartStyle { ChartStyle(rawValue: style) ?? .south }
@@ -64,8 +65,17 @@ struct ContentView: View {
                     .frame(maxHeight: 420)
                     Text("\(Names.ayanamsas[chart.ayanamsa_mode] ?? chart.ayanamsa_mode) ayanamsa \(Names.dms(chart.ayanamsa)) · \(chart.node) node · TT − UTC \(String(format: "%.1f", chart.delta_t)) s")
                         .font(.footnote).foregroundStyle(.secondary)
-                    grahaTable(chart)
-                    dashaList(chart, zone: birth.wrappedValue.timeZone ?? .current)
+                    Picker("Section", selection: $section) {
+                        ForEach(["Grahas", "Vargas", "Dasha", "KP", "Transits"], id: \.self) { Text($0).tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 520)
+                    switch section {
+                    case "Vargas": VargaGrid(chart: chart, style: chartStyle)
+                    case "Dasha": DashaTree(chart: chart, zone: birth.wrappedValue.timeZone ?? .current)
+                    case "KP": KPSection(chart: chart)
+                    case "Transits": TransitSection(natal: chart, style: chartStyle, zone: birth.wrappedValue.timeZone ?? .current, load: skyReader(for: birth.wrappedValue))
+                    default: grahaTable(chart)
+                    }
                 }
             }
             .padding(20)
@@ -117,6 +127,15 @@ struct ContentView: View {
         .frame(maxWidth: 640)
     }
 
+    /// Reads the sky for a moment at a birth's place, under the settings in force.
+    private func skyReader(for birth: Birth) -> (Date) throws -> Chart {
+        let engine = engine, node = node, ayanamsa = ayanamsa
+        return { moment in
+            try engine.chart(julianDay: moment.timeIntervalSince1970 / 86400 + 2440587.5, latitude: birth.latitude, longitude: birth.longitude,
+                             node: node, ayanamsa: ayanamsa, zoneHours: Double((birth.timeZone ?? .current).secondsFromGMT(for: moment)) / 3600)
+        }
+    }
+
     private func exportReport() {
         guard let index = store.index, let chart = store.chart else { return }
         let birth = store.births[index]
@@ -124,7 +143,7 @@ struct ContentView: View {
         panel.allowedContentTypes = [.pdf]
         panel.nameFieldStringValue = "\(birth.name.isEmpty ? "Chart" : birth.name).pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        if Report(birth: birth, chart: chart).write(to: url) { NSWorkspace.shared.open(url) } else { store.problem = "The report could not be written to \(url.path)." }
+        if Report(birth: birth, chart: chart, transit: try? skyReader(for: birth)(Date())).write(to: url) { NSWorkspace.shared.open(url) } else { store.problem = "The report could not be written to \(url.path)." }
     }
 
     private func labels(_ chart: Chart, navamsa: Bool) -> [Int: [String]] {
@@ -164,37 +183,6 @@ struct ContentView: View {
             Text(Names.signs[navamsa])
             Text(motion)
         }
-    }
-
-    private func dashaList(_ chart: Chart, zone: TimeZone) -> some View {
-        let format = Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: zone)
-        func span(_ period: Period) -> String {
-            "\(Names.date(julianDay: period.start).formatted(format)) – \(Names.date(julianDay: period.end).formatted(format))"
-        }
-        let now = Date().timeIntervalSince1970 / 86400 + 2440587.5
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("Vimshottari dasha").font(.headline)
-            ForEach(chart.dasha.filter { $0.end > chart.jd }) { maha in
-                DisclosureGroup {
-                    ForEach((maha.antar ?? []).filter { $0.end > chart.jd }) { antar in
-                        HStack {
-                            Text("\(Names.lords[maha.lord] ?? maha.lord) – \(Names.lords[antar.lord] ?? antar.lord)").frame(width: 170, alignment: .leading)
-                            Text(span(antar)).foregroundStyle(.secondary)
-                        }
-                        .fontWeight(antar.holds(now) ? .bold : .regular)
-                        .padding(.leading, 12)
-                    }
-                } label: {
-                    HStack {
-                        Text(Names.lords[maha.lord] ?? maha.lord).frame(width: 170, alignment: .leading)
-                        Text(span(maha)).foregroundStyle(.secondary)
-                    }
-                    .fontWeight(maha.holds(now) ? .bold : .regular)
-                }
-            }
-        }
-        .monospacedDigit()
-        .frame(maxWidth: 520, alignment: .leading)
     }
 }
 

@@ -28,8 +28,11 @@ struct FormJyotishApp: App {
                             kernel: URL(fileURLWithPath: defaults.string(forKey: "kernelPath") ?? Engine.defaultKernel))
         guard let birth = Store().births.first else { print("no saved chart"); exit(1) }
         do {
-            let chart = try engine.chart(for: birth, node: option("node") ?? "mean", ayanamsa: option("ayanamsa") ?? "lahiri")
-            guard Report(birth: birth, chart: chart).write(to: URL(fileURLWithPath: path)) else { print("the report could not be written to \(path)"); exit(1) }
+            let node = option("node") ?? "mean", ayanamsa = option("ayanamsa") ?? "lahiri"
+            let chart = try engine.chart(for: birth, node: node, ayanamsa: ayanamsa)
+            let transit = try? engine.chart(julianDay: Date().timeIntervalSince1970 / 86400 + 2440587.5, latitude: birth.latitude, longitude: birth.longitude,
+                                            node: node, ayanamsa: ayanamsa, zoneHours: birth.zoneHours ?? 0)
+            guard Report(birth: birth, chart: chart, transit: transit).write(to: URL(fileURLWithPath: path)) else { print("the report could not be written to \(path)"); exit(1) }
             print("report written to \(path)")
             exit(0)
         } catch {

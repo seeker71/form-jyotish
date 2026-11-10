@@ -134,6 +134,8 @@ section [form.bml] {
   }
   // the mean ayanamsa by name: "lahiri" or "truecitra"
   def sk-ayanamsa-of(path, segs, jd, mode) = (String) mode == "truecitra" ? sk-true-citra(path, segs, jd) : sk-ayanamsa(jd);
+  // Krishnamurti's ayanamsa: 22.363889 degrees at JD 2415020.0 (1900), carried by the general precession
+  def sk-ayanamsa-kp(jd) = 22.363889 + sk-prec-p(sk-century(jd)) - sk-prec-p(0.0 - 1.000014);
 
   // ---- the rising and culminating degrees ----
   def sk-gmst(jd) { let d = jd - 2451545.0; let t = d / 36525.0; 280.46061837 + 360.98564736629 * d + 0.000387933 * t * t - (t * t * t) / 38710000.0; }
@@ -147,6 +149,23 @@ section [form.bml] {
    let asc = jn-deg(jn-atan2(jn-cosd(th), 0.0 - (jn-sind(th) * jn-cosd(eps) + (jn-sind(lat) / jn-cosd(lat)) * jn-sind(eps))));
    [jn-norm360(asc), jn-norm360(jn-deg(jn-atan2(jn-sind(th), jn-cosd(th) * jn-cosd(eps)))), th];
   }
+  // ---- Placidus cusps: a cusp stands where a degree has run a third, or two thirds, of its own semi-arc from the meridian ----
+  def sk-on-ecliptic(ra, eps) = jn-norm360(jn-deg(jn-atan2(jn-sind(ra), jn-cosd(ra) * jn-cosd(eps))));
+  // base is the meridian's right ascension (upper for the eleventh and twelfth, lower for the second and third); side is 1 or -1
+  def sk-placidus-cusp(eps, lat, base, side, share, ra, more) {
+   let sd = jn-sind(eps) * jn-sind(sk-on-ecliptic(ra, eps));
+   let ad = jn-deg(jn-asin((jn-sind(lat) / jn-cosd(lat)) * (sd / math_sqrt(1.0 - sd * sd))));
+   let next = base + side * share * (90.0 + side * ad);
+   more <= 0 ? sk-on-ecliptic(next, eps) : sk-placidus-cusp(eps, lat, base, side, share, next, more - 1);
+  }
+  // the twelve cusps from the true equinox of date, first to twelfth
+  def sk-placidus(jd, lat, lon) {
+   let t = sk-century(jd); let eps = sk-obliquity(t) + sk-nutation(t)[1]; let r = sk-rising(jd, lat, lon); let th = r[2];
+   let c11 = sk-placidus-cusp(eps, lat, th, 1.0, 1.0 / 3.0, th + 30.0, 20); let c12 = sk-placidus-cusp(eps, lat, th, 1.0, 2.0 / 3.0, th + 60.0, 20);
+   let c2 = sk-placidus-cusp(eps, lat, th + 180.0, 0.0 - 1.0, 2.0 / 3.0, th + 120.0, 20); let c3 = sk-placidus-cusp(eps, lat, th + 180.0, 0.0 - 1.0, 1.0 / 3.0, th + 150.0, 20);
+   [r[0], c2, c3, r[1] + 180.0, c11 + 180.0, c12 + 180.0, r[0] + 180.0, c2 + 180.0, c3 + 180.0, r[1], c11, c12] |> map(x => jn-norm360(x));
+  }
+
   // [sidereal ascendant, sidereal midheaven] under Lahiri
   def sk-ascendant(jd, lat, lon) {
    let r = sk-rising(jd, lat, lon); let ay = sk-ayanamsa-true(jd);

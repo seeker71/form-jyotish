@@ -21,9 +21,17 @@ what the engine returns.
   point; rasi, nakshatra, sub and sub-sub lords; dignity (exalted, debilitated, own, or the compound
   friendship with the sign's lord) and combustion; Sripati bhavas; tithi, yoga and karana at birth; sunrise
   and sunset.
-- A printed report (the Report… button, or `FormJyotish --report out.pdf [--ayanamsa truecitra]`): cover,
-  birth particulars, birth chart with Moon and navamsa charts and the graha table, and the Chandra,
-  Navamsha and Bhava page, in the dress of a classical horoscope.
+- The sixteen vargas of Parashara (D1 to D60) for the lagna and every graha.
+- Vimshottari to four levels: mahadasha, antardasha, pratyantardasha and sookshma dasha.
+- Krishnamurti Paddhati: positions under the KP ayanamsa, Placidus cusps, star, sub and sub-sub lords, the
+  significators of houses and grahas, ruling planets and Fortuna. The significator sets are folded in the
+  shell (`app/Reading.swift`) from what the engine returns.
+- Transits: the sky at any moment set in the houses of the birth lagna.
+- A printed report (the Report… button, or `FormJyotish --report out.pdf [--ayanamsa truecitra]`), 22
+  pages in the dress of a classical horoscope: cover, birth particulars, birth chart, Chandra, Navamsha
+  and Bhava, two pages of divisional charts, Vimshottari (mahadasha and antardasha, nine pages of
+  pratyantardashas, three of sookshma dashas from today), two of Krishnamurti Paddhati, and the transits
+  of the day.
 
 ## Layout
 
@@ -67,5 +75,5 @@ The app finds this folder and the kernel at the paths it was built from; both ca
 
 ## Not yet here
 
-The other divisional charts, shadbala and ashtakavarga, further dasha systems, transits, muhurta, yogas,
-compatibility, printing, and an atlas that works offline.
+Shadbala and ashtakavarga, the dasha systems beyond Vimshottari, Jaimini, varshaphala, muhurta, yogas,
+compatibility, interpretive text, and an atlas that works offline.

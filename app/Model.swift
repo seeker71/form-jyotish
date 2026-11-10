@@ -49,6 +49,8 @@ struct Placement: Codable {
     var rasi_lord: String
     var sub_lord: String
     var sub_sub: String
+    /// the sign in each of the sixteen vargas, in the order of `Names.vargas`
+    var vargas: [Int]
 }
 
 struct Graha: Codable, Identifiable {
@@ -70,6 +72,8 @@ struct Graha: Codable, Identifiable {
     var rasi_lord: String
     var sub_lord: String
     var sub_sub: String
+    /// the sign in each of the sixteen vargas, in the order of `Names.vargas`
+    var vargas: [Int]
 }
 
 struct Period: Codable, Identifiable {
@@ -103,6 +107,15 @@ struct Day: Codable {
     var sunrise_after: Double?
 }
 
+/// The chart under Krishnamurti's ayanamsa with Placidus cusps.
+struct KP: Codable {
+    var ayanamsa: Double
+    var cusps: [Placement]
+    var grahas: [Graha]
+    var outer: [Graha]
+    var fortuna: Placement
+}
+
 struct Chart: Codable {
     var jd: Double
     var ayanamsa: Double
@@ -117,6 +130,7 @@ struct Chart: Codable {
     var outer: [Graha]
     var bhrigu: Placement
     var bhavas: [Bhava]
+    var kp: KP
     var day: Day
     var dasha: [Period]
 
@@ -129,6 +143,13 @@ enum Names {
     static let signsShort = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
     static let signsWestern = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
     static let lords = ["Su": "Sun", "Mo": "Moon", "Ma": "Mars", "Me": "Mercury", "Ju": "Jupiter", "Ve": "Venus", "Sa": "Saturn", "Ra": "Rahu", "Ke": "Ketu"]
+    static let vargas = ["Lagna", "Hora (wealth)", "Dreshkana (happiness siblings)", "Chaturthamsha (destiny)", "Saptamsha (children)", "Navamsha (spouse)",
+                         "Dashamsha (great successes)", "Dwadashamsha (parents)", "Shodashamsha (conveyances)", "Vimshamsha (spiritual progress)",
+                         "Chaturvimshamsha (knowledge)", "Saptavimshamsha (strength)", "Trimshamsha (misfortunes)", "Khavedamsha (ausp. inausp. effects)",
+                         "Akshavedamsha (all areas)", "Shashtiamsha (all areas)"]
+    static let vargaCodes = ["D1", "D2", "D3", "D4", "D7", "D9", "D10", "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60"]
+    static let lordsThree = ["Su": "Sun", "Mo": "Mon", "Ma": "Mar", "Me": "Mer", "Ju": "Jup", "Ve": "Ven", "Sa": "Sat", "Ra": "Rah", "Ke": "Ket"]
+    static let weekdayLords = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"]
     static let ayanamsas = ["lahiri": "Lahiri", "truecitra": "True Chitra"]
     static let tithis = ["Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi"]
     static let yogas = ["Vishkambha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda", "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva", "Vyaghata", "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyana", "Parigha", "Shiva", "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti"]

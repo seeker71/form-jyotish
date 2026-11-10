@@ -42,6 +42,7 @@ struct NorthPanel: View {
     var codeSize: CGFloat
     /// one mark to a line with its degrees, as the large birth chart shows them
     var stacked = false
+    var numbered = true
 
     private static let centres: [CGPoint] = [
         CGPoint(x: 0.5, y: 0.25), CGPoint(x: 0.25, y: 0.1), CGPoint(x: 0.105, y: 0.25), CGPoint(x: 0.25, y: 0.5),
@@ -67,7 +68,7 @@ struct NorthPanel: View {
                 .stroke(Color.black, lineWidth: 0.4)
                 ForEach(0..<12, id: \.self) { house in
                     let centre = Self.centres[house], corner = Self.inner[house]
-                    Text("\((firstSign + house) % 12 + 1)")
+                    Text(numbered ? "\((firstSign + house) % 12 + 1)" : "")
                         .font(.system(size: max(7, codeSize * 0.6)))
                         .position(x: (centre.x + (corner.x - centre.x) * 0.76) * w, y: (centre.y + (corner.y - centre.y) * 0.76) * h)
                     label(houses[house], house: house)
@@ -82,8 +83,11 @@ struct NorthPanel: View {
         .overlay(Rectangle().strokeBorder(Color.black, lineWidth: 0.5))
     }
 
-    private func label(_ marks: [Mark], house: Int) -> some View {
-        let perRow = stacked ? 1 : (house % 3 == 0 ? 3 : 2)
+    func label(_ marks: [Mark], house: Int) -> some View {
+        // a crowded house (the Hora chart holds everything in two signs) sets its marks smaller, more to a line
+        let crowded = !stacked && marks.count > 4
+        let perRow = stacked ? 1 : crowded ? 4 : (house % 3 == 0 ? 3 : 2)
+        let codeSize = crowded ? self.codeSize * 0.62 : self.codeSize
         let rows = stride(from: 0, to: marks.count, by: perRow).map { Array(marks[$0..<min($0 + perRow, marks.count)]) }
         return VStack(alignment: stacked ? .leading : .center, spacing: -1) {
             ForEach(rows.indices, id: \.self) { row in
@@ -111,7 +115,7 @@ struct OmSeal: View {
     }
 }
 
-private extension View {
+extension View {
     /// Place a view by its top-left corner on the page, in points.
     func at(_ x: CGFloat, _ y: CGFloat) -> some View {
         frame(width: 612, height: 792, alignment: .topLeading).offset(x: x, y: y)
@@ -127,12 +131,14 @@ private extension View {
 struct Report {
     let birth: Birth
     let chart: Chart
+    /// the sky at another moment, read for the same place, for the transit page
+    var transit: Chart? = nil
 
-    private var zone: TimeZone { birth.timeZone ?? TimeZone(secondsFromGMT: 0)! }
-    private var moment: Date { birth.moment ?? Date() }
-    private var name: String { birth.name.isEmpty ? "Unnamed" : birth.name }
+    var zone: TimeZone { birth.timeZone ?? TimeZone(secondsFromGMT: 0)! }
+    var moment: Date { birth.moment ?? Date() }
+    var name: String { birth.name.isEmpty ? "Unnamed" : birth.name }
 
-    private func text(_ date: Date, _ format: String, zone: TimeZone? = nil) -> String {
+    func text(_ date: Date, _ format: String, zone: TimeZone? = nil) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -140,34 +146,34 @@ struct Report {
         formatter.dateFormat = format
         return formatter.string(from: date)
     }
-    private func clock(_ julianDay: Double?, _ format: String = "HH:mm:ss") -> String {
+    func clock(_ julianDay: Double?, _ format: String = "HH:mm:ss") -> String {
         julianDay.map { text(Names.date(julianDay: $0), format) + " hrs" } ?? "none on this day"
     }
-    private func place(_ p: Placement) -> String { "\(Names.signsShort[p.sign]) \(Names.colons(p.deg))" }
-    private func place(_ lon: Double) -> (sign: String, degrees: String) {
+    func place(_ p: Placement) -> String { "\(Names.signsShort[p.sign]) \(Names.colons(p.deg))" }
+    func place(_ lon: Double) -> (sign: String, degrees: String) {
         let sign = Int(lon / 30) % 12
         return (Names.signsShort[sign], Names.colons(lon - Double(sign) * 30))
     }
-    private func angle(_ value: Double, _ positive: String, _ negative: String) -> String {
+    func angle(_ value: Double, _ positive: String, _ negative: String) -> String {
         let total = Int((abs(value) * 3600).rounded())
         return String(format: "%d%@%02d'%02d", total / 3600, value < 0 ? negative : positive, (total / 60) % 60, total % 60)
     }
-    private var headline: String {
+    var headline: String {
         "\(text(moment, "d MMMM yyyy")) • \(text(moment, "EEEE")) • \(text(moment, "HH:mm:ss")) hrs • \(birth.place.isEmpty ? "place not named" : birth.place)"
     }
 
     // MARK: derived readings
 
-    private var ishtkaal: String {
+    var ishtkaal: String {
         let rises = [chart.day.sunrise, chart.day.sunrise_before].compactMap { $0 }.filter { $0 <= chart.jd }
         guard let rise = rises.max() else { return "no sunrise before birth" }
         let vipalas = Int(((chart.jd - rise) * 216000).rounded())
         return String(format: "%d:%02d:%02d ghatis", vipalas / 3600, (vipalas / 60) % 60, vipalas % 60)
     }
     /// seconds to add to the civil clock for local mean time
-    private var meanTimeCorrection: Double { birth.longitude * 240 - Double(zone.secondsFromGMT(for: moment)) }
+    var meanTimeCorrection: Double { birth.longitude * 240 - Double(zone.secondsFromGMT(for: moment)) }
 
-    private var dashaAtBirth: (running: String, balance: String) {
+    var dashaAtBirth: (running: String, balance: String) {
         guard let maha = chart.dasha.first(where: { $0.holds(chart.jd) }), let antar = maha.antar?.first(where: { $0.holds(chart.jd) }) else { return ("", "") }
         let order = ["Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me"], years = [7.0, 20, 6, 10, 7, 18, 16, 19, 17]
         var lord = order.firstIndex(of: antar.lord) ?? 0, start = antar.start, third = antar.lord
@@ -184,7 +190,7 @@ struct Report {
 
     // MARK: chart marks
 
-    private func marks(sign: (Graha) -> Int, ascendant: Int, bhrigu: Int, degrees: Bool) -> [[Mark]] {
+    func marks(sign: (Graha) -> Int, ascendant: Int, bhrigu: Int, degrees: Bool) -> [[Mark]] {
         var bySign = [[Mark]](repeating: [], count: 12)
         let minutes = { (deg: Double) in String(format: "%02d:%02d", Int(deg), Int(deg * 60) % 60) }
         bySign[ascendant].append(Mark(code: "As", detail: degrees ? minutes(chart.asc.deg) : ""))
@@ -195,13 +201,13 @@ struct Report {
         bySign[bhrigu].append(Mark(code: "BP", detail: degrees ? minutes(chart.bhrigu.deg) : ""))
         return bySign
     }
-    private func houses(_ bySign: [[Mark]], first: Int) -> [[Mark]] { (0..<12).map { bySign[(first + $0) % 12] } }
+    func houses(_ bySign: [[Mark]], first: Int) -> [[Mark]] { (0..<12).map { bySign[(first + $0) % 12] } }
 
-    private var rasiHouses: [[Mark]] { houses(marks(sign: \.sign, ascendant: chart.asc.sign, bhrigu: chart.bhrigu.sign, degrees: true), first: chart.asc.sign) }
-    private var moonHouses: [[Mark]] { houses(marks(sign: \.sign, ascendant: chart.asc.sign, bhrigu: chart.bhrigu.sign, degrees: false), first: moonSign) }
-    private var navamsaHouses: [[Mark]] { houses(marks(sign: \.navamsa, ascendant: chart.asc.navamsa, bhrigu: chart.bhrigu.navamsa, degrees: false), first: chart.asc.navamsa) }
-    private var moonSign: Int { chart.graha("Mo")?.sign ?? 0 }
-    private var bhavaHouses: [[Mark]] {
+    var rasiHouses: [[Mark]] { houses(marks(sign: \.sign, ascendant: chart.asc.sign, bhrigu: chart.bhrigu.sign, degrees: true), first: chart.asc.sign) }
+    var moonHouses: [[Mark]] { houses(marks(sign: \.sign, ascendant: chart.asc.sign, bhrigu: chart.bhrigu.sign, degrees: false), first: moonSign) }
+    var navamsaHouses: [[Mark]] { houses(marks(sign: \.navamsa, ascendant: chart.asc.navamsa, bhrigu: chart.bhrigu.navamsa, degrees: false), first: chart.asc.navamsa) }
+    var moonSign: Int { chart.graha("Mo")?.sign ?? 0 }
+    var bhavaHouses: [[Mark]] {
         let house = { (lon: Double) in chart.bhavas.firstIndex { $0.holds(lon) } ?? 0 }
         var byHouse = [[Mark]](repeating: [], count: 12)
         byHouse[0].append(Mark(code: "As"))
@@ -215,7 +221,7 @@ struct Report {
 
     // MARK: page furniture
 
-    private func page<Content: View>(_ number: Int, title: String, seal: Bool = true, @ViewBuilder content: () -> Content) -> AnyView {
+    func page<Content: View>(_ number: Int, title: String, seal: Bool = true, @ViewBuilder content: () -> Content) -> AnyView {
         AnyView(
             ZStack(alignment: .topLeading) {
                 Color.white
@@ -236,14 +242,14 @@ struct Report {
         )
     }
 
-    private func heading(_ title: String, from x0: CGFloat, to x1: CGFloat, y: CGFloat) -> some View {
+    func heading(_ title: String, from x0: CGFloat, to x1: CGFloat, y: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
             Text(title).font(Ink.times(14.5)).foregroundColor(Ink.maroon).centred(from: x0, to: x1, y: y)
             Rectangle().fill(Ink.rule).frame(width: x1 - x0, height: 0.7).at(x0, y + 18)
         }
     }
 
-    private func facts(_ rows: [(String, String, Bool)], x: CGFloat, y: CGFloat, labelWidth: CGFloat) -> some View {
+    func facts(_ rows: [(String, String, Bool)], x: CGFloat, y: CGFloat, labelWidth: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(rows.indices, id: \.self) { index in
                 HStack(spacing: 0) {
@@ -258,7 +264,7 @@ struct Report {
         .at(x, y)
     }
 
-    private func tableBand(y: CGFloat, height: CGFloat) -> some View {
+    func tableBand(y: CGFloat, height: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
             Rectangle().fill(Ink.band).frame(width: 468, height: height).at(65, y)
             Rectangle().fill(Ink.rule).frame(width: 468, height: 0.7).at(65, y)
@@ -268,7 +274,7 @@ struct Report {
 
     // MARK: pages
 
-    private var cover: AnyView {
+    var cover: AnyView {
         AnyView(
             ZStack(alignment: .topLeading) {
                 Color.white
@@ -283,7 +289,7 @@ struct Report {
         )
     }
 
-    private var particulars: AnyView {
+    func particulars(_ number: Int) -> AnyView {
         let dasha = dashaAtBirth
         let daylight = zone.daylightSavingTimeOffset(for: moment) / 3600
         let offset = Double(zone.secondsFromGMT(for: moment)) / 3600
@@ -312,7 +318,7 @@ struct Report {
             ("Dasha at Birth", dasha.running, false), ("Balance of Dasha", dasha.balance, false),
             ("Ayanamsha", "-" + Names.colons(chart.ayanamsa) + " " + (Names.ayanamsas[chart.ayanamsa_mode] ?? chart.ayanamsa_mode), false),
         ]
-        return page(2, title: "", seal: false) {
+        return page(number, title: "", seal: false) {
             Text(name).font(Ink.times(17)).frame(width: 198, height: 22).background(Color.white)
                 .overlay(Rectangle().stroke(Ink.rule, lineWidth: 0.8)).at(200, 43)
             heading("Birth Particulars", from: 66, to: 284, y: 74)
@@ -327,13 +333,13 @@ struct Report {
         }
     }
 
-    private var birthChart: AnyView {
+    func birthChart(_ number: Int) -> AnyView {
         struct Row { var name: String; var code: String; var flags: String; var p: Placement; var speed: String; var status: String }
         let asc = chart.asc
         var rows = [Row(name: "Lagna", code: "La", flags: "", p: asc, speed: "", status: "")]
         for g in chart.grahas {
             let p = Placement(lon: g.lon, sign: g.sign, sign_name: g.sign_name, deg: g.deg, nak: g.nak, nak_name: g.nak_name, pada: g.pada,
-                              nak_lord: g.nak_lord, navamsa: g.navamsa, rasi_lord: g.rasi_lord, sub_lord: g.sub_lord, sub_sub: g.sub_sub)
+                              nak_lord: g.nak_lord, navamsa: g.navamsa, rasi_lord: g.rasi_lord, sub_lord: g.sub_lord, sub_sub: g.sub_sub, vargas: g.vargas)
             let node = g.id == "Ra" || g.id == "Ke"
             rows.append(Row(name: Names.lords[g.id] ?? g.name, code: g.id, flags: (g.retro && !node ? "R" : "") + (g.combust == true ? "C" : ""),
                             p: p, speed: Names.colons(g.speed), status: g.status ?? ""))
@@ -341,7 +347,7 @@ struct Report {
         let widths: [CGFloat] = [58, 24, 28, 50, 52, 92, 28, 20, 20, 20, 22, 44]
         let titles = ["Planet", "R/C", "Sign", "Degree", "Speed", "Nakshatra", "Pada", "RL", "NL", "SL", "SS", "Status"]
         let lord = { (code: String) in Text(code).foregroundColor(Ink.graha(code)) }
-        return page(3, title: "Birth Chart") {
+        return page(number, title: "Birth Chart") {
             Text(headline).font(Ink.times(11.5)).bold().foregroundColor(Ink.maroon).centred(from: 50, to: 548, y: 76)
             NorthPanel(firstSign: asc.sign, houses: rasiHouses, codeSize: 14, stacked: true).frame(width: 470, height: 272).at(64, 94)
             Text("Moon").font(Ink.times(11.5)).bold().foregroundColor(Ink.maroon).at(64, 377)
@@ -378,13 +384,13 @@ struct Report {
         }
     }
 
-    private var bhavaPage: AnyView {
+    func bhavaPage(_ number: Int) -> AnyView {
         let ordinals = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth"]
         let cell = { (lon: Double) -> AnyView in
             let p = self.place(lon)
             return AnyView(HStack(spacing: 0) { Text(p.sign).frame(width: 30, alignment: .leading); Text(p.degrees).frame(width: 104, alignment: .leading) })
         }
-        return page(4, title: "Chandra, Navamsha and Bhava") {
+        return page(number, title: "Chandra, Navamsha and Bhava") {
             Text("Moon Chart").font(Ink.times(13.5)).foregroundColor(Ink.maroon).centred(from: 64, to: 290, y: 76)
             NorthPanel(firstSign: moonSign, houses: moonHouses, codeSize: 13).frame(width: 226, height: 174).at(64, 93)
             Text("Navamsha").font(Ink.times(13.5)).foregroundColor(Ink.maroon).centred(from: 312, to: 534, y: 76)
@@ -416,7 +422,10 @@ struct Report {
         }
     }
 
-    var pages: [AnyView] { [cover, particulars, birthChart, bhavaPage] }
+    var pages: [AnyView] {
+        let makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, birthChart, bhavaPage] + vargaPages + dashaPages + kpPages + transitPages
+        return makers.enumerated().map { $1($0 + 1) }
+    }
 
     /// Write the report as a vector PDF, one US Letter page per view.
     func write(to url: URL) -> Bool {
