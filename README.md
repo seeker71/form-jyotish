@@ -57,6 +57,12 @@ the old one's place the next time the app starts (or at once with Restart now).
 
 ## The window
 
+- **A teacher.** The Guide workspace opens first: the eight steps by which a chart is read, each with a link
+  that shows that step in this chart; the chart's main facts as plain sentences, every name a link; and the
+  twelve houses, each with what it covers, its lord and where the lord stands, who is in it, who looks at
+  it, and its bindus. Picking a graha lists what supports it and what strains it, side by side, and what
+  its nakshatra stands for. Sample charts can be added from ⌘K. The general understandings live in
+  `app/Lore.swift`; they state the factors a reader weighs and leave the judgment to the reader.
 - **One pick.** Click a graha, a sign or a dasha period on any card; the inspector at the right explains
   it and every other card highlights the same thing.
 - **One time.** The bar at the bottom moves the whole desk: Birth, Now, step, play. Away from the birth,

@@ -172,6 +172,9 @@ struct Palette: View {
             Command(id: "rectify", title: "Rectify the birth time", keywords: "adjust", run: { store.goBirth(); store.rectifying = true }),
             Command(id: "report", title: "Write the report (PDF)…", keywords: "print export", run: report),
             Command(id: "help", title: store.showHelp ? "Hide explanations" : "Show explanations", keywords: "help tips learn beginner", run: { store.showHelp.toggle() }),
+            Command(id: "sample-1", title: "Add a sample chart: New Delhi, 1 January 2000", keywords: "example explore demo", run: { store.addSample("New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) }),
+            Command(id: "sample-2", title: "Add a sample chart: London, 21 June 1990", keywords: "example explore demo", run: { store.addSample("London 1990", date: "1990-06-21", time: "06:00:00", zone: "Europe/London", place: "London, United Kingdom", latitude: 51.5074, longitude: -0.1278) }),
+            Command(id: "sample-3", title: "Add a sample chart: New York, 5 November 1985", keywords: "example explore demo", run: { store.addSample("New York 1985", date: "1985-11-05", time: "22:15:00", zone: "America/New_York", place: "New York, United States", latitude: 40.7128, longitude: -74.006) }),
             Command(id: "new", title: "New chart", keywords: "birth person add", run: { store.add() }),
             Command(id: "reset", title: "Restore this workspace's standard cards", keywords: "reset layout", run: { store.resetLayout() }),
         ]

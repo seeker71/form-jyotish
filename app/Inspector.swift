@@ -81,6 +81,19 @@ struct Inspector: View {
                 fact("Bindus", "\(chart.ashtakavarga[index][g.sign]) of 8 in its own ashtakavarga here")
             }
             if let age = g.baladi, let wake = g.jagradadi, let mood = g.deeptadi { fact("Avasthas", "\(Help.avastha(age)) · \(Help.avastha(wake)) · \(Help.avastha(mood))") }
+            let weighed = chart.factors(for: g)
+            if !weighed.supports.isEmpty {
+                section("What supports it")
+                ForEach(weighed.supports, id: \.self) { Label($0, systemImage: "plus.circle").font(.callout).foregroundStyle(.green).labelStyle(FactLabel()) }
+            }
+            if !weighed.strains.isEmpty {
+                section("What strains it")
+                ForEach(weighed.strains, id: \.self) { Label($0, systemImage: "minus.circle").font(.callout).foregroundStyle(.orange).labelStyle(FactLabel()) }
+            }
+            if !weighed.supports.isEmpty || !weighed.strains.isEmpty { note(Lore.balance) }
+            let ruled = chart.housesRuled(by: code)
+            if !ruled.isEmpty { fact("Rules", ruled.map { "the \(Chart.ordinal($0)) (\(Lore.houseNames[$0 - 1].lowercased()))" }.joined(separator: ", ")) }
+            note(Lore.nakshatra(g.nak))
             section("Its lords")
             HStack { Text("Rasi").foregroundStyle(.secondary); chip(g.rasi_lord); Text("Star").foregroundStyle(.secondary); chip(g.nak_lord) }
             HStack { Text("Sub").foregroundStyle(.secondary); chip(g.sub_lord); Text("Sub-sub").foregroundStyle(.secondary); chip(g.sub_sub) }
@@ -102,6 +115,8 @@ struct Inspector: View {
                 section("Yogas it forms")
                 ForEach(formed) { yoga in Text(yoga.name).font(.callout).help(yoga.why) }
             }
+            section("See it elsewhere")
+            HStack(spacing: 10) { GoLink(title: "Strength", workspace: "Strength"); GoLink(title: "Yogas", workspace: "Yogas"); GoLink(title: "Houses", workspace: "Guide") }
             section("In the vargas")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), alignment: .leading)], alignment: .leading, spacing: 2) {
                 ForEach(0..<16, id: \.self) { index in
@@ -129,12 +144,13 @@ struct Inspector: View {
         let lord = Names.weekdayLords[[2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4][sign]]
         let here = (chart.grahas + chart.outer).filter { $0.sign == sign }
         Text("\(Names.signs[sign]) · \(Names.signsWestern[sign])").font(.title3).fontWeight(.semibold)
-        note(Help.sign(sign))
+        note(Lore.sign(sign))
         fact("House", "\(house(sign, from: chart.asc.sign)) from the lagna, \(house(sign, from: moon)) from the Moon")
         if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)") }
         HStack { Text("Lord").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); chip(lord) }
         fact("Bindus", "\(chart.sarva[sign]) in the sarvashtakavarga (337 over twelve signs)")
         if !chart.aspecting(sign: sign).isEmpty { HStack { Text("Aspected by").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); ForEach(chart.aspecting(sign: sign), id: \.self) { chip($0) } } }
+        note("The \(Chart.ordinal(chart.house(ofSign: sign))) house covers \(Lore.houses[chart.house(ofSign: sign) - 1]). It is \(Lore.houseKind(chart.house(ofSign: sign))).")
         section(here.isEmpty ? "No graha stands here at birth" : "Here at birth")
         ForEach(here) { g in HStack { chip(g.id); Text(Names.dms(g.deg)).foregroundStyle(.secondary) } }
         if let sky = store.sky {
@@ -181,6 +197,16 @@ struct Inspector: View {
         if lords.count < 5 {
             section("Its parts")
             ForEach(Vimshottari.parts(of: whole).filter { $0.end > chart.jd }) { part in periodButton(lords + [part.lord], part, chart) }
+        }
+    }
+}
+
+/// A fact with its mark, the mark aligned to the first line.
+struct FactLabel: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            configuration.icon
+            configuration.title.foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
         }
     }
 }

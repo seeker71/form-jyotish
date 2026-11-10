@@ -14,7 +14,10 @@ enum Catalog {
     static let all: [CardInfo] =
         [CardInfo(id: "birth", title: "Birth data", keywords: "name date time place enter", wide: true)]
         + (0..<16).map { CardInfo(id: "chart:\($0)", title: $0 == 0 ? "Rasi chart" : "\(Names.vargaCodes[$0]) \(Names.vargas[$0])", keywords: "\(Names.vargaCodes[$0]) varga divisional chart", wide: false) }
-        + [CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
+        + [CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
+           CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
+           CardInfo(id: "houses", title: "The twelve houses", keywords: "bhava lords areas of life", wide: true),
+           CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
            CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
            CardInfo(id: "timeline", title: "Vimshottari timeline", keywords: "dasha graph periods zoom", wide: true),
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
@@ -114,6 +117,9 @@ struct Card: View {
                 ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [])
             } else {
                 switch id {
+                case "guide": GuideCard(chart: chart)
+                case "reading": ReadingCard(chart: chart)
+                case "houses": HousesCard(chart: chart)
                 case "grahas": GrahaTable(chart: chart)
                 case "timeline": DashaTimeline(chart: chart)
                 case "dashas": DashaList(chart: chart)

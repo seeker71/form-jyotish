@@ -5,6 +5,7 @@ import Foundation
 enum Help {
     static func workspace(_ name: String) -> String {
         switch name {
+        case "Guide": return "Where to begin. The steps a reader follows, this chart put in plain sentences, and the twelve houses. Every name is a link."
         case "Overview": return "The birth data, the birth chart, the navamsa, the grahas' positions and the dasha timeline. Start here."
         case "Vargas": return "The sixteen divisional charts. Each divides every sign into finer parts and shows one area of life in more detail."
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
@@ -21,6 +22,9 @@ enum Help {
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {
+        case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
+        case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
+        case "houses": return "One row per house. A house does well when its lord is strong and well placed, benefics stand in it or look at it, and its bindus are high. Click a row to pick the house."
         case "yogas": return "Named combinations of grahas, grouped by kind. Each line states the rule that was met; schools differ on some rules, so read the rule, not only the name. Click a line to pick the grahas that form it."
         case "aspects": return "Every graha looks fully at the 7th sign from itself; Mars also at the 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th. Pick a graha and the signs it aspects are tinted in the birth chart."
         case "avasthas": return "The state each graha is in: its age by degree, its wakefulness by the sign it is in, and its mood by its dignity."
@@ -90,6 +94,13 @@ enum Help {
             "Its mahadasha": "The years of life ruled by this graha. Click to go there.",
             "Houses it signifies (KP)": "The houses whose matters this graha can bring about, by Krishnamurti's rules.",
             "In the sky of the moment": "Where this graha is at the moment shown in the time bar.",
+            "Sign": "The sign that falls on the house, counted from the lagna's sign.",
+            "Its lord, and where it stands": "The graha that rules the house's sign, the house that graha is in, and its dignity there. Where the lord goes, the house's matters follow.",
+            "Grahas in it": "Grahas standing in the house colour its matters directly.",
+            "Aspected by": "Grahas looking at the house from elsewhere. Jupiter and Venus help; Saturn and Mars press.",
+            "What supports it": "Facts of this chart that speak for the graha giving good results.",
+            "What strains it": "Facts of this chart that make the graha's results harder to come by.",
+            "See it elsewhere": "The other views that examine the same thing.",
             "Aspects": "The signs this graha looks at in full. Click a sign to read about it.",
             "Yogas it forms": "Named combinations this graha takes part in. Hover a name for the rule.",
             "Avasthas": "The graha's state: age, wakefulness, mood.",

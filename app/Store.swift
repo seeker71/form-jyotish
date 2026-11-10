@@ -43,8 +43,9 @@ final class Feed {
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
-    static let workspaces = ["Overview", "Vargas", "Dasha", "Strength", "Yogas", "KP", "Transits"]
+    static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "KP", "Transits"]
     static let standardLayout: [String: [String]] = [
+        "Guide": ["guide", "reading", "houses"],
         "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["timeline", "dashas"],
@@ -84,7 +85,7 @@ final class Store: ObservableObject {
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("FormJyotish")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         file = folder.appendingPathComponent("charts.json")
-        workspace = defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Overview"
+        workspace = defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Guide"
         var saved = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
         // A saved layout gains each card that has since joined a workspace's standard set, once: the cards
         // already offered are remembered, so a card the person removed stays removed.
@@ -134,6 +135,13 @@ final class Store: ObservableObject {
 
     func add() {
         let birth = Birth()
+        births.append(birth)
+        current = birth.id
+    }
+
+    /// A chart to explore with: an arbitrary moment and place, not a real person's birth.
+    func addSample(_ name: String, date: String, time: String, zone: String, place: String, latitude: Double, longitude: Double) {
+        let birth = Birth(name: "Sample: " + name, date: date, time: time, zone: zone, place: place, latitude: latitude, longitude: longitude)
         births.append(birth)
         current = birth.id
     }
