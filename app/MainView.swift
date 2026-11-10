@@ -15,8 +15,8 @@ struct MainView: View {
                         .contextMenu { Button("Delete", role: .destructive) { store.remove(birth.id) } }
                 }
             }
-            .navigationSplitViewColumnWidth(min: 150, ideal: 180)
-            .toolbar { Button { store.add() } label: { Label("New chart", systemImage: "plus") } }
+            .safeAreaInset(edge: .bottom) { ChartSettings() }
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
             VStack(spacing: 0) {
                 updateBanner
@@ -242,5 +242,40 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 560)
+    }
+}
+
+/// How every chart is drawn and reckoned: always in sight at the foot of the sidebar.
+struct ChartSettings: View {
+    @EnvironmentObject var store: Store
+
+    private func row<Content: View>(_ title: String, _ help: String, @ViewBuilder _ picker: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            picker().labelsHidden().frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .help(help)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button { store.add() } label: { Label("New chart", systemImage: "plus") }
+                .help("Add a chart for another person or moment")
+            Divider()
+            row("Chart style", "South Indian charts keep the signs in place; North Indian charts keep the houses in place.") {
+                Picker("Chart style", selection: $store.style) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
+            }
+            row("Ayanamsa", "The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars. Lahiri is India's official value; True Chitra fixes the star Spica at the start of Libra; B.V. Raman's is about 1 degree 27 minutes smaller.") {
+                Picker("Ayanamsa", selection: $store.ayanamsa) {
+                    ForEach(["lahiri", "truecitra", "raman"], id: \.self) { Text(Names.ayanamsas[$0] ?? $0).tag($0) }
+                }
+            }
+            row("Rahu and Ketu", "The mean node moves evenly; the true node follows the Moon's orbit as it wobbles. Most almanacs use the mean node.") {
+                Picker("Node", selection: $store.node) { Text("Mean node").tag("mean"); Text("True node").tag("true") }
+            }
+        }
+        .controlSize(.small)
+        .padding(.horizontal, 10).padding(.bottom, 8)
+        .background(.bar)
     }
 }

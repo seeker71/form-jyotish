@@ -153,7 +153,7 @@ struct MatchCard: View {
         let here = store.birth?.name ?? "This chart"
         VStack(alignment: .leading, spacing: 8) {
             if others.isEmpty {
-                Text("A match compares two charts. Add a second chart with the + in the sidebar, and it appears here.").foregroundStyle(.secondary)
+                Text("A match compares two charts. Add a second chart with New chart at the foot of the sidebar, and it appears here.").foregroundStyle(.secondary)
             } else {
                 HStack(spacing: 10) {
                     Text(here).fontWeight(.semibold)
