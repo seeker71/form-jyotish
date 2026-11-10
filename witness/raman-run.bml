@@ -7,6 +7,7 @@
 //     Sun 168 22, Venus 205 53, Rahu 103 36 within 2 minutes of arc. His Moon is printed at 120 10 (Simha);
 //     the ephemeris places it before 120 (Karka), and his Jupiter, printed at 30 25, before 30 (Mesha).
 //     The witness holds that difference as found, so a change in it is seen.
+//   Nos. 35, 36, 38, 43 (Tagore, Vivekananda, Ford, Aurobindo): the Sun and Mars within 2 minutes of arc of print.
 //   ./fkwu witness/raman-run.bml   ->  one verdict line
 import engine/num.bml;
 import engine/spk.bml;
@@ -22,6 +23,8 @@ section [form.bml] {
   let segs = js-segments(path); let e = 2407422.951389; let g = 2403972.628981;
   let einstein = [[10, wr-dm(332.0, 46.0)], [301, wr-dm(233.0, 48.0)], [4, wr-dm(276.0, 12.0)], [1, wr-dm(342.0, 25.0)], [5, wr-dm(306.0, 44.0)], [2, wr-dm(356.0, 16.0)]];
   let gandhi = [[10, wr-dm(168.0, 22.0)], [2, wr-dm(205.0, 53.0)]];
+  let others = [[2400902.372917, 10, wr-dm(25.0, 48.0)], [2400902.372917, 4, wr-dm(61.0, 36.0)], [2401517.527083, 10, wr-dm(270.0, 52.0)], [2401517.527083, 4, wr-dm(7.0, 46.0)],
+   [2401717.314120, 10, wr-dm(106.0, 34.0)], [2401717.314120, 4, wr-dm(127.0, 35.0)], [2405020.474769, 10, wr-dm(121.0, 47.0)], [2405020.474769, 4, wr-dm(96.0, 50.0)]];
   let moon = wr-place(path, segs, e, 301); let span = 360.0 / 27.0; let left = 1.0 - (moon - span * floor(moon / span)) / span;
   let balance = left * 17.0; let printed = 7.0 + 10.0 / 12.0 + 26.0 / 360.0;
   let claims = [
@@ -29,6 +32,7 @@ section [form.bml] {
    wr-near(wr-rahu(path, segs, e), wr-dm(280.0, 46.0)),
    floor(moon / span) == 17 && balance - printed < 0.02 && printed - balance < 0.02,
    wr-all(gandhi |> map(r => wr-near(wr-place(path, segs, g, r[0]), r[1]))) && wr-near(wr-rahu(path, segs, g), wr-dm(103.0, 36.0)),
+   wr-all(others |> map(r => wr-near(wr-place(path, segs, r[0], r[1]), r[2]))),
    wr-place(path, segs, g, 301) < 120.0 && wr-place(path, segs, g, 301) > 119.0 && wr-place(path, segs, g, 5) < 30.0 && wr-place(path, segs, g, 5) > 29.0];
   let held = len(claims |> filter(c => c));
   "raman witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims " + value_str(claims) + " (Mercury balance " + value_str(balance) + " years, printed " + value_str(printed) + ")";

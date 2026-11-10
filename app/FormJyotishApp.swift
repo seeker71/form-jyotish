@@ -9,6 +9,7 @@ struct FormJyotishApp: App {
     init() {
         let arguments = CommandLine.arguments
         // a newer build fetched during the last run takes this one's place before anything else happens
+        if arguments.contains("--save-public") { print("public charts added: \(PublicCharts.saveAll())"); exit(0) }
         if arguments.contains("--update-helper") { UpdateHelper.run(); exit(0) }
         Updater.waitForPredecessor(arguments)
         if !arguments.contains("--report") && !arguments.contains("--match-check") {
