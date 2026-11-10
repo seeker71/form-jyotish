@@ -44,6 +44,9 @@ what the engine returns.
   itself in seconds and minutes; Apply writes it into the birth data.
 - **Workspaces of cards.** Overview, Vargas, Dasha, KP and Transits come filled; cards can be added,
   moved and removed, and the layout is remembered.
+- **Help in place.** Each workspace, card and inspector section carries a short explanation in plain words,
+  and every control, column heading and chart label has a tooltip. The ? button in the toolbar hides the
+  explanations once they are no longer needed; the tooltips stay. The words live in `app/Help.swift`.
 - **Type to do anything (⌘K).** "d9", "kp", "north", "true chitra", "now", "report".
 - The Vimshottari timeline zooms from 120 years to six weeks, showing finer levels as it narrows; dragging
   along it moves the moment, a click picks the period.

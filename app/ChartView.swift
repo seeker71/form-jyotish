@@ -78,6 +78,7 @@ struct ChartView: View {
             .onTapGesture { store.pick = pick }
             .onHover { inside in store.hover = inside ? pick : (store.hover == pick ? nil : store.hover) }
             .accessibilityLabel("\(mark.transit ? "transit " : "")\(mark.label)")
+            .help(mark.code == "As" ? (Help.term("Lagna") ?? "") : (mark.transit ? "In the sky of the moment. " : "") + Help.graha(mark.code) + (mark.retro ? " Retrograde." : ""))
     }
 
     private func labels(_ sign: Int, perRow: Int, size: CGFloat) -> some View {

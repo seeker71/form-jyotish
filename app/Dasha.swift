@@ -39,6 +39,7 @@ struct DashaTimeline: View {
             HStack {
                 Picker("Span", selection: $span) { ForEach(Self.spans, id: \.years) { Text($0.name).tag($0.years) } }
                     .pickerStyle(.segmented).labelsHidden().frame(width: 280)
+                    .help("How much time the timeline shows; narrower spans show finer periods")
                 Text("Drag to move through time; click a period to pick it.").font(.footnote).foregroundStyle(.secondary)
             }
             GeometryReader { geo in

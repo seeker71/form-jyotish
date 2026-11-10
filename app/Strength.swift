@@ -10,7 +10,7 @@ struct ShadbalaTable: View {
     private func cell(_ text: String, _ index: Int, bold: Bool) -> some View {
         let code = seven[index], chosen = store.pick?.graha == code, near = store.hover?.graha == code
         return Text(text).fontWeight(bold ? .semibold : .regular)
-            .frame(width: 74, alignment: .trailing).padding(.vertical, 1.5)
+            .frame(width: 62, alignment: .trailing).padding(.vertical, 1.5)
             .background(Color.accentColor.opacity(chosen ? 0.22 : near ? 0.09 : 0))
             .contentShape(Rectangle())
             .onTapGesture { store.pick = .graha(code) }
@@ -20,7 +20,7 @@ struct ShadbalaTable: View {
     private func row(_ name: String, _ values: [String], bold: Bool = false, secondary: Bool = false) -> some View {
         HStack(spacing: 0) {
             Text(name).fontWeight(bold ? .semibold : .regular).foregroundStyle(secondary ? .secondary : .primary)
-                .padding(.leading, bold ? 0 : 12).frame(width: 150, alignment: .leading)
+                .padding(.leading, bold ? 0 : 12).frame(width: 130, alignment: .leading).help(Help.term(name) ?? "")
             ForEach(0..<7, id: \.self) { cell(values[$0], $0, bold: bold) }
         }
     }
@@ -29,15 +29,15 @@ struct ShadbalaTable: View {
         ScrollView(.horizontal) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 0) {
-                    Text("virupas").font(.caption).foregroundStyle(.secondary).frame(width: 150, alignment: .leading)
+                    Text("virupas").font(.caption).foregroundStyle(.secondary).frame(width: 130, alignment: .leading)
                     ForEach(0..<7, id: \.self) { index in
-                        Text(Names.lords[seven[index]] ?? "").font(.callout).fontWeight(.medium).foregroundStyle(Tint.graha(seven[index])).frame(width: 74, alignment: .trailing)
+                        Text(Names.lords[seven[index]] ?? "").font(.callout).fontWeight(.medium).foregroundStyle(Tint.graha(seven[index])).frame(width: 62, alignment: .trailing)
                     }
                 }
                 .padding(.bottom, 4)
                 ForEach(chart.shadbala) { r in
                     row(r.title, r.values.map { String(format: "%.2f", $0) }, bold: r.isSum)
-                    if r.isSum { Divider().frame(width: 150 + 74 * 7).padding(.vertical, 2) }
+                    if r.isSum { Divider().frame(width: 130 + 62 * 7).padding(.vertical, 2) }
                 }
                 row("Rupas", (0..<7).map { String(format: "%.2f", chart.rupas($0)) }, bold: true)
                 row("Required", Chart.requiredRupas.map { String(format: "%.1f", $0) }, secondary: true)
@@ -60,7 +60,7 @@ struct AshtakavargaTable: View {
         return Text("\(value)")
             .fontWeight(value >= strong ? .semibold : .regular)
             .foregroundStyle(value >= strong ? AnyShapeStyle(.green) : value <= weak ? AnyShapeStyle(.red) : AnyShapeStyle(.primary))
-            .frame(width: 44, alignment: .center).padding(.vertical, 2)
+            .frame(width: 36, alignment: .center).padding(.vertical, 2)
             .background(Color.accentColor.opacity(chosen ? 0.22 : near ? 0.09 : 0))
             .contentShape(Rectangle())
             .onTapGesture { store.pick = .sign(sign) }
@@ -73,7 +73,7 @@ struct AshtakavargaTable: View {
                 HStack(spacing: 0) {
                     Text("").frame(width: 110, alignment: .leading)
                     ForEach(0..<12, id: \.self) { sign in
-                        Text(Names.signsShort[sign]).font(.caption).foregroundStyle(sign == chart.asc.sign ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary)).frame(width: 44)
+                        Text(Names.signsShort[sign]).font(.caption).foregroundStyle(sign == chart.asc.sign ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary)).frame(width: 36)
                     }
                     Text("Sum").font(.caption).foregroundStyle(.secondary).frame(width: 50, alignment: .trailing)
                 }
@@ -86,9 +86,9 @@ struct AshtakavargaTable: View {
                         Text("\(chart.ashtakavarga[index].reduce(0, +))").foregroundStyle(.secondary).frame(width: 50, alignment: .trailing)
                     }
                 }
-                Divider().frame(width: 110 + 44 * 12 + 50).padding(.vertical, 3)
+                Divider().frame(width: 110 + 36 * 12 + 50).padding(.vertical, 3)
                 HStack(spacing: 0) {
-                    Text("Sarva").fontWeight(.semibold).frame(width: 110, alignment: .leading)
+                    Text("Sarva").fontWeight(.semibold).frame(width: 110, alignment: .leading).help(Help.term("Sarva") ?? "")
                     ForEach(0..<12, id: \.self) { sign in points(chart.sarva[sign], sign: sign, graha: nil, strong: 30, weak: 24) }
                     Text("\(chart.sarva.reduce(0, +))").foregroundStyle(.secondary).frame(width: 50, alignment: .trailing)
                 }

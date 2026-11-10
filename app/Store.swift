@@ -72,6 +72,8 @@ final class Store: ObservableObject {
     @Published var node: String { didSet { defaults.set(node, forKey: "node"); readNatal(); readSky() } }
     @Published var ayanamsa: String { didSet { defaults.set(ayanamsa, forKey: "ayanamsa"); readNatal(); readSky() } }
     @Published var style: ChartStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
+    /// explanations shown in place on every card and in the inspector; on until the person turns it off
+    @Published var showHelp: Bool { didSet { defaults.set(showHelp, forKey: "showHelp") } }
 
     private let defaults = UserDefaults.standard
     private let file: URL
@@ -86,6 +88,7 @@ final class Store: ObservableObject {
         node = defaults.string(forKey: "node") ?? "mean"
         ayanamsa = defaults.string(forKey: "ayanamsa") ?? "lahiri"
         style = ChartStyle(rawValue: defaults.string(forKey: "style") ?? "") ?? .south
+        showHelp = defaults.object(forKey: "showHelp") as? Bool ?? true
         if let data = try? Data(contentsOf: file), let saved = try? JSONDecoder().decode([Birth].self, from: data) {
             births = saved
         } else {

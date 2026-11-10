@@ -32,6 +32,11 @@ struct MainView: View {
             ToolbarItem(placement: .principal) {
                 Picker("Workspace", selection: $store.workspace) { ForEach(Store.workspaces, id: \.self) { Text($0).tag($0) } }
                     .pickerStyle(.segmented).labelsHidden()
+                    .help("Each workspace gathers the cards for one kind of reading")
+            }
+            ToolbarItem {
+                Button { store.showHelp.toggle() } label: { Label(store.showHelp ? "Hide explanations" : "Show explanations", systemImage: store.showHelp ? "questionmark.circle.fill" : "questionmark.circle") }
+                    .help(store.showHelp ? "Hide the explanations on each card and in the inspector" : "Show an explanation on each card and in the inspector")
             }
             ToolbarItem {
                 Button { palette = true } label: { Label("Add or change anything", systemImage: "magnifyingglass") }
@@ -79,17 +84,24 @@ struct TimeBar: View {
 
     var body: some View {
         let steps = store.rectifying ? Self.fineSteps : Self.steps
+        VStack(spacing: 4) {
+        if store.showHelp { Text(Help.timeBar).font(.footnote).foregroundStyle(.secondary).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading) }
         HStack(spacing: 8) {
             Button("Birth") { playing = false; store.goBirth() }.disabled(store.atBirth && !store.rectifying)
+                .help("Return to the birth chart alone")
             Button("Now") { playing = false; store.goNow() }
+                .help("Lay the present sky over the birth chart")
             Divider().frame(height: 18)
-            Button { store.step(seconds: -step) } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Step back")
+            Button { store.step(seconds: -step) } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Step back").help("Step back by the chosen amount (⌘←)")
                 .keyboardShortcut(.leftArrow, modifiers: .command)
             Picker("Step", selection: $step) { ForEach(steps, id: \.seconds) { Text($0.name).tag($0.seconds) } }.labelsHidden().frame(width: 120)
-            Button { store.step(seconds: step) } label: { Image(systemName: "chevron.right") }.accessibilityLabel("Step forward")
+                .help("How far each step moves")
+            Button { store.step(seconds: step) } label: { Image(systemName: "chevron.right") }.accessibilityLabel("Step forward").help("Step forward by the chosen amount (⌘→)")
                 .keyboardShortcut(.rightArrow, modifiers: .command)
             Button { playing.toggle() } label: { Image(systemName: playing ? "pause.fill" : "play.fill") }.accessibilityLabel(playing ? "Pause" : "Play")
+                .help(playing ? "Stop stepping" : "Keep stepping forward and watch the charts move")
             Text(label).monospacedDigit().lineLimit(1).frame(maxWidth: .infinity, alignment: .center)
+                .help("The moment every card is showing, on the birthplace's clock")
             if store.rectifying {
                 Button("Apply") { playing = false; store.applyRectify(); store.rectifying = false }.disabled(store.rectify == 0)
                     .help("Write this time into the birth data")
@@ -98,6 +110,7 @@ struct TimeBar: View {
                 Button("Rectify") { playing = false; store.goBirth(); store.rectifying = true }
                     .help("Step the birth time itself in seconds and minutes and watch every card change")
             }
+        }
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .onReceive(tick) { _ in if playing { store.step(seconds: step) } }
@@ -133,6 +146,7 @@ struct Palette: View {
             Command(id: "t-birth", title: "Go to the birth", keywords: "time natal", run: { store.goBirth() }),
             Command(id: "rectify", title: "Rectify the birth time", keywords: "adjust", run: { store.goBirth(); store.rectifying = true }),
             Command(id: "report", title: "Write the report (PDF)…", keywords: "print export", run: report),
+            Command(id: "help", title: store.showHelp ? "Hide explanations" : "Show explanations", keywords: "help tips learn beginner", run: { store.showHelp.toggle() }),
             Command(id: "new", title: "New chart", keywords: "birth person add", run: { store.add() }),
             Command(id: "reset", title: "Restore this workspace's standard cards", keywords: "reset layout", run: { store.resetLayout() }),
         ]

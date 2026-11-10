@@ -45,6 +45,9 @@ struct Workspace: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 if let problem = store.problem { Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                if store.showHelp {
+                    Label(Help.workspace(store.workspace), systemImage: "lightbulb").font(.callout).foregroundStyle(.secondary)
+                }
                 if store.cards.isEmpty {
                     ContentUnavailableView("This workspace is empty", systemImage: "rectangle.dashed", description: Text("Press ⌘K and type what to add, such as “d9” or “transits”."))
                 }
@@ -72,7 +75,7 @@ struct Card: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(Catalog.info(id).title).font(.headline)
+                Text(Catalog.info(id).title).font(.headline).help(Help.card(id))
                 Spacer()
                 Menu {
                     Button("Move earlier") { store.moveCard(id, by: -1) }
@@ -82,6 +85,9 @@ struct Card: View {
                 } label: { Image(systemName: "ellipsis") }
                     .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                     .accessibilityLabel("Card options for \(Catalog.info(id).title)")
+            }
+            if store.showHelp, !Help.card(id).isEmpty {
+                Text(Help.card(id)).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             content
         }
@@ -144,17 +150,15 @@ struct BirthForm: View {
                 }
                 GridRow {
                     Text("Place")
-                    HStack(spacing: 6) {
-                        TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }
-                        Button("Look up") { store.lookUpPlace() }.disabled(birth.wrappedValue.place.isEmpty).fixedSize()
-                            .help("Sends the place name to Apple's geocoder and fills latitude, longitude and time zone.")
-                    }
+                    TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }
                     Text("Latitude"); TextField("north +", value: birth.latitude, format: .number.precision(.fractionLength(0...4))).frame(width: 110)
                     Text("Longitude"); TextField("east +", value: birth.longitude, format: .number.precision(.fractionLength(0...4))).frame(width: 90)
                 }
                 GridRow {
                     Text("Time zone")
                     TextField("Area/City", text: birth.zone).foregroundStyle(birth.wrappedValue.timeZone == nil ? .red : .primary)
+                    Button("Look up place") { store.lookUpPlace() }.disabled(birth.wrappedValue.place.isEmpty).gridCellColumns(4)
+                        .help("Sends the place name to Apple's geocoder and fills latitude, longitude and time zone.")
                 }
             }
             .textFieldStyle(.roundedBorder)
@@ -185,6 +189,7 @@ struct PickRow: View {
                     .foregroundStyle(header ? AnyShapeStyle(.secondary) : index == 0 ? AnyShapeStyle(tint) : AnyShapeStyle(.primary))
                     .lineLimit(1)
                     .frame(width: cells[index].width, alignment: .leading)
+                    .help(header ? (Help.term(cells[index].text) ?? "") : "")
             }
         }
         .padding(.vertical, 2).padding(.horizontal, 6)

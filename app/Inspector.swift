@@ -38,7 +38,7 @@ struct Inspector: View {
 
     private func fact(_ name: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(name).foregroundStyle(.secondary).frame(width: 84, alignment: .leading)
+            Text(name).foregroundStyle(.secondary).frame(width: 84, alignment: .leading).help(Help.term(name) ?? "")
             Text(value).textSelection(.enabled)
         }
     }
@@ -52,7 +52,15 @@ struct Inspector: View {
         Button(Names.signs[sign]) { store.pick = .sign(sign) }.buttonStyle(.bordered).controlSize(.small)
     }
 
-    private func section(_ title: String) -> some View { Text(title).font(.subheadline).fontWeight(.semibold).padding(.top, 4) }
+    private func section(_ title: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.subheadline).fontWeight(.semibold).padding(.top, 4).help(Help.term(title) ?? "")
+            if store.showHelp, let words = Help.term(title) { Text(words).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+        }
+    }
+    private func note(_ words: String) -> some View {
+        Group { if store.showHelp, !words.isEmpty { Text(words).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) } }
+    }
 
     private func house(_ sign: Int, from: Int) -> Int { (sign - from + 12) % 12 + 1 }
 
@@ -62,6 +70,7 @@ struct Inspector: View {
         if let g = (chart.grahas + chart.outer).first(where: { $0.id == code }) {
             let moon = chart.graha("Mo")?.sign ?? 0
             Text("\(g.name) · \(Names.lords[g.id] ?? g.id)").font(.title3).fontWeight(.semibold).foregroundStyle(Tint.graha(g.id))
+            note(Help.graha(g.id))
             fact("Rasi", "\(Names.signs[g.sign]) \(Names.dms(g.deg))")
             fact("House", "\(house(g.sign, from: chart.asc.sign)) from the lagna, \(house(g.sign, from: moon)) from the Moon")
             fact("Nakshatra", "\(g.nak_name), pada \(g.pada)")
@@ -106,6 +115,7 @@ struct Inspector: View {
         let lord = Names.weekdayLords[[2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4][sign]]
         let here = (chart.grahas + chart.outer).filter { $0.sign == sign }
         Text("\(Names.signs[sign]) · \(Names.signsWestern[sign])").font(.title3).fontWeight(.semibold)
+        note(Help.sign(sign))
         fact("House", "\(house(sign, from: chart.asc.sign)) from the lagna, \(house(sign, from: moon)) from the Moon")
         if sign == chart.asc.sign { fact("Lagna", "\(Names.dms(chart.asc.deg)) · \(chart.asc.nak_name), pada \(chart.asc.pada)") }
         HStack { Text("Lord").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); chip(lord) }
@@ -145,6 +155,7 @@ struct Inspector: View {
         let whole = Period(lord: lords.last ?? "", start: start, end: end, antar: nil)
         Text(lords.map { Names.lords[$0] ?? $0 }.joined(separator: " – ")).font(.title3).fontWeight(.semibold)
         Text(levels[min(lords.count, levels.count) - 1]).foregroundStyle(.secondary)
+        note(Help.term(levels[min(lords.count, levels.count) - 1]) ?? "")
         fact("Begins", Names.date(julianDay: max(start, chart.jd)).formatted(format))
         fact("Ends", Names.date(julianDay: end).formatted(format))
         fact("Length", Vimshottari.span(days: end - start))
