@@ -18,17 +18,20 @@ struct MainView: View {
             .safeAreaInset(edge: .bottom) { ChartSettings() }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
-            VStack(spacing: 0) {
-                updateBanner
-                WorkspaceTabs()
-                Divider()
-                HStack(spacing: 0) {
-                    Workspace()
+            Zoomed(scale: store.textScale) { room in
+                VStack(spacing: 0) {
+                    updateBanner
+                    WorkspaceTabs()
                     Divider()
-                    Inspector().frame(width: 280)
+                    HStack(spacing: 0) {
+                        Workspace()
+                        Divider()
+                        // the explanations give way before the workspace does when text is large or the window narrow
+                        Inspector().frame(width: min(280, max(200, room.width - 600)))
+                    }
+                    Divider()
+                    TimeBar()
                 }
-                Divider()
-                TimeBar()
             }
         }
         .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }
@@ -163,6 +166,8 @@ struct Palette: View {
         }
         list += ChartStyle.allCases.map { style in Command(id: "style-\(style.rawValue)", title: "\(style.rawValue) charts", keywords: "style chart form", run: { store.style = style }) }
         list += [
+            Command(id: "text-larger", title: "Larger text", keywords: "font size bigger zoom in", run: { store.textScale = Store.textScales.first { $0.scale > store.textScale }?.scale ?? store.textScale }),
+            Command(id: "text-smaller", title: "Smaller text", keywords: "font size zoom out", run: { store.textScale = Store.textScales.last { $0.scale < store.textScale }?.scale ?? store.textScale }),
             Command(id: "ay-lahiri", title: "Lahiri ayanamsa", keywords: "chitrapaksha", run: { store.ayanamsa = "lahiri" }),
             Command(id: "ay-truecitra", title: "True Chitra ayanamsa", keywords: "citra spica", run: { store.ayanamsa = "truecitra" }),
             Command(id: "ay-raman", title: "B.V. Raman ayanamsa", keywords: "raman notable horoscopes", run: { store.ayanamsa = "raman" }),
@@ -262,6 +267,9 @@ struct ChartSettings: View {
             Button { store.add() } label: { Label("New chart", systemImage: "plus") }
                 .help("Add a chart for another person or moment")
             Divider()
+            row("Text size", "How large the charts, tables and words are drawn.") {
+                Picker("Text size", selection: $store.textScale) { ForEach(Store.textScales, id: \.scale) { Text($0.name).tag($0.scale) } }
+            }
             row("Chart style", "South Indian charts keep the signs in place; North Indian charts keep the houses in place.") {
                 Picker("Chart style", selection: $store.style) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
             }
@@ -277,5 +285,24 @@ struct ChartSettings: View {
         .controlSize(.small)
         .padding(.horizontal, 10).padding(.bottom, 8)
         .background(.bar)
+    }
+}
+
+/// Draws its content larger or smaller as one piece: text, tables and charts keep their proportions, and
+/// the content is laid out in the room the scale leaves it.
+struct Zoomed<Content: View>: View {
+    var scale: Double
+    /// the content is handed the room it has, measured in its own units
+    @ViewBuilder var content: (CGSize) -> Content
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        GeometryReader { geo in
+            content(CGSize(width: geo.size.width / scale, height: geo.size.height / scale))
+                .frame(width: geo.size.width / scale, height: geo.size.height / scale)
+                .environment(\.displayScale, displayScale * max(1, scale))
+                .scaleEffect(scale, anchor: .topLeading)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+        }
     }
 }

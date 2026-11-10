@@ -64,16 +64,19 @@ struct Workspace: View {
     /// one pass on every macOS the app runs on.
     private func rows(_ run: [String], width: CGFloat) -> [[String]] {
         let fit = max(1, min(4, Int((width - 32 + 14) / (240 + 14))))
-        let perRow = run.count <= 3 ? run.count : fit
+        let perRow = run.count <= 3 ? min(run.count, max(fit, Int((width - 32 + 14) / (190 + 14)))) : fit
         return stride(from: 0, to: run.count, by: perRow).map { Array(run[$0..<min($0 + perRow, run.count)]) }
     }
 
     var body: some View {
-        GeometryReader { geo in content(width: geo.size.width) }
+        // below this width the cards keep their shape and the workspace scrolls sideways
+        GeometryReader { geo in content(width: max(geo.size.width, Workspace.narrowest), sideways: geo.size.width < Workspace.narrowest) }
     }
 
-    private func content(width: CGFloat) -> some View {
-        ScrollView {
+    static let narrowest: CGFloat = 560
+
+    private func content(width: CGFloat, sideways: Bool) -> some View {
+        ScrollView(sideways ? [.vertical, .horizontal] : .vertical) {
             VStack(alignment: .leading, spacing: 14) {
                 if let problem = store.problem { Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                 if store.showHelp {
@@ -103,7 +106,7 @@ struct Workspace: View {
                 }
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: width, alignment: .leading)
         }
     }
 }
@@ -209,21 +212,23 @@ struct BirthForm: View {
         if let index = store.index {
             let birth = $store.births[index]
             Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
+                // two pairs to a row: the form keeps its shape at any text size
                 GridRow {
                     Text("Name"); TextField("Name", text: birth.name).frame(minWidth: 150)
+                    Text("Place"); TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }.frame(minWidth: 150)
+                }
+                GridRow {
                     Text("Date"); TextField("YYYY-MM-DD", text: birth.date).frame(width: 110)
                     Text("Time"); TextField("HH:MM:SS", text: birth.time).frame(width: 90)
                 }
                 GridRow {
-                    Text("Place")
-                    TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }
                     Text("Latitude"); TextField("north +", value: birth.latitude, format: .number.precision(.fractionLength(0...4))).frame(width: 110)
-                    Text("Longitude"); TextField("east +", value: birth.longitude, format: .number.precision(.fractionLength(0...4))).frame(width: 90)
+                    Text("Longitude"); TextField("east +", value: birth.longitude, format: .number.precision(.fractionLength(0...4))).frame(width: 110)
                 }
                 GridRow {
                     Text("Time zone")
                     TextField("Area/City", text: birth.zone).foregroundStyle(birth.wrappedValue.timeZone == nil ? .red : .primary)
-                    Button("Look up place") { store.lookUpPlace() }.disabled(birth.wrappedValue.place.isEmpty).gridCellColumns(4)
+                    Button("Look up place") { store.lookUpPlace() }.disabled(birth.wrappedValue.place.isEmpty).gridCellColumns(2)
                         .help("Sends the place name to Apple's geocoder and fills latitude, longitude and time zone.")
                 }
             }
