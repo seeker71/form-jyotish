@@ -127,7 +127,7 @@ extension Report {
             { number in
                 self.page(number, title: "Vimshottari Dasha – PD and Sookshma #\(part + 1)") {
                     self.title("Vimshottari Pratyantardasha and Sookshma Dasha", y: 76)
-                    Text("The dates are given for dasha beginning dates.").font(Ink.times(8.5)).centred(from: 50, to: 548, y: 96)
+                    Text("Each date is the day and time a sookshma dasha begins.").font(Ink.times(8.5)).centred(from: 50, to: 548, y: 96)
                     ForEach(0..<12, id: \.self) { slot in
                         if part * 12 + slot < shown.count {
                             let entry = shown[part * 12 + slot], x = 64 + CGFloat(slot % 4) * 119.5, y = 116 + CGFloat(slot / 4) * 201
@@ -367,8 +367,20 @@ extension Report {
                 }
                 .font(Ink.times(10.8)).at(70, 464)
                 self.rule(x: 65, y: 464 + 12 * 13.9 + 3, width: 468)
+                Text(self.passingNote(sky)).font(Ink.times(10)).italic().fixedSize(horizontal: false, vertical: true).frame(width: 452, alignment: .leading).at(70, 642)
             }
         }
+    }
+
+    /// what the slow grahas are passing over, said as the app says it
+    func passingNote(_ sky: Chart) -> String {
+        var words = "A transit acts within what the running dasha allows. Houses are counted from the birth lagna and from the birth Moon."
+        if let saturn = sky.graha("Sa") {
+            let fromMoon = (saturn.sign - moonSign + 12) % 12 + 1
+            if [12, 1, 2].contains(fromMoon) { words += " Saturn stands \(Chart.ordinal(fromMoon)) from the Moon: this is Sade Sati, Saturn's passage over the Moon, read as a season for maturing and consolidating." }
+            if [4, 8].contains(fromMoon) { words += " Saturn stands \(Chart.ordinal(fromMoon)) from the Moon, a passage traditionally read as a time to simplify and build resilience." }
+        }
+        return words + " " + Lore.balance
     }
 
     var transitPages: [(Int) -> AnyView] { transit.map { [transitPage($0)] } ?? [] }

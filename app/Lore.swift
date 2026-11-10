@@ -100,3 +100,69 @@ extension Chart {
         return (supports, strains)
     }
 }
+
+/// One sentence of a chart's summary: what it says, and what it names that can be examined.
+struct GlanceLine: Identifiable {
+    let heading: String
+    let words: String
+    var signs: [Int] = []
+    var grahas: [String] = []
+    var workspace: String? = nil
+    var pick: Pick? = nil
+    var id: String { heading }
+}
+
+extension Lore {
+    /// what a point of attention asks for, as its teachers put it constructively
+    static func yogaNote(_ name: String) -> String? {
+        if name.contains("bhanga") { return nil }
+        if name.hasPrefix("Kuja dosha") { return "Read as strong drive in partnership: it asks for a partner of matching energy and for directness handled with care." }
+        if name.hasPrefix("Kemadruma") { return "Read as a mind that stands alone: it asks for chosen company and steady routines, and grows self-reliance." }
+        if name.hasPrefix("Kala-sarpa") { return "Read as a life drawn strongly along one axis: it asks for patience with its turns, and gives focus." }
+        if name.hasPrefix("Guru-Chandala") { return "Read as wisdom meeting the unconventional: it asks for discernment about teachers, and can renew what is handed down." }
+        if name.hasPrefix("Papa-kartari") { return "Read as a lagna held between firm influences: it asks for clear boundaries, and builds resilience." }
+        return nil
+    }
+}
+
+extension Chart {
+    /// The chart's main facts as plain sentences, for the moment `day`.
+    func glance(day: Double, atBirth: Bool) -> [GlanceLine] {
+        let seven = Array(grahas.prefix(7)), name = { (code: String) in Names.lords[code] ?? code }
+        let placed = { (g: Graha) in "\(Names.signs[g.sign]), the \(Chart.ordinal(self.house(ofSign: g.sign))) house" }
+        let names = { (list: [Graha]) in list.map { name($0.id) }.joined(separator: ", ") }
+        let lagnaLord = lord(ofHouse: 1)
+        var lines = [GlanceLine(heading: "The lagna", words: "\(Names.signs[asc.sign]) rises, \(Lore.sign(asc.sign).lowercased()) Its lord, \(name(lagnaLord)), stands in \(graha(lagnaLord).map(placed) ?? "").",
+                                signs: [asc.sign], grahas: [lagnaLord])]
+        if let moon = graha("Mo") {
+            lines.append(GlanceLine(heading: "The Moon", words: "The Moon is in \(placed(moon)), in the nakshatra \(moon.nak_name), pada \(moon.pada). \(Lore.nakshatra(moon.nak))", signs: [moon.sign], grahas: ["Mo"]))
+        }
+        if let sun = graha("Su") {
+            lines.append(GlanceLine(heading: "The Sun", words: "The Sun is in \(placed(sun)). The Moon is \(self.day.tithi < 15 ? "waxing" : "waning"): the birth fell on \(Names.tithi(self.day.tithi)).", signs: [sun.sign], grahas: ["Su"]))
+        }
+        let high = seven.filter { $0.status == "Exalt." || $0.status == "Own" }, low = seven.filter { $0.status == "Debil." }
+        let back = seven.filter(\.retro), burnt = seven.filter { $0.combust == true }
+        let condition = [high.isEmpty ? nil : "In their own or exalted signs: \(names(high)).", low.isEmpty ? nil : "Debilitated, giving through effort: \(names(low)).",
+                         back.isEmpty ? nil : "Retrograde: \(names(back)).", burnt.isEmpty ? nil : "Combust, working inwardly: \(names(burnt)).",
+                         high.isEmpty && low.isEmpty && back.isEmpty && burnt.isEmpty ? "None is exalted, in its own sign, debilitated, retrograde or combust." : nil].compactMap { $0 }.joined(separator: " ")
+        var marked: [String] = []
+        for g in high + low + back + burnt where !marked.contains(g.id) { marked.append(g.id) }
+        lines.append(GlanceLine(heading: "Condition of the grahas", words: condition, grahas: marked))
+        let ranked = seven.indices.sorted { strengthRatio($0) > strengthRatio($1) }
+        if let first = ranked.first, let last = ranked.last {
+            lines.append(GlanceLine(heading: "Strength", words: String(format: "By shadbala %@ is strongest at %.2f times what is required, and %@ has the most to build at %.2f.",
+                                                                       name(seven[first].id), strengthRatio(first), name(seven[last].id), strengthRatio(last)),
+                                    grahas: [seven[first].id, seven[last].id], workspace: "Strength"))
+        }
+        lines.append(GlanceLine(heading: "Yogas", words: yogas.isEmpty ? "None of the yogas the app knows is formed." : "\(yogas.count) are formed, among them \(yogas.prefix(3).map(\.name).joined(separator: ", ")).", workspace: "Yogas"))
+        let running = Vimshottari.running(at: day, in: dasha, depth: 2)
+        if running.count == 2 {
+            let maha = running[0].lord, antar = running[1].lord, ruled = housesRuled(by: maha)
+            let standing = graha(maha).map { " and stands in the \(Chart.ordinal(self.house(ofSign: $0.sign)))" } ?? ""
+            lines.append(GlanceLine(heading: atBirth ? "The time at birth" : "The time under view",
+                                    words: "The mahadasha of \(name(maha)) is running, with the antardasha of \(name(antar)). \(name(maha)) \(ruled.isEmpty ? "rules no house" : "rules the " + ruled.map(Chart.ordinal).joined(separator: " and "))\(standing).",
+                                    grahas: [maha, antar], workspace: "Dasha", pick: .period(lords: [maha], start: running[0].start, end: running[0].end)))
+        }
+        return lines
+    }
+}

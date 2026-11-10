@@ -76,67 +76,21 @@ struct ReadingCard: View {
     @EnvironmentObject var store: Store
     let chart: Chart
 
-    private func chip(_ code: String) -> some View {
-        Button(Names.lords[code] ?? code) { store.pick = .graha(code) }.buttonStyle(.bordered).controlSize(.small).tint(Tint.graha(code)).help(Help.graha(code))
-    }
-    private func signChip(_ sign: Int) -> some View {
-        Button(Names.signs[sign]) { store.pick = .sign(sign) }.buttonStyle(.bordered).controlSize(.small).help(Lore.sign(sign))
-    }
-    private func line<Links: View>(_ heading: String, _ words: String, @ViewBuilder links: () -> Links) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(heading).font(.subheadline).fontWeight(.semibold)
-            Text(words).fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 6) { links() }
-        }
-    }
-    private func placed(_ g: Graha) -> String {
-        "\(Names.signs[g.sign]), the \(Chart.ordinal(chart.house(ofSign: g.sign))) house"
-    }
-    private func names(_ grahas: [Graha]) -> String { grahas.map { Names.lords[$0.id] ?? $0.name }.joined(separator: ", ") }
-
     var body: some View {
-        let seven = Array(chart.grahas.prefix(7))
-        let lagnaLord = chart.lord(ofHouse: 1), lord = chart.graha(lagnaLord)
-        let moon = chart.graha("Mo"), sun = chart.graha("Su")
-        let ranked = seven.indices.sorted { chart.strengthRatio($0) > chart.strengthRatio($1) }
-        let high = seven.filter { $0.status == "Exalt." || $0.status == "Own" }, low = seven.filter { $0.status == "Debil." }
-        let back = seven.filter(\.retro), burnt = seven.filter { $0.combust == true }
-        let day = store.viewDay ?? chart.jd, running = Vimshottari.running(at: day, in: chart.dasha, depth: 2)
         VStack(alignment: .leading, spacing: 12) {
-            line("The lagna", "\(Names.signs[chart.asc.sign]) rises, \(Lore.sign(chart.asc.sign).lowercased()) Its lord, \(Names.lords[lagnaLord] ?? lagnaLord), stands in \(lord.map(placed) ?? "").") {
-                signChip(chart.asc.sign); chip(lagnaLord)
-            }
-            if let moon {
-                line("The Moon", "The Moon is in \(placed(moon)), in the nakshatra \(moon.nak_name), pada \(moon.pada). \(Lore.nakshatra(moon.nak))") {
-                    chip("Mo"); signChip(moon.sign)
-                }
-            }
-            if let sun {
-                line("The Sun", "The Sun is in \(placed(sun)). The Moon is \(chart.day.tithi < 15 ? "waxing" : "waning"): the birth fell on \(Names.tithi(chart.day.tithi)).") {
-                    chip("Su"); signChip(sun.sign)
-                }
-            }
-            line("Condition of the grahas",
-                 [high.isEmpty ? nil : "In their own or exalted signs: \(names(high)).", low.isEmpty ? nil : "Debilitated: \(names(low)).",
-                  back.isEmpty ? nil : "Retrograde: \(names(back)).", burnt.isEmpty ? nil : "Combust: \(names(burnt)).",
-                  high.isEmpty && low.isEmpty && back.isEmpty && burnt.isEmpty ? "None is exalted, in its own sign, debilitated, retrograde or combust." : nil].compactMap { $0 }.joined(separator: " ")) {
-                ForEach(high + low + back.filter { g in !(high + low).contains { $0.id == g.id } }) { chip($0.id) }
-            }
-            if let first = ranked.first, let last = ranked.last {
-                line("Strength", String(format: "By shadbala %@ is strongest at %.2f times what is required, and %@ weakest at %.2f.",
-                                        Names.lords[seven[first].id] ?? "", chart.strengthRatio(first), Names.lords[seven[last].id] ?? "", chart.strengthRatio(last))) {
-                    chip(seven[first].id); chip(seven[last].id); GoLink(title: "Open Strength", workspace: "Strength")
-                }
-            }
-            line("Yogas", chart.yogas.isEmpty ? "None of the yogas the app knows is formed." : "\(chart.yogas.count) are formed, among them \(chart.yogas.prefix(3).map(\.name).joined(separator: ", ")).") {
-                GoLink(title: "Open Yogas", workspace: "Yogas")
-            }
-            if running.count == 2 {
-                let maha = running[0].lord, antar = running[1].lord, ruled = chart.housesRuled(by: maha)
-                let standing = chart.graha(maha).map { " and stands in the \(Chart.ordinal(chart.house(ofSign: $0.sign)))" } ?? ""
-                line(store.atBirth ? "The time at birth" : "The time under view",
-                     "The mahadasha of \(Names.lords[maha] ?? maha) is running, with the antardasha of \(Names.lords[antar] ?? antar). \(Names.lords[maha] ?? maha) \(ruled.isEmpty ? "rules no house" : "rules the " + ruled.map(Chart.ordinal).joined(separator: " and "))\(standing).") {
-                    chip(maha); chip(antar); GoLink(title: "Open Dasha", workspace: "Dasha", pick: .period(lords: [maha], start: running[0].start, end: running[0].end))
+            ForEach(chart.glance(day: store.viewDay ?? chart.jd, atBirth: store.atBirth)) { line in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(line.heading).font(.subheadline).fontWeight(.semibold)
+                    Text(line.words).fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 6) {
+                        ForEach(line.signs, id: \.self) { sign in
+                            Button(Names.signs[sign]) { store.pick = .sign(sign) }.buttonStyle(.bordered).controlSize(.small).help(Lore.sign(sign))
+                        }
+                        ForEach(line.grahas, id: \.self) { code in
+                            Button(Names.lords[code] ?? code) { store.pick = .graha(code) }.buttonStyle(.bordered).controlSize(.small).tint(Tint.graha(code)).help(Help.graha(code))
+                        }
+                        if let workspace = line.workspace { GoLink(title: "Open \(workspace)", workspace: workspace, pick: line.pick) }
+                    }
                 }
             }
             Text(Lore.balance).font(.footnote).foregroundStyle(.secondary)

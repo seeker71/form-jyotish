@@ -152,17 +152,12 @@ struct SourcesCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("How the app speaks").font(.subheadline).fontWeight(.semibold)
-            Text("It states the conditions a chart shows and the understandings the tradition attaches to them, and it stops there. It names what supports a graha and what asks more of it side by side. A chart describes conditions; what is made of them remains with the person. Where the tradition's words are stern (dusthana, debilitated, malefic), the app keeps the word, so you can look it up anywhere, and gives the constructive reading the same teachers give: effort, depth, release, strength gained by use.")
-                .fixedSize(horizontal: false, vertical: true)
+            Text(Lore.voice).fixedSize(horizontal: false, vertical: true)
             Text("Where the positions come from").font(.subheadline).fontWeight(.semibold).padding(.top, 2)
-            source("NASA JPL DE440", "The planetary ephemeris every position is read from. The app's positions are checked against NASA's Horizons service and against Swiss Ephemeris, and agree within a fraction of an arcsecond.", "https://ssd.jpl.nasa.gov/horizons/")
+            source(Lore.sources[0].title, Lore.sources[0].words, Lore.sources[0].link)
             Text("Where the rules come from").font(.subheadline).fontWeight(.semibold).padding(.top, 2)
-            source("Brihat Parashara Hora Shastra", "Houses and their lords, dignities, aspects, vargas, yogas, the dashas, ashtakavarga. The arudha pada rule follows its chapter on padas: a pada falling on its own house moves to the tenth from it, one falling on the seventh to the fourth.", "https://archive.org/download/BPHSEnglish/BPHS%20-%201%20RSanthanam.pdf")
-            source("Parashara, verse by verse", "The chapters on padas and on the karakas, with translation.", "https://enjoylearningsanskrit.com/scriptures/parashara/chapter-29")
-            source("B.V. Raman, Graha and Bhava Balas", "Shadbala, row by row.", nil)
-            source("K.N. Rao, Jaimini's Chara Dasha", "The order and years of the Chara dasha.", nil)
-            source("K.S. Krishnamurti, Krishnamurti Paddhati", "The KP ayanamsa, sub-lords and significators.", nil)
-            Text("Where schools differ, the app follows one and says which. Rules are stated beside what they find, so a reader can check them.")
+            ForEach(Array(Lore.sources.dropFirst()), id: \.title) { source($0.title, $0.words, $0.link) }
+            Text(Lore.schools)
                 .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }

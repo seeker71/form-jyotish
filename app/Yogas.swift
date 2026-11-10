@@ -28,7 +28,7 @@ struct YogaList: View {
                                 }
                             }
                             .frame(width: 70, alignment: .leading)
-                            Text(yoga.why).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            Text(yoga.why + (Lore.yogaNote(yoga.name).map { ". " + $0 } ?? "")).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.vertical, 2).padding(.horizontal, 6)
                         .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.2 : 0)))

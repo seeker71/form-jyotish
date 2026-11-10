@@ -42,7 +42,7 @@ struct ShadbalaTable: View {
                 row("Rupas", (0..<7).map { String(format: "%.2f", chart.rupas($0)) }, bold: true)
                 row("Required", Chart.requiredRupas.map { String(format: "%.1f", $0) }, secondary: true)
                 row("Times required", (0..<7).map { String(format: "%.2f", chart.strengthRatio($0)) }, bold: true)
-                Text("After B.V. Raman's Graha and Bhava Balas. Planetary war is not read.").font(.footnote).foregroundStyle(.secondary).padding(.top, 6)
+                Text("After B.V. Raman's Graha and Bhava Balas. Planetary war (graha yuddha) is left out of the count. A ratio under 1 marks a graha with more to build, not one that fails.").font(.footnote).foregroundStyle(.secondary).padding(.top, 6)
             }
             .monospacedDigit()
         }
@@ -133,8 +133,8 @@ extension Report {
             line("Minimum requirement", Chart.requiredRupas.map { String(format: "%.1f", $0) }, false, after + 24)
             line("Times the requirement", (0..<7).map { String(format: "%.2f", chart.strengthRatio($0)) }, true, after + 40)
             rule(x: 65, y: after + 58, width: 468)
-            Text("Read after B.V. Raman's Graha and Bhava Balas, in virupas (sixtieths of a rupa). Planetary war is not read.")
-                .font(Ink.times(9)).italic().at(left, after + 64)
+            Text("Read after B.V. Raman's Graha and Bhava Balas, in virupas (sixtieths of a rupa). Planetary war (graha yuddha) is left out of the count. A graha above its requirement acts with ease; one below it has more to build, and gains by use.")
+                .font(Ink.times(9)).italic().frame(width: 452, alignment: .leading).at(left, after + 64)
         }
     }
 
@@ -161,7 +161,7 @@ extension Report {
             rule(x: 65, y: 246, width: 468)
             line(Text("Sarva"), chart.sarva, true, 252)
             rule(x: 65, y: 272, width: 468)
-            Text("Bindus each graha gathers in each sign, counted from the seven grahas and the lagna. The lagna's sign is marked in the heading.")
+            Text("Bindus each graha gathers in each sign, counted from the seven grahas and the lagna. The lagna's sign is marked in the heading. A sign with 30 or more in the Sarva row is well supported; one with 24 or fewer asks for patience when grahas pass through it.")
                 .font(Ink.times(9)).italic().frame(width: 440, alignment: .leading).at(left, 278)
         }
     }

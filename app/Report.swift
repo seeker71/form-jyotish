@@ -424,12 +424,14 @@ struct Report {
     }
 
     var pages: [AnyView] {
-        var makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, birthChart, bhavaPage]
+        var makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, glancePage, birthChart, bhavaPage]
         makers += vargaPages
         makers += strengthPages
+        makers += wordPages
         makers += dashaPages
         makers += kpPages
         makers += transitPages
+        makers.append(voicePage)
         return makers.enumerated().map { $1($0 + 1) }
     }
 
