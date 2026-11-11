@@ -29,8 +29,8 @@ struct FormJyotishApp: App {
         }
     }
 
-    /// `FormJyotish --report out.pdf [--ayanamsa lahiri|truecitra|raman] [--node mean|true]`:
-    /// write the first saved chart's report without opening a window, then leave.
+    /// `FormJyotish --report out.pdf [--public key] [--ayanamsa lahiri|truecitra|raman] [--node mean|true]`:
+    /// write the report of a public chart, or of the first saved chart, without opening a window, then leave.
     private static func writeReport(to path: String, arguments: [String]) -> Never {
         func option(_ name: String) -> String? {
             arguments.firstIndex(of: "--" + name).flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } ?? UserDefaults.standard.string(forKey: name)
@@ -38,7 +38,9 @@ struct FormJyotishApp: App {
         let defaults = UserDefaults.standard
         let engine = Engine(root: URL(fileURLWithPath: defaults.string(forKey: "enginePath") ?? Engine.defaultRoot),
                             kernel: URL(fileURLWithPath: defaults.string(forKey: "kernelPath") ?? Engine.defaultKernel))
-        guard let birth = Store().births.first else { print("no saved chart"); exit(1) }
+        // with --public <key> the report is of that public chart, and no saved chart is read
+        let known = arguments.firstIndex(of: "--public").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }.flatMap { key in PublicCharts.all.first { $0.key == key }?.birth }
+        guard let birth = known ?? Store().births.first else { print("no saved chart"); exit(1) }
         do {
             let node = birth.node ?? option("node") ?? "mean", ayanamsa = birth.ayanamsa ?? option("ayanamsa") ?? "lahiri"
             let chart = try engine.chart(for: birth, node: node, ayanamsa: ayanamsa)
@@ -104,7 +106,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

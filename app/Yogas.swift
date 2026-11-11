@@ -13,6 +13,7 @@ struct YogaList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text(Lore.yogaPrinciple).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if chart.yogas.isEmpty { Text("None of the yogas the engine knows is formed in this chart.").foregroundStyle(.secondary) }
             ForEach(groups, id: \.name) { group in
                 VStack(alignment: .leading, spacing: 3) {
@@ -28,7 +29,14 @@ struct YogaList: View {
                                 }
                             }
                             .frame(width: 70, alignment: .leading)
-                            Text(yoga.why + (Lore.yogaNote(yoga.name).map { ". " + $0 } ?? "")).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(yoga.why + ".").foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                if let meaning = Lore.yogaMeaning(yoga, in: chart) {
+                                    (Text("Tradition: ").fontWeight(.medium) + Text(meaning.tradition)).fixedSize(horizontal: false, vertical: true)
+                                    (Text("Read as: ").fontWeight(.medium) + Text(meaning.reading)).fixedSize(horizontal: false, vertical: true)
+                                }
+                                if let standing = Lore.yogaStanding(yoga, in: chart) { Text(standing).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                            }
                         }
                         .padding(.vertical, 2).padding(.horizontal, 6)
                         .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.2 : 0)))

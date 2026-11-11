@@ -7,6 +7,10 @@
 //   boat:     one graha in each of the seven houses from the lagna is Nauka
 //   cart:     the Moon in the 8th from Jupiter, away from the angles, is Shakata
 //   teachers: Mercury, Jupiter and Venus in angles with Jupiter in its own sign is Saraswati, and Mala
+//   fortune:  lagna, Sun and Moon in odd signs by day is Mahabhagya; the 6th lord in the 8th is Viparita;
+//             Jupiter in an angle from the Moon is Kesari; Venus in the 2nd is Su-shubha
+//   lifted:   the Moon exalted in the lagna under Jupiter's aspect is Gauri; the Sun in its fall with the
+//             lord of its sign beside it is Neecha-bhanga
 //   ./fkwu witness/yoga-run.bml   ->  one verdict line
 import engine/num.bml;
 import engine/strength.bml;
@@ -22,12 +26,16 @@ section [form.bml] {
   let boat = wy-read([0, 1, 2, 3, 4, 5, 6, 8, 2], 0);
   let cart = wy-read([2, 11, 5, 2, 4, 1, 8, 6, 0], 0);
   let teachers = wy-read([1, 2, 4, 5, 8, 11, 10, 5, 11], 2);
+  let fortune = wy-read([0, 2, 9, 7, 5, 1, 10, 3, 9], 0);
+  let lifted = wy-read([6, 1, 4, 6, 9, 6, 2, 0, 6], 1);
   let claims = [
-   wy-has(einstein, "Pravrajya yoga") && wy-has(einstein, "Dharma-karmadhipati yoga") && wy-has(einstein, "Kahala yoga") && wy-has(einstein, "Kedara yoga") && wy-has(einstein, "Daridra yoga"),
-   wy-has(movable, "Rajju yoga") && !wy-has(movable, "Kedara yoga") && !wy-has(movable, "Musala yoga"),
-   wy-has(boat, "Nauka yoga") && !wy-has(boat, "Veena yoga"),
+   wy-has(einstein, "Pravrajya yoga") && wy-has(einstein, "Dharma-karmadhipati yoga (9th and 10th)") && wy-has(einstein, "Kahala yoga (4th and 9th lords)") && wy-has(einstein, "Kedara yoga") && wy-has(einstein, "Daridra yoga"),
+   wy-has(movable, "Rajju yoga") && wy-has(movable, "Kedara yoga") && !wy-has(movable, "Musala (nabhasa) yoga"),
+   wy-has(boat, "Nauka yoga") && wy-has(boat, "Veena yoga"),
    wy-has(cart, "Shakata yoga") && !wy-has(einstein, "Shakata yoga"),
-   wy-has(teachers, "Saraswati yoga") && wy-has(teachers, "Mala yoga")];
+   wy-has(teachers, "Saraswati yoga") && wy-has(teachers, "Mala yoga"),
+   wy-has(fortune, "Mahabhagya yoga") && wy-has(fortune, "Viparita raja yoga") && wy-has(fortune, "Kesari yoga") && wy-has(fortune, "Su-shubha yoga") && !wy-has(einstein, "Mahabhagya yoga"),
+   wy-has(lifted, "Gauri yoga") && wy-has(lifted, "Neecha-bhanga raja yoga") && !wy-has(fortune, "Gauri yoga")];
   let held = len(claims |> filter(c => c));
   "yoga witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims " + value_str(claims);
  }

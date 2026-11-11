@@ -41,7 +41,7 @@ enum Glossary {
         ("Varga", "A divisional chart: each sign divided into equal parts, each part assigned a sign. Each varga examines one area of life more finely.", "Vargas"),
         ("Navamsa", "The ninth-part chart (D9), the most used varga. It is read beside the birth chart for a graha's real strength, and for marriage.", "Vargas"),
         ("Vargottama", "A graha in the same sign in the birth chart and the navamsa: read as steady and strong.", "Vargas"),
-        ("Yoga", "A named combination of grahas with a known tendency, such as Gajakesari (Jupiter in an angle from the Moon).", "Yogas"),
+        ("Yoga", "A named combination of grahas with a known tendency, such as Kesari (Jupiter in an angle from the Moon).", "Yogas"),
         ("Dasha", "A planetary period. Vimshottari, the usual system, gives each graha a span of years in a fixed order across 120 years, starting from the Moon's nakshatra.", "Dasha"),
         ("Transit (gochara)", "Where the grahas are now, read against the birth chart: above all from the birth Moon, and from the lagna.", "Transits"),
         ("Sade Sati", "Saturn's seven and a half years passing through the 12th, 1st and 2nd signs from the birth Moon. Traditionally a season for slowing down, taking stock and maturing.", "Transits"),

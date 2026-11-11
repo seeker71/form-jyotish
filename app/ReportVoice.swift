@@ -75,25 +75,43 @@ extension Report {
         }
     }
 
-    func yogaPage(_ number: Int) -> AnyView {
+    private func yogaLine(_ yoga: Yoga) -> String {
+        var line = "  " + yoga.why + "."
+        if let meaning = Lore.yogaMeaning(yoga, in: chart) { line += " " + meaning.line }
+        if let standing = Lore.yogaStanding(yoga, in: chart) { line += " " + standing }
+        return line
+    }
+
+    /// The yogas, eight to a page: each with its rule, the tradition's reading, a reading to work with, and
+    /// the standing of its grahas.
+    var yogaPages: [(Int) -> AnyView] {
+        let all = chart.yogas, size = 8
+        let parts: [[Yoga]] = all.isEmpty ? [[]] : stride(from: 0, to: all.count, by: size).map { Array(all[$0..<min($0 + size, all.count)]) }
+        return parts.enumerated().map { index, part in { number in self.yogaPage(number, part: part, index: index, last: index == parts.count - 1) } }
+    }
+
+    private func yogaPage(_ number: Int, part: [Yoga], index: Int, last: Bool) -> AnyView {
         var order: [String] = []
-        for yoga in chart.yogas where !order.contains(yoga.group) { order.append(yoga.group) }
-        return page(number, title: "Yogas") {
+        for yoga in part where !order.contains(yoga.group) { order.append(yoga.group) }
+        return page(number, title: "Yogas #\(index + 1)") {
             title("Yogas Formed in the Chart", y: 76)
             rule(x: 65, y: 95, width: 468)
-            VStack(alignment: .leading, spacing: 9) {
+            VStack(alignment: .leading, spacing: 8) {
+                if index == 0 { prose(Lore.yogaPrinciple, size: 10) }
                 if chart.yogas.isEmpty { prose("None of the yogas the engine knows is formed in this chart.") }
                 ForEach(order, id: \.self) { group in
                     VStack(alignment: .leading, spacing: 3) {
                         subhead(group)
-                        ForEach(chart.yogas.filter { $0.group == group }) { yoga in
-                            (Text(yoga.name).bold() + Text(yoga.grahas.isEmpty ? "" : "  (" + yoga.grahas.joined(separator: ", ") + ")") + Text("  " + yoga.why + (Lore.yogaNote(yoga.name).map { ". " + $0 } ?? "")))
-                                .font(Ink.times(10.4)).fixedSize(horizontal: false, vertical: true)
+                        ForEach(part.filter { $0.group == group }) { yoga in
+                            (Text(yoga.name).bold() + Text(yoga.grahas.isEmpty ? "" : "  (" + yoga.grahas.joined(separator: ", ") + ")") + Text(yogaLine(yoga)))
+                                .font(Ink.times(10.2)).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
-                prose("Each yoga is listed with the rule it met, so the rule can be checked. A yoga gives in the periods of the grahas that form it, and in the measure of their strength. Points of attention name where the chart asks for awareness; the same teachers read them as places of growth.", size: 10).padding(.top, 4)
-                closing
+                if last {
+                    prose("A yoga gives in the periods of the grahas that form it. Points of attention name where the chart asks for awareness; the same teachers read them as places of growth. The readings follow Mantreswara's Phaladipika and Parashara.", size: 10).padding(.top, 4)
+                    closing
+                }
             }
             .frame(width: 452, alignment: .leading).at(74, 106)
         }
@@ -120,6 +138,6 @@ extension Report {
     }
 
     var wordPages: [(Int) -> AnyView] {
-        [weighedPage(Array(chart.grahas.prefix(5)), part: 1), weighedPage(Array(chart.grahas.dropFirst(5)), part: 2), yogaPage]
+        [weighedPage(Array(chart.grahas.prefix(5)), part: 1), weighedPage(Array(chart.grahas.dropFirst(5)), part: 2)] + yogaPages
     }
 }

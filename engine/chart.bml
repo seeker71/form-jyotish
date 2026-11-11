@@ -220,7 +220,7 @@ section [form.bml] {
     jc-pair("bhrigu", jc-obj(jc-place(jc-between(rahu, now[1])))),
     jc-pair("bhavas", jc-arr(jc-bhavas(jc-mids(asc, mc), 0))),
     jc-pair("aspects", jc-arr(yg-aspects(signs) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
-    jc-pair("yogas", jc-arr(yg-yogas(append(signs, [floor(rahu / 30.0), floor(jn-norm360(rahu + 180.0) / 30.0)]), append(now, [rahu, jn-norm360(rahu + 180.0)]), floor(asc / 30.0))
+    jc-pair("yogas", jc-arr(yg-yogas-at(append(signs, [floor(rahu / 30.0), floor(jn-norm360(rahu + 180.0) / 30.0)]), append(now, [rahu, jn-norm360(rahu + 180.0)]), asc)
       |> map(y => jc-obj([jc-pair("name", jc-q(y[0])), jc-pair("group", jc-q(y[1])), jc-pair("grahas", jc-arr(y[2] |> map(i => jc-q(jc-nine()[i])))), jc-pair("why", jc-q(y[3]))])))),
     jc-pair("day", jc-day(ev, now[0], now[1])),
     jc-pair("ashtakavarga", jc-arr(st-ashtakavarga(append(signs, [floor(asc / 30.0)])) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
