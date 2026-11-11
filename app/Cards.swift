@@ -275,8 +275,8 @@ struct BirthForm: View {
                     Text("Place"); TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }.frame(minWidth: 150)
                 }
                 GridRow {
-                    Text("Date"); TextField("YYYY-MM-DD", text: birth.date).frame(width: 110)
-                    Text("Time"); TextField("HH:MM:SS", text: birth.time).frame(width: 90)
+                    Text("Date"); TextField("1971-03-11 or 11 Mar 1971", text: birth.date).onSubmit { if let written = birth.wrappedValue.writtenDate { birth.wrappedValue.date = written } }.frame(minWidth: 130)
+                    Text("Time"); TextField("02:50 or 2:50 am", text: birth.time).onSubmit { if let written = birth.wrappedValue.writtenTime { birth.wrappedValue.time = written } }.frame(minWidth: 110)
                 }
                 GridRow {
                     Text("Latitude"); TextField("north +", value: birth.latitude, format: .number.precision(.fractionLength(0...4))).frame(width: 110)
@@ -291,6 +291,19 @@ struct BirthForm: View {
             }
             .textFieldStyle(.roundedBorder)
             .foregroundStyle(.secondary)
+            // what the entry is read as, so a partial or loosely typed entry shows its full match at once
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Read as").font(.caption).foregroundStyle(.secondary)
+                ForEach(birth.wrappedValue.resolved, id: \.label) { line in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: line.read ? "checkmark.circle" : "exclamationmark.circle").foregroundStyle(line.read ? Color.green : Color.orange).font(.caption)
+                        Text(line.label).foregroundStyle(.secondary).frame(width: 44, alignment: .leading)
+                        Text(line.words).foregroundStyle(line.read ? .primary : Color.orange).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .font(.callout)
+                }
+            }
+            .padding(.top, 6)
             if let source = birth.wrappedValue.source, !source.isEmpty {
                 Text("Source. " + source).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
             }

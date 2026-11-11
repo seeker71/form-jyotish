@@ -210,7 +210,16 @@ final class Store: ObservableObject {
         let birth = Birth()
         births.append(birth)
         current = birth.id
+        editBirth()
     }
+
+    /// bring the birth data form into view
+    func editBirth() {
+        workspace = "Overview"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.showCard = "birth" }
+    }
+    /// the report was asked for from the sidebar: the window writes it
+    @Published var reportAsked = 0
 
     /// A chart to explore with: an arbitrary moment and place, not a real person's birth.
     func addSample(_ name: String, date: String, time: String, zone: String, place: String, latitude: Double, longitude: Double) {
@@ -340,6 +349,9 @@ final class Store: ObservableObject {
                 self.births[at].latitude = (location.coordinate.latitude * 10000).rounded() / 10000
                 self.births[at].longitude = (location.coordinate.longitude * 10000).rounded() / 10000
                 if let zone = mark.timeZone { self.births[at].zone = zone.identifier }
+                // the place is written out as it was matched: town, region, country
+                let full = [mark.locality, mark.administrativeArea, mark.country].compactMap { $0 }.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.joined(separator: ", ")
+                if !full.isEmpty { self.births[at].place = full }
                 self.problem = nil
             }
         }

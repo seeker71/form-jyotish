@@ -38,6 +38,7 @@ struct MainView: View {
             }
         }
         .overlay { if store.paletteShown { Palette(shown: $store.paletteShown, report: exportReport) } }
+        .onChange(of: store.reportAsked) { _ in exportReport() }
         .overlay { if let about = store.explanation { Explained(about: about) } }
         .onAppear { store.readNatal() }
     }
@@ -232,6 +233,7 @@ struct Palette: View {
             Command(id: "sample-2", title: "Add a sample chart: London, 21 June 1990", keywords: "example explore demo", run: { store.addSample("London 1990", date: "1990-06-21", time: "06:00:00", zone: "Europe/London", place: "London, United Kingdom", latitude: 51.5074, longitude: -0.1278) }),
             Command(id: "sample-3", title: "Add a sample chart: New York, 5 November 1985", keywords: "example explore demo", run: { store.addSample("New York 1985", date: "1985-11-05", time: "22:15:00", zone: "America/New_York", place: "New York, United States", latitude: 40.7128, longitude: -74.006) }),
             Command(id: "new", title: "New chart", keywords: "birth person add", run: { store.add() }),
+            Command(id: "birth", title: "Edit birth data (name, date, time, place)", keywords: "entry form edit change", run: { store.editBirth() }),
             Command(id: "reset", title: "Restore this workspace's standard cards", keywords: "reset layout", run: { store.resetLayout() }),
         ]
         return list
@@ -347,6 +349,10 @@ struct ChartSettings: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Button { store.add() } label: { Label("New chart", systemImage: "plus") }
+            Button { store.editBirth() } label: { Label("Birth data", systemImage: "pencil") }.disabled(store.birth == nil)
+                .help("Open the form with this chart's name, date, time and place")
+            Button { store.reportAsked += 1 } label: { Label("Report (PDF)", systemImage: "doc.richtext") }.disabled(store.chart == nil)
+                .help("Write this chart's report as a PDF: charts, tables, each graha weighed, the yogas and the dashas")
             Button { updater.check(byHand: true) } label: { Label("Check for updates", systemImage: "arrow.down.circle") }
             // the running build, in plain sight beside the button that asks for a newer one
             Text((Bundle.main.infoDictionary?["CFBundleVersion"] as? String).map { "This is build \($0)" } ?? "Running from source")

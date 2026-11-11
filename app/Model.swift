@@ -22,15 +22,90 @@ struct Birth: Codable, Identifiable, Hashable {
 
     /// The birth moment, or nil when the date, time or zone cannot be read.
     var moment: Date? {
-        guard let tz = timeZone else { return nil }
-        let d = date.split(separator: "-").map { Int($0) }
-        let t = time.split(separator: ":").map { Int($0) }
-        guard d.count == 3, (2...3).contains(t.count), !d.contains(nil), !t.contains(nil) else { return nil }
-        let (month, day, hour, minute, second) = (d[1]!, d[2]!, t[0]!, t[1]!, t.count > 2 ? t[2]! : 0)
-        guard (1...12).contains(month), (1...31).contains(day), (0...23).contains(hour), (0...59).contains(minute), (0...59).contains(second) else { return nil }
+        guard let tz = timeZone, let d = Birth.readDate(date), let t = Birth.readTime(time) else { return nil }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = tz
-        return calendar.date(from: DateComponents(year: d[0]!, month: month, day: day, hour: hour, minute: minute, second: second))
+        return calendar.date(from: DateComponents(year: d.year, month: d.month, day: d.day, hour: t.hour, minute: t.minute, second: t.second))
+    }
+
+    private static let months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+
+    /// A date as a person types it: 1971-03-11, 11 Mar 1971, March 11, 1971, 11.3.1971, 3/11/1971. With
+    /// slashes the day comes first where the Mac's region writes it so, unless the numbers settle it.
+    static func readDate(_ words: String) -> (year: Int, month: Int, day: Int)? {
+        let parts = words.lowercased().split(whereSeparator: { " ,.-/".contains($0) }).map(String.init)
+        guard parts.count == 3 else { return nil }
+        func month(_ word: String) -> Int? { word.count >= 3 ? months.firstIndex { word.hasPrefix($0) }.map { $0 + 1 } : nil }
+        let n = parts.map { Int($0) }
+        var year: Int?, m: Int?, day: Int?
+        if let name = parts.firstIndex(where: { month($0) != nil }) {
+            let rest = n.enumerated().filter { $0.offset != name }.compactMap { $0.element }
+            guard rest.count == 2 else { return nil }
+            m = month(parts[name]); (day, year) = rest[0] > 31 ? (rest[1], rest[0]) : (rest[0], rest[1])
+        } else {
+            guard let a = n[0], let b = n[1], let c = n[2] else { return nil }
+            if parts[0].count == 4 || a > 31 { (year, m, day) = (a, b, c) }
+            else if words.contains(".") || a > 12 { (day, m, year) = (a, b, c) }
+            else if b > 12 || words.contains("-") { (m, day, year) = (a, b, c) }
+            else {
+                let dayFirst = (DateFormatter.dateFormat(fromTemplate: "yMd", options: 0, locale: .current) ?? "M/d").first == "d"
+                (day, m, year) = dayFirst ? (a, b, c) : (b, a, c)
+            }
+        }
+        guard let year, let m, let day, (1...12).contains(m), (1...31).contains(day), parts.contains(where: { $0.count == 4 && Int($0) == year }) else { return nil }
+        // the day must exist in that month
+        var check = DateComponents(); check.year = year; check.month = m; check.day = day
+        guard check.isValidDate(in: Calendar(identifier: .gregorian)) else { return nil }
+        return (year, m, day)
+    }
+
+    /// A time as a person types it: 02:50, 2:50:30, 2.50 pm, 0250, 14, 2am. Without am or pm it is the 24-hour clock.
+    static func readTime(_ words: String) -> (hour: Int, minute: Int, second: Int)? {
+        var text = words.lowercased().replacingOccurrences(of: " ", with: "")
+        var half: String?
+        for mark in ["a.m.", "p.m.", "am", "pm", "a", "p"] where text.hasSuffix(mark) { half = String(mark.first!); text.removeLast(mark.count); break }
+        var parts = text.split(whereSeparator: { ":.h".contains($0) }).map { Int($0) }
+        if parts.count == 1, text.count >= 3, text.count <= 4, let all = Int(text) { parts = [all / 100, all % 100] }
+        guard (1...3).contains(parts.count), !parts.contains(nil) else { return nil }
+        var hour = parts[0]!
+        let minute = parts.count > 1 ? parts[1]! : 0, second = parts.count > 2 ? parts[2]! : 0
+        if let half { guard (1...12).contains(hour) else { return nil }; hour = hour % 12 + (half == "p" ? 12 : 0) }
+        guard (0...23).contains(hour), (0...59).contains(minute), (0...59).contains(second) else { return nil }
+        return (hour, minute, second)
+    }
+
+    /// the date and time in the one form the app writes them, when they can be read
+    var writtenDate: String? { Birth.readDate(date).map { String(format: "%04d-%02d-%02d", $0.year, $0.month, $0.day) } }
+    var writtenTime: String? { Birth.readTime(time).map { String(format: "%02d:%02d:%02d", $0.hour, $0.minute, $0.second) } }
+
+    /// What the entry is read as, field by field: the full date, the clock time with its zone and offset at
+    /// that moment, and the place with its coordinates. A field that cannot be read says what would be.
+    var resolved: [(label: String, words: String, read: Bool)] {
+        var lines: [(String, String, Bool)] = []
+        let zoneRead = timeZone != nil, tz = timeZone ?? TimeZone(secondsFromGMT: 0)!
+        if let d = Birth.readDate(date) {
+            var calendar = Calendar(identifier: .gregorian); calendar.timeZone = tz
+            let noon = calendar.date(from: DateComponents(year: d.year, month: d.month, day: d.day, hour: 12))
+            let style = Date.FormatStyle(date: .complete, time: .omitted, timeZone: tz)
+            lines.append(("Date", noon.map { $0.formatted(style) } ?? "", true))
+        } else { lines.append(("Date", "not read yet: write it as 1971-03-11, 11 Mar 1971 or 11.3.1971", false)) }
+        if let t = Birth.readTime(time) {
+            var words = String(format: "%02d:%02d:%02d", t.hour, t.minute, t.second) + " on the 24-hour clock (" + String(format: "%d:%02d", (t.hour + 11) % 12 + 1, t.minute) + (t.hour < 12 ? " am)" : " pm)")
+            if let moment, zoneRead {
+                let seconds = tz.secondsFromGMT(for: moment), sign = seconds < 0 ? "−" : "+"
+                let offset = "UTC" + sign + String(format: "%d:%02d", abs(seconds) / 3600, abs(seconds) % 3600 / 60)
+                words += ", " + (tz.isDaylightSavingTime(for: moment) ? "daylight time, " : "standard time, ") + offset
+                var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(secondsFromGMT: 0)!
+                let c = utc.dateComponents([.year, .month, .day, .hour, .minute], from: moment)
+                words += String(format: " · %04d-%02d-%02d %02d:%02d UTC", c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0)
+            }
+            lines.append(("Time", words, true))
+        } else { lines.append(("Time", "not read yet: write it as 02:50, 2:50 am or 14:05:30", false)) }
+        lines.append(("Zone", zoneRead ? zone.replacingOccurrences(of: "_", with: " ") : "not read yet: an area and city such as Europe/Zurich, or look the place up", zoneRead))
+        let set = latitude != 0 || longitude != 0
+        let where_ = String(format: "%.4f° %@, %.4f° %@", abs(latitude), latitude < 0 ? "S" : "N", abs(longitude), longitude < 0 ? "W" : "E")
+        lines.append(("Place", set ? (place.isEmpty ? where_ : place + " · " + where_) : "not set yet: type a city and press Look up place, or enter latitude and longitude", set))
+        return lines
     }
 
     var julianDay: Double? { moment.map { $0.timeIntervalSince1970 / 86400 + 2440587.5 } }

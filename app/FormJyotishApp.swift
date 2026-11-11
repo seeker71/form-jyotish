@@ -11,6 +11,19 @@ struct FormJyotishApp: App {
         // a newer build fetched during the last run takes this one's place before anything else happens
         if arguments.contains("--save-public") { print("public charts added: \(PublicCharts.saveAll())"); exit(0) }
         if arguments.contains("--update-helper") { UpdateHelper.run(); exit(0) }
+        // `FormJyotish --entry-check`: dates and times as people type them, each read to the one form the app writes
+        if arguments.contains("--entry-check") {
+            let dates: [(String, String?)] = [("1971-03-11", "1971-03-11"), ("1971-3-11", "1971-03-11"), ("11 Mar 1971", "1971-03-11"), ("March 11, 1971", "1971-03-11"), ("11.3.1971", "1971-03-11"),
+                                             ("13/3/1971", "1971-03-13"), ("3/13/1971", "1971-03-13"), ("1971/03/11", "1971-03-11"), ("31 Feb 1971", nil), ("11 Mar 71", nil), ("soon", nil)]
+            let times: [(String, String?)] = [("02:50", "02:50:00"), ("2:50", "02:50:00"), ("2:50 am", "02:50:00"), ("2.50pm", "14:50:00"), ("0250", "02:50:00"), ("14", "14:00:00"), ("12 am", "00:00:00"),
+                                             ("12:30 pm", "12:30:00"), ("09:15:30", "09:15:30"), ("25:00", nil), ("13 pm", nil), ("noonish", nil)]
+            var held = 0
+            for (typed, want) in dates { let got = Birth(date: typed).writtenDate; if got == want { held += 1 } else { print("date \(typed): read \(got ?? "nothing"), expected \(want ?? "nothing")") } }
+            for (typed, want) in times { let got = Birth(time: typed).writtenTime; if got == want { held += 1 } else { print("time \(typed): read \(got ?? "nothing"), expected \(want ?? "nothing")") } }
+            print("entry check: \(held) of \(dates.count + times.count) read as expected")
+            for line in Birth(date: "11 Mar 1971", time: "2:50 am", zone: "America/Vancouver", place: "Vancouver", latitude: 49.2604, longitude: -123.1139).resolved { print("  \(line.label): \(line.words)") }
+            exit(held == dates.count + times.count ? 0 : 1)
+        }
         Updater.waitForPredecessor(arguments)
         if !arguments.contains("--report") && !arguments.contains("--match-check") {
             Updater.installStagedAndRelaunch()

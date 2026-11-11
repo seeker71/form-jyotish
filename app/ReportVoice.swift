@@ -117,6 +117,51 @@ extension Report {
         }
     }
 
+    /// Jaimini's reading on one page: the seven chara karakas, the twelve arudha padas and the Chara dasha.
+    func jaiminiPage(_ number: Int) -> AnyView {
+        let j = chart.jaimini
+        let line = { (head: String, rest: String) in (Text(head).bold() + Text("  " + rest)).font(Ink.times(10.2)).fixedSize(horizontal: false, vertical: true) }
+        let columns = { (lines: [(String, String)]) in
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(0..<2, id: \.self) { half in
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(lines.enumerated()).filter { $0.offset % 2 == half }, id: \.offset) { line($0.element.0, $0.element.1) }
+                    }
+                    .frame(width: 220, alignment: .leading)
+                }
+            }
+        }
+        let karakas: [(String, String)] = j.karakas.enumerated().map { index, code in
+            let role = Lore.karakas[index], degrees = chart.graha(code).map { Names.dms($0.deg) } ?? ""
+            return ("\(role.code) \(role.name)", "\(Names.lords[code] ?? code) \(degrees). \(role.words.prefix(1).uppercased() + role.words.dropFirst()).")
+        }
+        let padas: [(String, String)] = (1...12).map { house in
+            let sign = j.arudhas[house - 1]
+            return (house == 1 ? "AL" : house == 12 ? "UL" : "A\(house)", "of the \(Chart.ordinal(house)) (\(Lore.houseNames[house - 1].lowercased())): \(Names.signs[sign]), the \(Chart.ordinal(chart.house(ofSign: sign))) house")
+        }
+        let periods: [(String, String)] = j.chara.prefix(24).map { p in
+            ("\(Names.signs[p.sign])\(p.years.map { " (\($0)y)" } ?? "")", "\(dateText(p.start)) to \(dateText(p.end))")
+        }
+        return page(number, title: "Jaimini") {
+            title("Jaimini: Karakas, Arudha Padas and Chara Dasha", y: 76)
+            rule(x: 65, y: 95, width: 468)
+            VStack(alignment: .leading, spacing: 7) {
+                subhead("The seven chara karakas")
+                prose("The grahas ranked by how far each has come through its sign; the furthest is the atmakaraka.", size: 10)
+                VStack(alignment: .leading, spacing: 2) { ForEach(Array(karakas.enumerated()), id: \.offset) { line($0.element.0, $0.element.1) } }
+                prose("Karakamsa, the atmakaraka's navamsa sign: \(Names.signs[j.karakamsa]), the \(Chart.ordinal(chart.house(ofSign: j.karakamsa))) house of the birth chart.", size: 10.2)
+                subhead("Arudha padas")
+                prose("The image each house casts: count from the house to its lord, then as far again. A pada falling on its own house moves to the tenth from it, one falling on the seventh to the fourth (Parashara).", size: 10)
+                columns(padas)
+                subhead("Chara dasha")
+                prose("Periods of signs, after K.N. Rao. The signs take their turns \(j.forward ? "forward" : "backward") through the zodiac from the lagna; a sign's years are the count from it to its lord.", size: 10)
+                columns(periods)
+                closing.padding(.top, 4)
+            }
+            .frame(width: 452, alignment: .leading).at(74, 106)
+        }
+    }
+
     func voicePage(_ number: Int) -> AnyView {
         page(number, title: "Sources and Voice") {
             title("How to Read This Report", y: 76)
