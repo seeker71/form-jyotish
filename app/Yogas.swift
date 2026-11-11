@@ -4,6 +4,7 @@ import SwiftUI
 struct YogaList: View {
     @EnvironmentObject var store: Store
     let chart: Chart
+    @State private var over: String?
 
     private var groups: [(name: String, yogas: [Yoga])] {
         var order: [String] = []
@@ -40,10 +41,13 @@ struct YogaList: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 2).padding(.horizontal, 6)
-                        .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.2 : 0)))
+                        .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.2 : over == yoga.id ? 0.1 : 0)))
                         .contentShape(Rectangle())
-                        .onTapGesture { if let first = yoga.grahas.first { store.pick = .graha(first) } }
-                        .help("Press ⌘K and type the yoga's name for its rule and meaning")
+                        .onTapGesture { if Lore.yogaMeaning(yoga.name) != nil { store.lookedUp = yoga.name } else if let first = yoga.grahas.first { store.pick = .graha(first) } }
+                        .onHover { inside in
+                            if inside { over = yoga.id; store.glow = yoga.grahas } else if over == yoga.id { over = nil; store.glow = [] }
+                        }
+                        .help("Its grahas light up in every chart. Click for the yoga's rule and meaning; click a graha's letters to pick the graha.")
                     }
                 }
             }

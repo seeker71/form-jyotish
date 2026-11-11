@@ -47,6 +47,8 @@ struct ChartView: View {
     var marks: [Int: [ChartMark]]
     /// signs the picked graha aspects: tinted
     var aspected: [Int] = []
+    /// signs the graha in focus rules: tinted
+    var owned: [Int] = []
 
     var body: some View {
         GeometryReader { geo in
@@ -66,12 +68,13 @@ struct ChartView: View {
         if store.pick == .sign(sign) { return Color.accentColor.opacity(0.22) }
         if store.hover == .sign(sign) { return Color.accentColor.opacity(0.09) }
         if aspected.contains(sign) { return Color.orange.opacity(0.16) }
+        if owned.contains(sign) { return Color.green.opacity(0.14) }
         return Color.primary.opacity(0.0001)
     }
 
     private func label(_ mark: ChartMark, size: CGFloat) -> some View {
         let pick: Pick = mark.sign.map { .sign($0) } ?? (mark.code == "As" ? .sign(ascSign) : .graha(mark.code))
-        let chosen = mark.sign == nil && store.pick?.graha == mark.code, near = mark.sign == nil && store.hover?.graha == mark.code
+        let chosen = mark.sign == nil && store.pick?.graha == mark.code, near = mark.sign == nil && (store.hover?.graha == mark.code || store.glow.contains(mark.code))
         return Text(mark.label)
             .font(.system(size: size, weight: mark.transit ? .regular : .medium))
             .italic(mark.transit)

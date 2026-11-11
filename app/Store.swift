@@ -44,19 +44,23 @@ final class Feed {
 @MainActor
 final class Store: ObservableObject {
     static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits", "Annual", "Match"]
+    /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
+    /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "reading", "houses", "glossary", "sources"],
-        "Jaimini": ["karakas", "arudhas", "chara-dasha"],
+        "Guide": ["guide", "chart:0", "reading", "houses", "glossary", "sources"],
+        "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
-        "Overview": ["birth", "chart:0", "chart:5", "moon", "grahas", "edges", "timeline"],
+        "Overview": ["chart:0", "chart:5", "moon", "grahas", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
-        "Dasha": ["dasha-context", "timeline", "events", "dashas", "other-dashas"],
-        "Strength": ["shadbala", "ashtakavarga", "avasthas"],
-        "Yogas": ["yogas", "aspects"],
+        "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "other-dashas", "events"],
+        "Strength": ["chart:0", "ashtakavarga", "shadbala", "avasthas"],
+        "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
         "Transits": ["chart:0", "transits", "transit-dates", "timeline"],
     ]
+    /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
+    static let layoutVersion = 2
 
     @Published var births: [Birth] = [] { didSet { save(); if births.first(where: { $0.id == current }) != oldValue.first(where: { $0.id == current }) { readNatal() } } }
     @Published var current: Birth.ID? { didSet { if current != oldValue { moment = nil; rectify = 0; pick = nil; chart = nil; readNatal() } } }
@@ -71,6 +75,12 @@ final class Store: ObservableObject {
     @Published var rectifying = false
     @Published var pick: Pick?
     @Published var hover: Pick?
+    /// grahas lit together on every card while the pointer rests on something they form: a yoga, a period
+    @Published var glow: [String] = []
+    /// whether the inspector shows what the pointer rests on, or only what was clicked
+    @Published var followPointer: Bool = UserDefaults.standard.object(forKey: "followPointer") as? Bool ?? true { didSet { defaults.set(followPointer, forKey: "followPointer") } }
+    /// what the inspector and the charts speak of: the thing under the pointer, else the thing clicked
+    var focus: Pick? { followPointer ? (hover ?? pick) : pick }
     @Published var problem: String?
     /// the type-to-do-anything panel is open
     @Published var paletteShown = false
@@ -94,7 +104,9 @@ final class Store: ObservableObject {
     /// a card the workspace is asked to bring into view
     @Published var showCard: String? = nil
     @Published var workspace: String { didSet { defaults.set(workspace, forKey: "workspace") } }
-    @Published var layout: [String: [String]] { didSet { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } }
+    @Published var layout: [String: [String]] { didSet { if !Store.trial { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } } }
+    /// a run that only pictures the window (`--snapshot`): it shows the standard desk and writes nothing of the desk's arrangement
+    static let trial = CommandLine.arguments.contains("--snapshot")
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
@@ -134,7 +146,8 @@ final class Store: ObservableObject {
         workspace = endedCleanly ? defaults.string(forKey: "workspace").flatMap { Store.workspaces.contains($0) ? $0 : nil } ?? "Guide" : "Guide"
         defaults.set(true, forKey: "running")
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in UserDefaults.standard.set(false, forKey: "running") }
-        var saved = defaults.data(forKey: "layout").flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
+        if !Store.trial, defaults.integer(forKey: "layoutVersion") < Store.layoutVersion { defaults.removeObject(forKey: "layout"); defaults.removeObject(forKey: "offeredCards"); defaults.set(Store.layoutVersion, forKey: "layoutVersion") }
+        var saved = (Store.trial ? nil : defaults.data(forKey: "layout")).flatMap { try? JSONDecoder().decode([String: [String]].self, from: $0) } ?? Store.standardLayout
         // A saved layout gains each card that has since joined a workspace's standard set, once: the cards
         // already offered are remembered, so a card the person removed stays removed.
         let standard = Store.standardLayout.flatMap { name, cards in cards.map { name + "/" + $0 } }
@@ -147,8 +160,8 @@ final class Store: ObservableObject {
                 saved[name] = list
             }
         }
-        defaults.set(standard, forKey: "offeredCards")
-        if defaults.data(forKey: "layout") != nil { defaults.set(try? JSONEncoder().encode(saved), forKey: "layout") }
+        if !Store.trial { defaults.set(standard, forKey: "offeredCards") }
+        if !Store.trial, defaults.data(forKey: "layout") != nil { defaults.set(try? JSONEncoder().encode(saved), forKey: "layout") }
         layout = saved
         node = defaults.string(forKey: "node") ?? "mean"
         ayanamsa = defaults.string(forKey: "ayanamsa") ?? "lahiri"
@@ -283,6 +296,14 @@ final class Store: ObservableObject {
         layout[workspace] = list
     }
     func removeCard(_ id: String) { layout[workspace] = cards.filter { $0 != id } }
+    /// Put a card where another stands: after it when it came from before, before it when it came from after.
+    func moveCard(_ id: String, onto other: String) {
+        var list = cards
+        guard id != other, let from = list.firstIndex(of: id), let to = list.firstIndex(of: other) else { return }
+        list.remove(at: from)
+        list.insert(id, at: to)
+        layout[workspace] = list
+    }
     func moveCard(_ id: String, by offset: Int) {
         var list = cards
         guard let at = list.firstIndex(of: id), list.indices.contains(at + offset) else { return }

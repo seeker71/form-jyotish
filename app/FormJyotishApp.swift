@@ -86,6 +86,16 @@ struct FormJyotishApp: App {
     /// `FormJyotish --snapshot out.png`: after the window has settled, write what it shows as a picture and
     /// leave. With `--public`, `--workspace`, `--look-up` it shows a new view without anyone clicking.
     private func snapshot(to path: String) {
+        let arguments = CommandLine.arguments
+        func value(_ name: String) -> String? { arguments.firstIndex(of: name).flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } }
+        // --size 1600x900 sets the window's size; --focus Ju rests the pointer on a graha; --glow Ju,Mo lights several
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if let size = value("--size")?.split(separator: "x").compactMap({ Double($0) }), size.count == 2, let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) {
+                window.setFrame(NSRect(x: window.frame.minX, y: window.frame.minY, width: size[0], height: size[1]), display: true)
+            }
+            if let code = value("--focus") { store.hover = .graha(code) }
+            if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let view = window.contentView, let shot = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { print("snapshot: no window"); exit(1) }
             view.cacheDisplay(in: view.bounds, to: shot)

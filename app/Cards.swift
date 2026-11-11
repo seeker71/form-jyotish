@@ -44,41 +44,52 @@ enum Catalog {
            CardInfo(id: "kp-houses", title: "KP house significators", keywords: "krishnamurti occupants", wide: true),
            CardInfo(id: "kp-planets", title: "KP houses signified by grahas", keywords: "krishnamurti significators strong weak", wide: true)]
 
+    /// The least width at which a card still reads well beside others. A card not named here takes a row to itself.
+    static let shared: [String: CGFloat] = [
+        "grahas": 560, "birth": 440, "edges": 420, "reading": 420, "dasha-context": 440, "yogas": 440, "dashas": 420, "other-dashas": 440,
+        "karakas": 440, "arudhas": 440, "chara-dasha": 440, "kp-grahas": 540, "kp-cusps": 540, "kp-houses": 540, "kp-planets": 540,
+        "transits": 540, "transit-dates": 440, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
+    /// long cards: beside another card they scroll within the height on screen, so their neighbour stays in view
+    static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events"]
+
     static func info(_ id: String) -> CardInfo { all.first { $0.id == id } ?? CardInfo(id: id, title: id, keywords: "", wide: true) }
 }
 
-/// The workspace: wide cards one under another, runs of charts in a grid between them.
+/// The workspace: neighbouring cards share a row where the window has room for each to read well; a card
+/// that needs the full width takes a row to itself.
 struct Workspace: View {
     @EnvironmentObject var store: Store
 
-    /// a card that takes a row to itself: by its nature, or a chart the reader has enlarged
-    private func wide(_ id: String) -> Bool { Catalog.info(id).wide || store.enlarged.contains(id) }
+    private func isChart(_ id: String) -> Bool { !Catalog.info(id).wide }
+    /// the least width a card needs to share a row; nil for a card that takes the full width
+    private func least(_ id: String) -> CGFloat? { isChart(id) ? (store.enlarged.contains(id) ? 360 : 230) : Catalog.shared[id] }
 
-    private var runs: [[String]] {
-        var result: [[String]] = []
+    /// The cards in rows, in their order: each row takes the next card while its least width still fits.
+    private func rows(width: CGFloat) -> [[String]] {
+        let room = width - 32
+        var result: [[String]] = [], used = CGFloat.infinity
         for id in store.cards {
-            if !wide(id), let last = result.last, let first = last.first, !wide(first) { result[result.count - 1].append(id) }
-            else { result.append([id]) }
+            guard let need = least(id) else { result.append([id]); used = .infinity; continue }
+            if used + 14 + need <= room { result[result.count - 1].append(id); used += 14 + need } else { result.append([id]); used = need }
         }
         return result
     }
 
-    /// The room one chart card may take when `columns` of them share a row: its share of the width, and never
-    /// more than shows whole in the height on screen (the card's title and words stand above the square).
-    private func cardWidth(columns: Int, width: CGFloat, height: CGFloat) -> CGFloat {
-        let share = (width - 32 - CGFloat(columns - 1) * 14) / CGFloat(columns)
-        return max(150, min(share, height - (store.showHelp ? 150 : 80)))
-    }
-
-    /// How many charts share a row, read from the window alone: as many as can each be a size that reads
-    /// well. A wider window holds more of them; a narrow one stacks them.
-    private func columns(for count: Int, width: CGFloat, height: CGFloat) -> Int {
-        let readable: CGFloat = 230
-        return max(1, min(count, Int((width - 32 + 14) / (readable + 14))))
-    }
-
-    private func rows(_ run: [String], columns: Int) -> [[String]] {
-        stride(from: 0, to: run.count, by: columns).map { Array(run[$0..<min($0 + columns, run.count)]) }
+    /// The width each card of a row takes. Charts alone share the row evenly; beside tables a chart takes the
+    /// size that shows whole in the window (its largest when enlarged), as far as the tables can spare it.
+    private func widths(_ row: [String], width: CGFloat, height: CGFloat) -> [CGFloat] {
+        let room = width - 32 - CGFloat(row.count - 1) * 14
+        let tallest = max(150, height - (store.showHelp ? 150 : 80))
+        let charts = row.filter(isChart), others = row.count - charts.count
+        let anyLarge = charts.contains { store.enlarged.contains($0) }
+        if others == 0 && !anyLarge { return row.map { _ in max(150, min(room / CGFloat(row.count), tallest)) } }
+        if charts.isEmpty { return row.map { _ in room / CGFloat(others) } }
+        let spare = room - row.filter { !isChart($0) }.reduce(0) { $0 + (least($1) ?? 0) }
+        let want = charts.map { store.enlarged.contains($0) ? tallest : min(tallest, 300) }
+        let scale = min(1, spare / want.reduce(0, +))
+        let chartWidth = Dictionary(uniqueKeysWithValues: zip(charts, want.map { $0 * scale }))
+        let rest = others == 0 ? 0 : (room - chartWidth.values.reduce(0, +)) / CGFloat(others)
+        return row.map { chartWidth[$0] ?? rest }
     }
 
     var body: some View {
@@ -104,20 +115,18 @@ struct Workspace: View {
                     }
                     .frame(maxWidth: .infinity).padding(40)
                 }
-                ForEach(runs, id: \.self) { run in
-                    if wide(run[0]) {
-                        // an enlarged chart is the largest that shows whole in the window: never wider or taller than the room drawn
-                        Card(id: run[0]).id(run[0]).frame(maxWidth: Catalog.info(run[0]).wide ? .infinity : cardWidth(columns: 1, width: width, height: height))
-                    } else {
-                        let perRow = columns(for: run.count, width: width, height: height), each = cardWidth(columns: perRow, width: width, height: height)
-                        ForEach(rows(run, columns: perRow), id: \.self) { line in
-                            HStack(alignment: .top, spacing: 14) {
-                                ForEach(line, id: \.self) { Card(id: $0).frame(width: each) }
-                            }
+                ForEach(rows(width: width), id: \.self) { row in
+                    let each = widths(row, width: width, height: height)
+                    HStack(alignment: .top, spacing: 14) {
+                        ForEach(Array(row.enumerated()), id: \.element) { index, id in
+                            Card(id: id, limit: row.count > 1 && Catalog.long.contains(id) ? max(300, height - 40) : nil)
+                                .id(id).frame(width: each[index])
                         }
                     }
                 }
             }
+            .animation(.easeInOut(duration: 0.22), value: store.cards)
+            .animation(.easeInOut(duration: 0.22), value: store.enlarged)
             .padding(16)
             .frame(width: width, alignment: .leading)
         }
@@ -130,11 +139,16 @@ struct Workspace: View {
 struct Card: View {
     @EnvironmentObject var store: Store
     let id: String
+    /// the height the card may take before its content scrolls within it; nil lets it grow
+    var limit: CGFloat? = nil
+    @State private var hovering = false
+    @State private var targeted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(Catalog.info(id).title).font(.headline).help(Help.card(id))
+                Text(Catalog.info(id).title).font(.headline).help(Help.card(id) + " Drag this title onto another card to move the card there.")
+                    .draggable(id)
                 Spacer()
                 if !Catalog.info(id).wide {
                     Button { store.toggleEnlarged(id) } label: { Image(systemName: store.enlarged.contains(id) ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") }
@@ -154,11 +168,18 @@ struct Card: View {
             if store.showHelp, !Help.card(id).isEmpty {
                 Text(Help.card(id)).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            content
+            if let limit { ScrollView { content.frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: limit - 70) } else { content }
+            if let words = legend { Text(words).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.08)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(targeted ? Color.accentColor : Color.primary.opacity(hovering ? 0.25 : 0.08), lineWidth: targeted ? 2 : 1))
+        .onHover { hovering = $0 }
+        .dropDestination(for: String.self) { items, _ in
+            guard let moved = items.first, moved != id, store.cards.contains(moved) else { return false }
+            store.moveCard(moved, onto: id)
+            return true
+        } isTargeted: { targeted = $0 }
     }
 
     @ViewBuilder private var content: some View {
@@ -171,9 +192,9 @@ struct Card: View {
         } else if let chart = store.chart {
             if id == "moon" {
                 // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house
-                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart))
+                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart), owned: owned(chart))
             } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
-                ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [])
+                ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [], owned: varga == 0 ? owned(chart) : [])
             } else {
                 switch id {
                 case "karakas": KarakaCard(chart: chart)
@@ -210,8 +231,16 @@ struct Card: View {
         }
     }
 
-    /// the signs the picked graha aspects, tinted in the birth chart
-    private func aspected(_ chart: Chart) -> [Int] { store.pick?.graha.map { chart.aspectedSigns(by: $0) } ?? [] }
+    /// the signs the graha in focus (under the pointer, else clicked) aspects, and the signs it rules: tinted in the birth chart
+    private func aspected(_ chart: Chart) -> [Int] { store.focus?.graha.map { chart.aspectedSigns(by: $0) } ?? [] }
+    private func owned(_ chart: Chart) -> [Int] { store.focus?.graha.map { code in chart.housesRuled(by: code).map { (chart.asc.sign + $0 - 1) % 12 } } ?? [] }
+    /// under a birth chart, what the tints mean while a graha is in focus
+    private var legend: String? {
+        guard id == "chart:0" || id == "moon", let chart = store.chart, let code = store.focus?.graha, chart.graha(code) != nil else { return nil }
+        let name = Names.lords[code] ?? code, seen = aspected(chart), ruled = owned(chart)
+        let parts = [seen.isEmpty ? nil : "orange: the signs \(name) aspects", ruled.isEmpty ? nil : "green: the signs \(name) rules"].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 
     /// Birth positions in a varga, with the sky's positions beside them while the desk stands away from the birth.
     private func marks(_ chart: Chart, _ varga: Int, lagnaLabel: Bool = false) -> [Int: [ChartMark]] {
@@ -275,7 +304,7 @@ struct PickRow: View {
 
     var body: some View {
         let chosen = pick != nil && (store.pick == pick || (pick?.graha != nil && store.pick?.graha == pick?.graha))
-        let near = pick != nil && (store.hover == pick || (pick?.graha != nil && store.hover?.graha == pick?.graha))
+        let near = pick != nil && (store.hover == pick || (pick?.graha != nil && (store.hover?.graha == pick?.graha || store.glow.contains(pick?.graha ?? ""))))
         HStack(spacing: 0) {
             ForEach(cells.indices, id: \.self) { index in
                 Text(cells[index].text)

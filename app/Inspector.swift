@@ -8,8 +8,15 @@ struct Inspector: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(store.followPointer && store.hover != nil && store.hover != store.pick ? "Under the pointer. Click to keep it here." : store.pick != nil ? "Picked" : " ")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Toggle("Follow the pointer", isOn: $store.followPointer).toggleStyle(.checkbox).controlSize(.small).font(.caption)
+                        .help("On: this panel shows whatever the pointer rests on, and returns to what was clicked when the pointer leaves. Off: it changes only on a click.")
+                }
                 if let chart = store.chart {
-                    switch store.pick {
+                    switch store.focus {
                     case .graha(let code): grahaPanel(code, chart)
                     case .sign(let sign): signPanel(sign, chart)
                     case .period(let lords, let start, let end): periodPanel(lords, start, end, chart)
@@ -30,7 +37,8 @@ struct Inspector: View {
     private var help: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Point at anything").font(.title3).fontWeight(.semibold)
-            Text("Click a graha, a sign or a dasha period on any card. It is explained here, and every other card shows where it stands.")
+            Text("Rest the pointer on a graha, a sign or a dasha period on any card: it is explained here, and every other card shows where it stands. Click to keep it.")
+            Text("On a chart, the signs a graha aspects turn orange and the signs it rules turn green. Rest on a yoga and its grahas light up in every chart. Drag a card's title onto another card to rearrange the desk.")
             Text("The bar below moves the whole desk through time. Press ⌘K and type to add a card, change a setting, or ask what a word means.")
         }
         .foregroundStyle(.secondary)
