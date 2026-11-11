@@ -23,13 +23,17 @@ struct KarakaCard: View {
         VStack(alignment: .leading, spacing: 3) {
             ForEach(Array(j.karakas.enumerated()), id: \.offset) { index, code in
                 let g = chart.graha(code), role = Lore.karakas[index]
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                VStack(alignment: .leading, spacing: 1) {
+                  HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(role.code).fontWeight(.semibold).frame(width: 36, alignment: .leading)
                     Text(role.name).frame(width: 110, alignment: .leading)
                     Text(Names.lords[code] ?? code).fontWeight(.medium).foregroundStyle(Tint.graha(code)).frame(width: 66, alignment: .leading)
                     Text(g.map { Names.dms($0.deg) } ?? "").monospacedDigit().foregroundStyle(.secondary).frame(width: 78, alignment: .leading)
-                    Text(role.words.prefix(1).uppercased() + role.words.dropFirst() + ".").foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                  }
+                  // the role's meaning takes the card's full width under its row, so it reads in a line or two
+                  Text(role.words.prefix(1).uppercased() + role.words.dropFirst() + ".").font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.leading, 44)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 2).padding(.horizontal, 6)
                 .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(store.pick?.graha == code ? 0.2 : 0)))
                 .contentShape(Rectangle())

@@ -99,6 +99,8 @@ extension Store {
 /// The walk-through's voice: it stands at the head of the inspector while the desk shows what it speaks of.
 struct TourPanel: View {
     @EnvironmentObject var store: Store
+    /// where the buttons stand in the window: read by the click witness (`--probe-tour`)
+    static var spots: [String: CGRect] = [:]
 
     var body: some View {
         let steps = store.tourSteps
@@ -108,7 +110,7 @@ struct TourPanel: View {
                 HStack {
                     Text("Walk-through · \(at + 1) of \(steps.count)").font(.caption).foregroundStyle(.secondary)
                     Spacer()
-                    Button("End") { store.tour(to: nil) }.buttonStyle(.link).font(.caption).help("Close the walk-through and stay where the desk stands")
+                    Button("End") { store.tour(to: nil) }.buttonStyle(.link).font(.caption).background(GeometryReader { geo in let place = geo.frame(in: .global); Color.clear.onAppear { TourPanel.spots["end"] = place }.onChanged(of: place) { TourPanel.spots["end"] = geo.frame(in: .global) } }).help("Close the walk-through and stay where the desk stands")
                 }
                 ProgressView(value: Double(at + 1), total: Double(steps.count)).tint(.accentColor)
                 Text(step.title).font(.title3).fontWeight(.semibold)
@@ -116,8 +118,8 @@ struct TourPanel: View {
                 if store.familiar, !step.detail.isEmpty { Text(step.detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                 Label(step.tryIt, systemImage: "hand.point.up.left").font(.callout).foregroundStyle(Color.accentColor).fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Button("Back") { store.tour(to: at - 1) }.disabled(at == 0)
-                    Button(at == steps.count - 1 ? "Finish" : "Next") { store.tour(to: at == steps.count - 1 ? nil : at + 1) }.keyboardShortcut(.defaultAction)
+                    Button("Back") { store.tour(to: at - 1) }.disabled(at == 0).background(GeometryReader { geo in let place = geo.frame(in: .global); Color.clear.onAppear { TourPanel.spots["back"] = place }.onChanged(of: place) { TourPanel.spots["back"] = geo.frame(in: .global) } })
+                    Button(at == steps.count - 1 ? "Finish" : "Next") { store.tour(to: at == steps.count - 1 ? nil : at + 1) }.keyboardShortcut(.defaultAction).background(GeometryReader { geo in let place = geo.frame(in: .global); Color.clear.onAppear { TourPanel.spots["next"] = place }.onChanged(of: place) { TourPanel.spots["next"] = geo.frame(in: .global) } })
                     Spacer()
                     if !store.familiar, !step.detail.isEmpty {
                         Button("More") { store.explanation = Explanation(title: step.title, group: "For the familiar reader", lines: [step.detail]) }.buttonStyle(.link).font(.caption)

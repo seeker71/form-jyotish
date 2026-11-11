@@ -47,10 +47,10 @@ enum Catalog {
     /// The least width at which a card still reads well beside others. A card not named here takes a row to itself.
     static let shared: [String: CGFloat] = [
         "grahas": 560, "birth": 440, "edges": 420, "reading": 420, "dasha-context": 440, "yogas": 440, "dashas": 420, "other-dashas": 440,
-        "karakas": 440, "arudhas": 440, "chara-dasha": 440, "kp-grahas": 540, "kp-cusps": 540, "kp-houses": 540, "kp-planets": 540,
-        "transits": 540, "transit-dates": 440, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
+        "karakas": 440, "arudhas": 600, "chara-dasha": 440, "kp-grahas": 540, "kp-cusps": 540, "kp-houses": 540, "kp-planets": 540,
+        "transit-dates": 440, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
     /// long cards: beside another card they scroll within the height on screen, so their neighbour stays in view
-    static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events"]
+    static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events", "transit-dates"]
 
     static func info(_ id: String) -> CardInfo { all.first { $0.id == id } ?? CardInfo(id: id, title: id, keywords: "", wide: true) }
 }
@@ -360,18 +360,17 @@ struct GrahaTable: View {
 struct TransitTable: View {
     @EnvironmentObject var store: Store
     let natal: Chart
-    private let widths: [CGFloat] = [112, 86, 84, 150, 44, 96, 84, 84]
+    private let widths: [CGFloat] = [104, 84, 84, 84, 84, 150, 44, 96]
 
     var body: some View {
         if let sky = store.sky {
             let moon = natal.graha("Mo")?.sign ?? 0
             ScrollView(.horizontal) {
                 VStack(alignment: .leading, spacing: 1) {
-                    PickRow(pick: nil, cells: zip(["Graha", "Rasi", "Longitude", "Nakshatra", "Pada", "Motion °/day", "From lagna", "From Moon"], widths).map { ($0, $1) }, header: true)
+                    PickRow(pick: nil, cells: zip(["Graha", "Rasi", "From lagna", "From Moon", "Longitude", "Nakshatra", "Pada", "Motion °/day"], widths).map { ($0, $1) }, header: true)
                     ForEach(sky.grahas + sky.outer) { g in
-                        PickRow(pick: .graha(g.id), cells: zip([g.name, Names.signs[g.sign], Names.dms(g.deg), g.nak_name, "\(g.pada)",
-                                                                 String(format: "%+.4f", g.speed) + (g.retro && g.id != "Ra" && g.id != "Ke" ? " ℞" : ""),
-                                                                 "house \((g.sign - natal.asc.sign + 12) % 12 + 1)", "house \((g.sign - moon + 12) % 12 + 1)"], widths).map { ($0, $1) },
+                        PickRow(pick: .graha(g.id), cells: zip([g.name, Names.signs[g.sign], "house \((g.sign - natal.asc.sign + 12) % 12 + 1)", "house \((g.sign - moon + 12) % 12 + 1)", Names.dms(g.deg), g.nak_name, "\(g.pada)",
+                                                                 String(format: "%+.4f", g.speed) + (g.retro && g.id != "Ra" && g.id != "Ke" ? " ℞" : "")], widths).map { ($0, $1) },
                                 tint: Tint.graha(g.id), retro: g.retro && g.id != "Ra" && g.id != "Ke")
                     }
                 }

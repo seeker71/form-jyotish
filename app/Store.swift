@@ -57,7 +57,7 @@ final class Store: ObservableObject {
         "Strength": ["chart:0", "ashtakavarga", "shadbala", "avasthas"],
         "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
-        "Transits": ["chart:0", "transits", "transit-dates", "timeline"],
+        "Transits": ["chart:0", "transit-dates", "transits", "timeline"],
     ]
     /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
     static let layoutVersion = 2
@@ -78,7 +78,7 @@ final class Store: ObservableObject {
     /// the step of the walk-through that is open; nil when it is closed
     @Published var tourAt: Int? = nil
     /// guidance for a reader who knows the tradition: each card states its method in place of the plain words
-    @Published var familiar: Bool = UserDefaults.standard.bool(forKey: "familiar") { didSet { defaults.set(familiar, forKey: "familiar") } }
+    @Published var familiar: Bool = UserDefaults.standard.bool(forKey: "familiar") { didSet { if !Store.trial { defaults.set(familiar, forKey: "familiar") } } }
     /// the guidance level as one choice: learning, familiar, off
     var guidance: String {
         get { !showHelp ? "off" : familiar ? "familiar" : "learning" }
@@ -112,10 +112,11 @@ final class Store: ObservableObject {
     @Published var explanation: Explanation? = nil { didSet { if explanation == nil, lookedUp != nil { lookedUp = nil } } }
     /// a card the workspace is asked to bring into view
     @Published var showCard: String? = nil
-    @Published var workspace: String { didSet { defaults.set(workspace, forKey: "workspace") } }
+    @Published var workspace: String { didSet { if !Store.trial { defaults.set(workspace, forKey: "workspace") } } }
     @Published var layout: [String: [String]] { didSet { if !Store.trial { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } } }
-    /// a run that only pictures the window (`--snapshot`): it shows the standard desk and writes nothing of the desk's arrangement
-    static let trial = CommandLine.arguments.contains("--snapshot")
+    /// a run that only pictures or probes the window: it shows the standard desk and writes nothing of the desk's
+    /// arrangement, workspace or guidance level
+    static let trial = ["--snapshot", "--probe-tour", "--probe-tabs", "--probe-palette"].contains { CommandLine.arguments.contains($0) }
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
@@ -139,7 +140,7 @@ final class Store: ObservableObject {
     }
     @Published var style: ChartStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
     /// explanations shown in place on every card and in the inspector; on until the person turns it off
-    @Published var showHelp: Bool { didSet { defaults.set(showHelp, forKey: "showHelp") } }
+    @Published var showHelp: Bool { didSet { if !Store.trial { defaults.set(showHelp, forKey: "showHelp") } } }
 
     private let defaults = UserDefaults.standard
     private let file: URL

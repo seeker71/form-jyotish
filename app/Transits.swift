@@ -65,14 +65,19 @@ struct TransitDates: View {
         let format = Date.FormatStyle(date: .abbreviated, time: .shortened, timeZone: store.zone)
         let shown = events.filter { ($0.kind == "ingress" && ingresses) || ($0.kind == "station" && stations) || ($0.kind == "contact" && contacts) }
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Picker("Span", selection: $days) { ForEach(Self.spans, id: \.days) { Text($0.name).tag($0.days) } }
+            // the span and the three kinds stand on one line where the card has room, on two where it is narrow
+            let span = Picker("Span", selection: $days) { ForEach(Self.spans, id: \.days) { Text($0.name).tag($0.days) } }
                     .pickerStyle(.segmented).labelsHidden().frame(width: 300)
                     .help("How far ahead of the time bar's moment to look")
+            let kinds = HStack(spacing: 10) {
                 Toggle("Ingresses", isOn: $ingresses).help("A graha entering a sign")
                 Toggle("Stations", isOn: $stations).help("A graha turning retrograde or direct")
                 Toggle("Crossings", isOn: $contacts).help("Mars, Jupiter, Saturn, Rahu or Ketu reaching the exact degree of a birth graha or the lagna")
                 if busy { ProgressView().controlSize(.small) }
+            }.fixedSize()
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { span; kinds }
+                VStack(alignment: .leading, spacing: 6) { span; kinds }
             }
             .toggleStyle(.checkbox)
             HStack(spacing: 8) {

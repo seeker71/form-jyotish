@@ -94,6 +94,7 @@ struct FormJyotishApp: App {
             if let size = value("--size")?.split(separator: "x").compactMap({ Double($0) }), size.count == 2, let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) {
                 window.setFrame(NSRect(x: window.frame.minX, y: window.frame.minY, width: size[0], height: size[1]), display: true)
             }
+            if let level = value("--guidance") { store.guidance = level }
             if let step = value("--tour").flatMap({ Int($0) }) { store.tour(to: step - 1) }
             if value("--about") != nil { store.explanation = Help.about(card: value("--about") ?? "") }
             if let code = value("--focus") { store.hover = .graha(code) }
@@ -106,6 +107,33 @@ struct FormJyotishApp: App {
             print("snapshot written to \(path)")
             exit(0)
         }
+    }
+
+    /// `FormJyotish --probe-tour`: start the walk-through, press Next, Next, Back and End with real mouse events
+    /// sent to the window, and say whether the step and the workspace followed each press.
+    private func probeTour() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { store.tour(to: 0) }
+        let presses: [(button: String, step: Int?)] = [("next", 1), ("next", 2), ("next", 3), ("next", 4), ("next", 5), ("next", 6), ("back", 5), ("end", nil)]
+        var held = 0
+        func press(_ index: Int) {
+            guard index < presses.count else { print("probe: \(held) of \(presses.count) walk-through presses answered"); exit(held == presses.count ? 0 : 1) }
+            let (button, step) = presses[index]
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let spot = TourPanel.spots[button] else { print("probe: \(button) reported no place"); exit(1) }
+            let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
+            func event(_ kind: NSEvent.EventType) -> NSEvent? {
+                NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+            }
+            // a button follows the mouse in its own loop until the release arrives, so the release waits in the
+            // queue before the press is sent
+            if let up = event(.leftMouseUp), let down = event(.leftMouseDown) { NSApp.postEvent(up, atStart: false); window.sendEvent(down) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                let ok = store.tourAt == step && (step == nil || store.workspace == store.tourSteps[step!].workspace)
+                print("probe: \(button) -> step \(store.tourAt.map { String($0 + 1) } ?? "none"), workspace \(store.workspace), picked \(store.pick.map { String(describing: $0) } ?? "nothing")\(ok ? "" : "  MISSED")")
+                if ok { held += 1 }
+                press(index + 1)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { press(0) }
     }
 
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
@@ -131,7 +159,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

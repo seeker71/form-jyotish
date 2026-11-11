@@ -153,7 +153,7 @@ extension Chart {
                                                                        name(seven[first].id), strengthRatio(first), name(seven[last].id), strengthRatio(last)),
                                     grahas: [seven[first].id, seven[last].id], workspace: "Strength"))
         }
-        lines.append(GlanceLine(heading: "Yogas", words: yogas.isEmpty ? "None of the yogas the app knows is formed." : "\(yogas.count) are formed, among them \(yogas.prefix(3).map(\.name).joined(separator: ", ")).", workspace: "Yogas"))
+        lines.append(GlanceLine(heading: "Yogas", words: yogas.isEmpty ? "None of the yogas the app knows is formed." : "\(yogas.count) are formed, among them \(yogas.map(\.name).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.prefix(3).joined(separator: ", ")).", workspace: "Yogas"))
         let running = Vimshottari.running(at: day, in: dasha, depth: 2)
         if running.count == 2 {
             let maha = running[0].lord, antar = running[1].lord, ruled = housesRuled(by: maha)
