@@ -224,6 +224,9 @@ struct Palette: View {
             Command(id: "t-birth", title: "Go to the birth", keywords: "time natal", run: { store.goBirth() }),
             Command(id: "rectify", title: "Rectify the birth time", keywords: "adjust", run: { store.goBirth(); store.rectifying = true }),
             Command(id: "report", title: "Write the report (PDF)…", keywords: "print export", run: report),
+            Command(id: "tour", title: "Walk through this chart", keywords: "guide tour tutorial learn teach steps walkthrough start begin how to read", run: { store.tour(to: 0) }),
+            Command(id: "guidance-learning", title: "Guidance: Learning (plain words on each card)", keywords: "help level beginner new explain", run: { store.guidance = "learning" }),
+            Command(id: "guidance-familiar", title: "Guidance: Familiar (method and conventions on each card)", keywords: "help level expert advanced method", run: { store.guidance = "familiar" }),
             Command(id: "help", title: store.showHelp ? "Hide explanations" : "Show explanations", keywords: "help tips learn beginner", run: { store.showHelp.toggle() }),
             Command(id: "sample-1", title: "Add a sample chart: New Delhi, 1 January 2000", keywords: "example explore demo", run: { store.addSample("New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) }),
             Command(id: "sample-2", title: "Add a sample chart: London, 21 June 1990", keywords: "example explore demo", run: { store.addSample("London 1990", date: "1990-06-21", time: "06:00:00", zone: "Europe/London", place: "London, United Kingdom", latitude: 51.5074, longitude: -0.1278) }),
@@ -352,6 +355,9 @@ struct ChartSettings: View {
                 .help("Ask GitHub now whether a newer build is published. A newer build is fetched and installs at the next start.")
                 .help("Add a chart for another person or moment")
             Divider()
+            row("Guidance", "Learning: plain words on each card. Familiar: how each card is reached and which conventions it follows. Off: no words on the cards; the ? on each card and ⌘K still explain.") {
+                Picker("Guidance", selection: Binding(get: { store.guidance }, set: { store.guidance = $0 })) { Text("Learning").tag("learning"); Text("Familiar").tag("familiar"); Text("Off").tag("off") }
+            }
             row("Text size", "How large the charts, tables and words are drawn.") {
                 Picker("Text size", selection: only(\.textScale)) { ForEach(Store.textScales, id: \.scale) { Text($0.name).tag($0.scale) } }
             }

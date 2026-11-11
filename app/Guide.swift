@@ -56,6 +56,12 @@ struct GuideCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Button { store.tour(to: 0) } label: { Label(store.tourAt == nil ? "Start the walk-through" : "Restart the walk-through", systemImage: "figure.walk") }
+                    .buttonStyle(.borderedProminent)
+                    .help("Eleven steps. The desk opens each workspace and picks what the step speaks of, in this chart; the words stand at the head of the panel on the right.")
+                Text("The desk shows each step in this chart while the panel on the right explains it. Or follow the steps below at your own pace.").font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             ForEach(steps) { step in
                 HStack(alignment: .top, spacing: 10) {
                     Text("\(step.id)").font(.title3).fontWeight(.semibold).foregroundStyle(Color.accentColor).frame(width: 22, alignment: .trailing)

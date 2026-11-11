@@ -88,11 +88,14 @@ struct FormJyotishApp: App {
     private func snapshot(to path: String) {
         let arguments = CommandLine.arguments
         func value(_ name: String) -> String? { arguments.firstIndex(of: name).flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } }
-        // --size 1600x900 sets the window's size; --focus Ju rests the pointer on a graha; --glow Ju,Mo lights several
+        // --size 1600x900 sets the window's size; --focus Ju rests the pointer on a graha; --glow Ju,Mo lights several;
+        // --tour 2 opens that step of the walk-through; --about yogas opens a card's explanation
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             if let size = value("--size")?.split(separator: "x").compactMap({ Double($0) }), size.count == 2, let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) {
                 window.setFrame(NSRect(x: window.frame.minX, y: window.frame.minY, width: size[0], height: size[1]), display: true)
             }
+            if let step = value("--tour").flatMap({ Int($0) }) { store.tour(to: step - 1) }
+            if value("--about") != nil { store.explanation = Help.about(card: value("--about") ?? "") }
             if let code = value("--focus") { store.hover = .graha(code) }
             if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }
         }

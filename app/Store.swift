@@ -75,6 +75,15 @@ final class Store: ObservableObject {
     @Published var rectifying = false
     @Published var pick: Pick?
     @Published var hover: Pick?
+    /// the step of the walk-through that is open; nil when it is closed
+    @Published var tourAt: Int? = nil
+    /// guidance for a reader who knows the tradition: each card states its method in place of the plain words
+    @Published var familiar: Bool = UserDefaults.standard.bool(forKey: "familiar") { didSet { defaults.set(familiar, forKey: "familiar") } }
+    /// the guidance level as one choice: learning, familiar, off
+    var guidance: String {
+        get { !showHelp ? "off" : familiar ? "familiar" : "learning" }
+        set { if showHelp != (newValue != "off") { showHelp = newValue != "off" }; if newValue != "off", familiar != (newValue == "familiar") { familiar = newValue == "familiar" } }
+    }
     /// grahas lit together on every card while the pointer rests on something they form: a yoga, a period
     @Published var glow: [String] = []
     /// whether the inspector shows what the pointer rests on, or only what was clicked

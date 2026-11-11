@@ -6,6 +6,8 @@ struct Inspector: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
+        VStack(spacing: 0) {
+        TourPanel()
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
@@ -29,6 +31,7 @@ struct Inspector: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        }
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -39,6 +42,10 @@ struct Inspector: View {
             Text("Point at anything").font(.title3).fontWeight(.semibold)
             Text("Rest the pointer on a graha, a sign or a dasha period on any card: it is explained here, and every other card shows where it stands. Click to keep it.")
             Text("On a chart, the signs a graha aspects turn orange and the signs it rules turn green. Rest on a yoga and its grahas light up in every chart. Drag a card's title onto another card to rearrange the desk.")
+            if store.chart != nil, store.tourAt == nil {
+                Button { store.tour(to: 0) } label: { Label("Walk through this chart", systemImage: "figure.walk") }
+                    .help("Eleven steps in the order a chart is read. The desk shows each step in this chart while it is explained here.")
+            }
             Text("The bar below moves the whole desk through time. Press ⌘K and type to add a card, change a setting, or ask what a word means.")
         }
         .foregroundStyle(.secondary)

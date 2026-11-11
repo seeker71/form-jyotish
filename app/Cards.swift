@@ -150,6 +150,9 @@ struct Card: View {
                 Text(Catalog.info(id).title).font(.headline).help(Help.card(id) + " Drag this title onto another card to move the card there.")
                     .draggable(id)
                 Spacer()
+                Button { store.explanation = Help.about(card: id) } label: { Image(systemName: "questionmark.circle") }
+                    .buttonStyle(.plain).foregroundStyle(.secondary).accessibilityLabel("About \(Catalog.info(id).title)")
+                    .help("What this card shows, how it is reached, and what to try")
                 if !Catalog.info(id).wide {
                     Button { store.toggleEnlarged(id) } label: { Image(systemName: store.enlarged.contains(id) ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") }
                         .buttonStyle(.plain).foregroundStyle(.secondary)
@@ -166,7 +169,7 @@ struct Card: View {
                     .accessibilityLabel("Card options for \(Catalog.info(id).title)")
             }
             if store.showHelp, !Help.card(id).isEmpty {
-                Text(Help.card(id)).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(store.familiar ? (Help.method(id) ?? Help.card(id)) : Help.card(id)).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if let limit { ScrollView { content.frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: limit - 70) } else { content }
             if let words = legend { Text(words).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
@@ -314,7 +317,9 @@ struct PickRow: View {
                     .foregroundStyle(header ? AnyShapeStyle(.secondary) : index == 0 ? AnyShapeStyle(tint) : AnyShapeStyle(.primary))
                     .lineLimit(1)
                     .frame(width: cells[index].width, alignment: .leading)
-                    .help(header ? (Help.term(cells[index].text) ?? "") : "")
+                    .underline(header && Help.term(cells[index].text) != nil, pattern: .dot, color: Color.secondary.opacity(0.6))
+                    .help(header ? (Help.term(cells[index].text).map { $0 + " Click for more." } ?? "") : "")
+                    .onTapGesture { if header, Help.term(cells[index].text) != nil { store.explanation = Lore.explain(term: cells[index].text, chart: store.chart) } else if let pick { store.pick = pick } }
             }
         }
         .padding(.vertical, 2).padding(.horizontal, 6)
