@@ -172,7 +172,7 @@ struct Card: View {
                 Text(store.familiar ? (Help.method(id) ?? Help.card(id)) : Help.card(id)).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if let limit { ScrollView { content.frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: limit - 70) } else { content }
-            if let words = legend { Text(words).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+            if let words = legend { Text(words).font(.caption).foregroundStyle(.secondary).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading) }
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
@@ -237,12 +237,15 @@ struct Card: View {
     /// the signs the graha in focus (under the pointer, else clicked) aspects, and the signs it rules: tinted in the birth chart
     private func aspected(_ chart: Chart) -> [Int] { store.focus?.graha.map { chart.aspectedSigns(by: $0) } ?? [] }
     private func owned(_ chart: Chart) -> [Int] { store.focus?.graha.map { code in chart.housesRuled(by: code).map { (chart.asc.sign + $0 - 1) % 12 } } ?? [] }
-    /// under a birth chart, what the tints mean while a graha is in focus
+    /// Under a birth chart, what the tints mean. The line always stands there, one line high, so the cards
+    /// below keep their place while the pointer moves over the chart.
     private var legend: String? {
-        guard id == "chart:0" || id == "moon", let chart = store.chart, let code = store.focus?.graha, chart.graha(code) != nil else { return nil }
+        guard id == "chart:0" || id == "moon" else { return nil }
+        let rest = "Point at a graha to tint the signs it aspects and rules."
+        guard let chart = store.chart, let code = store.focus?.graha, chart.graha(code) != nil else { return rest }
         let name = Names.lords[code] ?? code, seen = aspected(chart), ruled = owned(chart)
         let parts = [seen.isEmpty ? nil : "orange: the signs \(name) aspects", ruled.isEmpty ? nil : "green: the signs \(name) rules"].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? rest : parts.joined(separator: " · ")
     }
 
     /// Birth positions in a varga, with the sky's positions beside them while the desk stands away from the birth.
