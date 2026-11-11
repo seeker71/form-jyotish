@@ -21,7 +21,6 @@ struct FormJyotishApp: App {
             for (typed, want) in dates { let got = Birth(date: typed).writtenDate; if got == want { held += 1 } else { print("date \(typed): read \(got ?? "nothing"), expected \(want ?? "nothing")") } }
             for (typed, want) in times { let got = Birth(time: typed).writtenTime; if got == want { held += 1 } else { print("time \(typed): read \(got ?? "nothing"), expected \(want ?? "nothing")") } }
             print("entry check: \(held) of \(dates.count + times.count) read as expected")
-            for line in Birth(date: "11 Mar 1971", time: "2:50 am", zone: "America/Vancouver", place: "Vancouver", latitude: 49.2604, longitude: -123.1139).resolved { print("  \(line.label): \(line.words)") }
             exit(held == dates.count + times.count ? 0 : 1)
         }
         Updater.waitForPredecessor(arguments)

@@ -264,7 +264,21 @@ struct Card: View {
 
 struct BirthForm: View {
     @EnvironmentObject var store: Store
+    private enum Field { case place, date, time }
+    @FocusState private var focus: Field?
+    @State private var left: Field?
+    @State private var placeBefore = ""
 
+    /// A field resolves when the cursor leaves it: the date and time are written out in full, and a changed
+    /// place is looked up and written as matched, with its latitude, longitude and time zone.
+    private func resolve(_ field: Field?) {
+        guard let field, let index = store.index else { return }
+        switch field {
+        case .date: if let written = store.births[index].writtenDate { store.births[index].date = written }
+        case .time: if let written = store.births[index].writtenTime { store.births[index].time = written }
+        case .place: if store.births[index].place != placeBefore, !store.births[index].place.isEmpty { store.lookUpPlace() }
+        }
+    }
     var body: some View {
         if let index = store.index {
             let birth = $store.births[index]
@@ -272,11 +286,13 @@ struct BirthForm: View {
                 // two pairs to a row: the form keeps its shape at any text size
                 GridRow {
                     Text("Name"); TextField("Name", text: birth.name).frame(minWidth: 150)
-                    Text("Place"); TextField("City, country", text: birth.place).onSubmit { store.lookUpPlace() }.frame(minWidth: 150)
+                    Text("Place"); TextField("City, country", text: birth.place).focused($focus, equals: .place).onSubmit { store.lookUpPlace(); placeBefore = birth.wrappedValue.place }.frame(minWidth: 150)
                 }
                 GridRow {
-                    Text("Date"); TextField("1971-03-11 or 11 Mar 1971", text: birth.date).onSubmit { if let written = birth.wrappedValue.writtenDate { birth.wrappedValue.date = written } }.frame(minWidth: 130)
-                    Text("Time"); TextField("02:50 or 2:50 am", text: birth.time).onSubmit { if let written = birth.wrappedValue.writtenTime { birth.wrappedValue.time = written } }.frame(minWidth: 110)
+                    Text("Date"); TextField("1971-03-11 or 11 Mar 1971", text: birth.date).focused($focus, equals: .date).onSubmit { resolve(.date) }.frame(minWidth: 130)
+                        .foregroundStyle(birth.wrappedValue.writtenDate == nil ? .red : .primary).help("Any common form: 1971-03-11, 11 Mar 1971, 11.3.1971. It is written out in full when you leave the field; red means it cannot be read yet.")
+                    Text("Time"); TextField("02:50 or 2:50 am", text: birth.time).focused($focus, equals: .time).onSubmit { resolve(.time) }.frame(minWidth: 110)
+                        .foregroundStyle(birth.wrappedValue.writtenTime == nil ? .red : .primary).help("The clock time at the birthplace: 02:50, 2:50 am, 0250. It is written out as 02:50:00 when you leave the field; red means it cannot be read yet.")
                 }
                 GridRow {
                     Text("Latitude"); TextField("north +", value: birth.latitude, format: .number.precision(.fractionLength(0...4))).frame(width: 110)
@@ -291,19 +307,11 @@ struct BirthForm: View {
             }
             .textFieldStyle(.roundedBorder)
             .foregroundStyle(.secondary)
-            // what the entry is read as, so a partial or loosely typed entry shows its full match at once
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Read as").font(.caption).foregroundStyle(.secondary)
-                ForEach(birth.wrappedValue.resolved, id: \.label) { line in
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Image(systemName: line.read ? "checkmark.circle" : "exclamationmark.circle").foregroundStyle(line.read ? Color.green : Color.orange).font(.caption)
-                        Text(line.label).foregroundStyle(.secondary).frame(width: 44, alignment: .leading)
-                        Text(line.words).foregroundStyle(line.read ? .primary : Color.orange).fixedSize(horizontal: false, vertical: true)
-                    }
-                    .font(.callout)
-                }
+            .onChange(of: focus) { now in
+                resolve(left)
+                left = now
+                if now == .place { placeBefore = birth.wrappedValue.place }
             }
-            .padding(.top, 6)
             if let source = birth.wrappedValue.source, !source.isEmpty {
                 Text("Source. " + source).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
             }

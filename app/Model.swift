@@ -78,36 +78,6 @@ struct Birth: Codable, Identifiable, Hashable {
     var writtenDate: String? { Birth.readDate(date).map { String(format: "%04d-%02d-%02d", $0.year, $0.month, $0.day) } }
     var writtenTime: String? { Birth.readTime(time).map { String(format: "%02d:%02d:%02d", $0.hour, $0.minute, $0.second) } }
 
-    /// What the entry is read as, field by field: the full date, the clock time with its zone and offset at
-    /// that moment, and the place with its coordinates. A field that cannot be read says what would be.
-    var resolved: [(label: String, words: String, read: Bool)] {
-        var lines: [(String, String, Bool)] = []
-        let zoneRead = timeZone != nil, tz = timeZone ?? TimeZone(secondsFromGMT: 0)!
-        if let d = Birth.readDate(date) {
-            var calendar = Calendar(identifier: .gregorian); calendar.timeZone = tz
-            let noon = calendar.date(from: DateComponents(year: d.year, month: d.month, day: d.day, hour: 12))
-            let style = Date.FormatStyle(date: .complete, time: .omitted, timeZone: tz)
-            lines.append(("Date", noon.map { $0.formatted(style) } ?? "", true))
-        } else { lines.append(("Date", "not read yet: write it as 1971-03-11, 11 Mar 1971 or 11.3.1971", false)) }
-        if let t = Birth.readTime(time) {
-            var words = String(format: "%02d:%02d:%02d", t.hour, t.minute, t.second) + " on the 24-hour clock (" + String(format: "%d:%02d", (t.hour + 11) % 12 + 1, t.minute) + (t.hour < 12 ? " am)" : " pm)")
-            if let moment, zoneRead {
-                let seconds = tz.secondsFromGMT(for: moment), sign = seconds < 0 ? "−" : "+"
-                let offset = "UTC" + sign + String(format: "%d:%02d", abs(seconds) / 3600, abs(seconds) % 3600 / 60)
-                words += ", " + (tz.isDaylightSavingTime(for: moment) ? "daylight time, " : "standard time, ") + offset
-                var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(secondsFromGMT: 0)!
-                let c = utc.dateComponents([.year, .month, .day, .hour, .minute], from: moment)
-                words += String(format: " · %04d-%02d-%02d %02d:%02d UTC", c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0)
-            }
-            lines.append(("Time", words, true))
-        } else { lines.append(("Time", "not read yet: write it as 02:50, 2:50 am or 14:05:30", false)) }
-        lines.append(("Zone", zoneRead ? zone.replacingOccurrences(of: "_", with: " ") : "not read yet: an area and city such as Europe/Zurich, or look the place up", zoneRead))
-        let set = latitude != 0 || longitude != 0
-        let where_ = String(format: "%.4f° %@, %.4f° %@", abs(latitude), latitude < 0 ? "S" : "N", abs(longitude), longitude < 0 ? "W" : "E")
-        lines.append(("Place", set ? (place.isEmpty ? where_ : place + " · " + where_) : "not set yet: type a city and press Look up place, or enter latitude and longitude", set))
-        return lines
-    }
-
     var julianDay: Double? { moment.map { $0.timeIntervalSince1970 / 86400 + 2440587.5 } }
 
     /// The civil clock's hours east of UTC at the birth moment.
