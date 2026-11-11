@@ -20,15 +20,14 @@ struct YogaList: View {
                     Text(group.name).font(.subheadline).fontWeight(.semibold).foregroundStyle(.secondary)
                     ForEach(group.yogas) { yoga in
                         let chosen = store.pick?.graha.map(yoga.grahas.contains) ?? false
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text(yoga.name).fontWeight(.medium).frame(width: 210, alignment: .leading)
-                            HStack(spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Text(yoga.name).fontWeight(.semibold)
                                 ForEach(yoga.grahas, id: \.self) { code in
                                     Text(code).font(.callout).fontWeight(.medium).foregroundStyle(Tint.graha(code))
                                         .onTapGesture { store.pick = .graha(code) }.help(Help.graha(code))
                                 }
                             }
-                            .frame(width: 70, alignment: .leading)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(yoga.why + ".").foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                                 if let meaning = Lore.yogaMeaning(yoga, in: chart) {
@@ -37,11 +36,14 @@ struct YogaList: View {
                                 }
                                 if let standing = Lore.yogaStanding(yoga, in: chart) { Text(standing).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                             }
+                            .padding(.leading, 12)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 2).padding(.horizontal, 6)
                         .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.2 : 0)))
                         .contentShape(Rectangle())
                         .onTapGesture { if let first = yoga.grahas.first { store.pick = .graha(first) } }
+                        .help("Press ⌘K and type the yoga's name for its rule and meaning")
                     }
                 }
             }

@@ -83,6 +83,18 @@ struct FormJyotishApp: App {
         }
     }
 
+    /// `FormJyotish --snapshot out.png`: after the window has settled, write what it shows as a picture and
+    /// leave. With `--public`, `--workspace`, `--look-up` it shows a new view without anyone clicking.
+    private func snapshot(to path: String) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let view = window.contentView, let shot = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { print("snapshot: no window"); exit(1) }
+            view.cacheDisplay(in: view.bounds, to: shot)
+            guard let data = shot.representation(using: .png, properties: [:]), (try? data.write(to: URL(fileURLWithPath: path))) != nil else { print("snapshot: could not write \(path)"); exit(1) }
+            print("snapshot written to \(path)")
+            exit(0)
+        }
+    }
+
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
     /// event, and say whether the explanation came up.
     private func probePalette() {
@@ -106,7 +118,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

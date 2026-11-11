@@ -179,6 +179,84 @@ extension Lore {
 
     static func yogaNote(_ name: String) -> String? { yogaMeaning(name)?.line }
 
+    /// every yoga the app can explain, by name
+    static var yogaNames: [String] { meanings.keys.sorted() }
+
+    private static let bhavaFair = ["Chamara", "Dhenu", "Shaurya", "Jaladhi", "Chatra", "Astra", "Kama", "Asura", "Bhagya", "Khyati", "Suparijata", "Musala"]
+    private static let bhavaHarsh = ["Ava", "Nissva", "Mriti", "Kuhu", "Pamara", "Harsha", "Dushkriti", "Sarala", "Nirbhagya", "Dur", "Daridra", "Vimala"]
+
+    private static let rules: [String: String] = [
+        "Adhi yoga": "Mercury, Jupiter and Venus in the 6th, 7th and 8th from the Moon (from the lagna it is listed as Lagnadhi).",
+        "Lagnadhi yoga": "Mercury, Jupiter and Venus in the 6th, 7th and 8th from the lagna.",
+        "Amala yoga": "A natural benefic in the 10th from the lagna or from the Moon.",
+        "Ashubha-mala yoga": "Mercury, Jupiter and Venus all in the 6th, 8th and 12th from the lagna.",
+        "Shubha-mala yoga": "Mercury, Jupiter and Venus all in the 5th, 6th and 7th from the lagna.",
+        "Budhaditya yoga": "The Sun and Mercury in one sign; read at its best when it reaches the 1st or the 5th.",
+        "Chandra-Mangala yoga": "The Moon and Mars in one sign, or facing each other.",
+        "Dhana yoga": "Lords of the 2nd or 11th joined with lords of the 1st, 5th or 9th (together, exchanged or facing), or such a lord seated in the 2nd or 11th.",
+        "Dharma-karma-adhipati raja yoga": "The lord of a trine (1st, 5th, 9th) and the lord of an angle (1st, 4th, 7th, 10th) together, exchanged or facing each other.",
+        "Dur yoga (the lords reversed)": "The lords of the 6th, 8th and 12th in angles or trines, and the lords of the 1st, 4th, 9th and 10th in the 6th, 8th or 12th.",
+        "Gaja-Kesari yoga": "Jupiter in an angle from the lagna or the Moon, joined or aspected by a benefic, and neither debilitated nor combust.",
+        "Kesari yoga": "Jupiter in an angle (1st, 4th, 7th, 10th) from the Moon.",
+        "Gauri yoga": "The Moon in its own or exalted sign, in an angle or a trine, aspected by Jupiter.",
+        "Kahala yoga": "The lord of the sign that holds the lord of the sign the lagna lord stands in, in its own or exalted sign, in an angle or a trine.",
+        "Parvata yoga": "The lord of the sign the lagna lord stands in, in its own or exalted sign, in an angle or a trine.",
+        "Kala-sarpa yoga": "All seven grahas on one side of the line from Rahu to Ketu.",
+        "Kemadruma yoga": "No true planet (Mars to Saturn) in the 2nd or 12th from the Moon, none with the Moon, and none in an angle from the lagna or the Moon.",
+        "Mahabhagya yoga": "For a man: the lagna, the Sun and the Moon in odd signs and a birth by day. For a woman: all three in even signs and a birth by night.",
+        "Maha-Lakshmi yoga": "The lord of the 9th and Venus each in their own or exalted sign, in an angle or a trine.",
+        "Neecha-bhanga raja yoga": "A debilitated graha is lifted when the lord of its sign, the lord of its exaltation sign, or the graha exalted in the sign it occupies joins or aspects it, or stands in an angle from the lagna or the Moon: six conditions in all.",
+        "Papa-kartari yoga": "Malefics in both the 2nd and the 12th from the lagna.",
+        "Shubha-kartari yoga": "Benefics in both the 2nd and the 12th from the lagna.",
+        "Maha-parivartana yoga": "Two house lords each in the other's sign. With a lord of the 6th, 8th or 12th it is Dainya; with the lord of the 3rd, Khala; otherwise Maha.",
+        "Pravrajya yoga": "Four or more grahas in one sign.",
+        "Pravrajya yoga (Moon and Saturn)": "The Moon in a navamsa of Mars, joined or aspected by Saturn.",
+        "Pushkala yoga": "The lord of the Moon's sign with the lagna lord in an angle or a friend's sign, and a benefic joining or aspecting the lagna.",
+        "Saraswati yoga": "Mercury, Jupiter and Venus in angles, trines or the 2nd; full when Jupiter is in its own or exalted sign.",
+        "Shakata yoga": "The Moon in the 6th, 8th or 12th from Jupiter; cancelled when the Moon is in an angle from the lagna.",
+        "Su-shubha yoga": "A natural benefic in the 2nd from the lagna.",
+        "Vasumati yoga": "Mercury, Jupiter and Venus all in the 3rd, 6th, 10th or 11th from the lagna or from the Moon.",
+        "Viparita raja yoga": "The lord of one of the 6th, 8th and 12th standing in another of them.",
+        "Vesi yoga": "A true planet in the 2nd from the Sun and none in the 12th. Benefics make it Shubha-vesi, malefics Papa-vesi.",
+        "Vasi yoga": "A true planet in the 12th from the Sun and none in the 2nd. Benefics make it Shubha-vasi, malefics Papa-vasi.",
+        "Ubhayachari yoga": "True planets in both the 2nd and the 12th from the Sun. Benefics make it Shubha-, malefics Papa-ubhayachari.",
+        "Sunapha yoga": "A true planet in the 2nd from the Moon and none in the 12th.",
+        "Anapha yoga": "A true planet in the 12th from the Moon and none in the 2nd.",
+        "Durudhara yoga": "True planets in both the 2nd and the 12th from the Moon.",
+        "Veena yoga": "The seven grahas in seven signs.", "Dama yoga": "The seven grahas in six signs.", "Pasha yoga": "The seven grahas in five signs.",
+        "Kedara yoga": "The seven grahas in four signs.", "Shula yoga": "The seven grahas in three signs.", "Yuga yoga": "The seven grahas in two signs.", "Gola yoga": "The seven grahas in one sign.",
+    ]
+
+    /// The condition that forms a yoga, where the app states one apart from a chart.
+    static func yogaRule(_ name: String) -> String? {
+        let short = name.replacingOccurrences(of: " yoga", with: "")
+        if let h = bhavaFair.firstIndex(of: short) { return "One of Phaladipika's 24 bhava yogas: the lord of the \(Chart.ordinal(h + 1)) house in a supporting house (any but the 6th, 8th and 12th), with it or its house joined or aspected by a benefic." }
+        if let h = bhavaHarsh.firstIndex(of: short) { return "One of Phaladipika's 24 bhava yogas: the lord of the \(Chart.ordinal(h + 1)) house in the 6th, 8th or 12th, with it or its house joined or aspected by a malefic." }
+        if let rule = rules[name] { return rule }
+        for (prefix, base) in [("Shubha-", ""), ("Papa-", "")] where name.hasPrefix(prefix) {
+            let plain = String(name.dropFirst(prefix.count + base.count)); let key = plain.prefix(1).uppercased() + plain.dropFirst()
+            if let rule = rules[key] { return rule }
+        }
+        if name.hasSuffix("parivartana yoga") { return rules["Maha-parivartana yoga"] }
+        if ["Ruchaka yoga", "Bhadra yoga", "Hamsa yoga", "Malavya yoga", "Shasha yoga"].contains(name) { return "One of the five Mahapurusha yogas: Mars (Ruchaka), Mercury (Bhadra), Jupiter (Hamsa), Venus (Malavya) or Saturn (Shasha) in its own or exalted sign, in an angle from the lagna; by extension, in a trine." }
+        return nil
+    }
+
+    /// A yoga explained: its rule, whether this chart holds it, the tradition's reading and a reading to work with.
+    static func explain(yoga name: String, chart: Chart?) -> Explanation? {
+        guard let meaning = yogaMeaning(name) else { return nil }
+        let held = chart?.yogas.filter { $0.name == name } ?? []
+        var lines: [String] = []
+        if let rule = yogaRule(name) { lines.append(rule) }
+        if chart != nil {
+            lines.append(held.isEmpty ? "This chart does not form it." : "This chart forms it: " + held.map { (y: Yoga) -> String in y.why + "." + (chart.flatMap { c in yogaStanding(y, in: c) }.map { s in " " + s } ?? "") }.joined(separator: " "))
+        }
+        let read = held.first.flatMap { y in chart.flatMap { yogaMeaning(y, in: $0) } } ?? meaning
+        lines.append("Tradition: " + read.tradition)
+        lines.append("Read as: " + read.reading)
+        return Explanation(title: name, group: "Yoga", lines: lines, workspace: "Yogas", term: name)
+    }
+
     /// How the grahas that form a yoga stand: the measure of what it gives.
     static func yogaStanding(_ yoga: Yoga, in chart: Chart) -> String? {
         let notes: [String] = yoga.grahas.compactMap { code in

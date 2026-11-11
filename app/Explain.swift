@@ -19,6 +19,7 @@ extension Lore {
         if let entry = Glossary.entries(for: chart).first(where: { $0.term == term || $0.term.hasPrefix(term + " ") }) {
             return Explanation(title: entry.term, group: entry.group, lines: [entry.words] + (entry.here.isEmpty ? [] : [entry.here]), workspace: entry.workspace, term: entry.term)
         }
+        if let yoga = explain(yoga: term, chart: chart) { return yoga }
         return Explanation(title: term, lines: [Help.term(term) ?? "The glossary holds no entry under this name."])
     }
 

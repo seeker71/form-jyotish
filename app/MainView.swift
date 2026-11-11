@@ -204,6 +204,7 @@ struct Palette: View {
         list += Catalog.all.map { card in Command(id: "add-\(card.id)", title: "Add \(card.title)", keywords: card.keywords + " card", run: { store.addCard(card.id) }) }
         // looking something up: a term opens the glossary on it; a graha, sign or house is picked
         list += Glossary.basics.map { entry in Command(id: "what-\(entry.term)", title: "What is \(entry.term)?", keywords: "glossary explain meaning define", run: { store.lookedUp = entry.term }) }
+        list += Lore.yogaNames.map { name in Command(id: "what-\(name)", title: "What is \(name)?", keywords: "yoga explain meaning define result", run: { store.lookedUp = name }) }
         list += ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"].map { code in Command(id: "pick-\(code)", title: "Show \(Names.lords[code] ?? code)", keywords: "graha planet pick " + (store.chart?.graha(code)?.name ?? ""), run: { store.pick = .graha(code) }) }
         list += (0..<12).map { sign in Command(id: "pick-sign-\(sign)", title: "Show \(Names.signs[sign]) (\(Names.signsWestern[sign]))", keywords: "sign rasi pick", run: { store.pick = .sign(sign) }) }
         if let chart = store.chart {
