@@ -116,7 +116,7 @@ final class Store: ObservableObject {
     @Published var layout: [String: [String]] { didSet { if !Store.trial { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } } }
     /// a run that only pictures or probes the window: it shows the standard desk and writes nothing of the desk's
     /// arrangement, workspace or guidance level
-    static let trial = ["--snapshot", "--probe-tour", "--probe-tabs", "--probe-palette"].contains { CommandLine.arguments.contains($0) }
+    static let trial = ["--snapshot", "--probe-tour", "--probe-table", "--probe-tabs", "--probe-palette"].contains { CommandLine.arguments.contains($0) }
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
@@ -187,7 +187,9 @@ final class Store: ObservableObject {
     }
 
     private func save() {
-        guard !ephemeral, let data = try? JSONEncoder().encode(births) else { return }
+        // keys in one order, so the file reads the same from one save to the next
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        guard !ephemeral, let data = try? encoder.encode(births) else { return }
         try? data.write(to: file, options: .atomic)
     }
 

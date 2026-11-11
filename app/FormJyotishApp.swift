@@ -136,6 +136,43 @@ struct FormJyotishApp: App {
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { press(0) }
     }
 
+    /// `FormJyotish --probe-table`: on Overview, click the Jupiter row and then the Nakshatra heading with real
+    /// mouse events, and say whether the row was picked and the heading explained.
+    private func probeTable() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { store.workspace = "Overview" }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { store.showCard = "grahas" }
+        // a heading that carries an explanation and stands inside the window now
+        func heading() -> String? {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { return nil }
+            return PickRow.spots.filter { $0.key.hasPrefix("heading:") && $0.value.midY > 120 && $0.value.midY < window.frame.height - 120 && $0.value.midX > 300 }.keys.sorted().first
+        }
+        func click(_ key: String) -> Bool {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let spot = PickRow.spots[key] else { print("probe: \(key) reported no place"); return false }
+            let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
+            print("probe: \(key) at \(Int(spot.midX)),\(Int(spot.midY)) of window \(Int(window.frame.width))x\(Int(window.frame.height)), scale \(store.textScale), hit \(window.contentView?.hitTest(point).map { String(describing: type(of: $0)) } ?? "nothing")")
+            func event(_ kind: NSEvent.EventType) -> NSEvent? {
+                NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+            }
+            // inside a scrolling desk a tap is told from a drag by its release, which follows a moment later
+            if let down = event(.leftMouseDown) { window.sendEvent(down) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { if let up = event(.leftMouseUp) { window.sendEvent(up) } }
+            return true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            guard click("row:Ju") else { exit(1) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                let picked = store.pick?.graha == "Ju"
+                print("probe: clicked the Jupiter row at \(PickRow.spots["row:Ju"].map { "\(Int($0.midX)),\(Int($0.midY))" } ?? "?") -> picked \(store.pick.map { String(describing: $0) } ?? "nothing")\(picked ? "" : "  MISSED")")
+                guard let key = heading(), click(key) else { print("probe: no heading with an explanation stands in the window; places \(PickRow.spots.mapValues { "\(Int($0.midX)),\(Int($0.midY))" })"); exit(1) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    let explained = store.explanation != nil
+                    print("probe: clicked the \(key.dropFirst(8)) heading -> explained \(store.explanation?.title ?? "nothing")\(explained ? "" : "  MISSED")")
+                    exit(picked && explained ? 0 : 1)
+                }
+            }
+        }
+    }
+
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
     /// event, and say whether the explanation came up.
     private func probePalette() {
@@ -159,7 +196,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() } }
+                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() }; if CommandLine.arguments.contains("--probe-table") { probeTable() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

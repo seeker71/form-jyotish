@@ -304,6 +304,11 @@ struct PickRow: View {
     var header = false
     /// underline the first cell: a retrograde graha
     var retro = false
+    /// where the first heading with an explanation and the first row of each graha stand: read by the click witness (`--probe-table`)
+    static var spots: [String: CGRect] = [:]
+    private func mark(_ key: String) -> some View {
+        GeometryReader { geo in let place = geo.frame(in: .global); Color.clear.onAppear { if PickRow.spots[key] == nil { PickRow.spots[key] = place } }.onChanged(of: place) { PickRow.spots[key] = geo.frame(in: .global) } }
+    }
 
     var body: some View {
         let chosen = pick != nil && (store.pick == pick || (pick?.graha != nil && store.pick?.graha == pick?.graha))
@@ -320,6 +325,7 @@ struct PickRow: View {
                     .underline(header && Help.term(cells[index].text) != nil, pattern: .dot, color: Color.secondary.opacity(0.6))
                     .help(header ? (Help.term(cells[index].text).map { $0 + " Click for more." } ?? "") : "")
                     .onTapGesture { if header, Help.term(cells[index].text) != nil { store.explanation = Lore.explain(term: cells[index].text, chart: store.chart) } else if let pick { store.pick = pick } }
+                    .background { if header, Help.term(cells[index].text) != nil { mark("heading:" + cells[index].text) } else if index == 0, let code = pick?.graha { mark("row:" + code) } }
             }
         }
         .padding(.vertical, 2).padding(.horizontal, 6)
