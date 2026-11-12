@@ -80,7 +80,7 @@ struct Engine {
 
     func chart(for birth: Birth, node: String, ayanamsa: String) throws -> Chart {
         guard let jd = birth.julianDay, let zone = birth.zoneHours else {
-            throw EngineFailure(message: "The date reads as YYYY-MM-DD, the time as HH:MM:SS, and the zone as a name like Asia/Kolkata.")
+            throw EngineFailure(message: "The date reads as YYYY-MMM-DD (1971-Mar-11), the time as HH:MM:SS, and the zone as a name like Asia/Kolkata.")
         }
         return try chart(julianDay: jd, latitude: birth.latitude, longitude: birth.longitude, node: node, ayanamsa: ayanamsa, zoneHours: zone)
     }

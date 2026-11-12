@@ -13,8 +13,8 @@ struct FormJyotishApp: App {
         if arguments.contains("--update-helper") { UpdateHelper.run(); exit(0) }
         // `FormJyotish --entry-check`: dates and times as people type them, each read to the one form the app writes
         if arguments.contains("--entry-check") {
-            let dates: [(String, String?)] = [("1971-03-11", "1971-03-11"), ("1971-3-11", "1971-03-11"), ("11 Mar 1971", "1971-03-11"), ("March 11, 1971", "1971-03-11"), ("11.3.1971", "1971-03-11"),
-                                             ("13/3/1971", "1971-03-13"), ("3/13/1971", "1971-03-13"), ("1971/03/11", "1971-03-11"), ("31 Feb 1971", nil), ("11 Mar 71", nil), ("soon", nil)]
+            let dates: [(String, String?)] = [("1971-03-11", "1971-Mar-11"), ("1971-3-11", "1971-Mar-11"), ("11 Mar 1971", "1971-Mar-11"), ("March 11, 1971", "1971-Mar-11"), ("11.3.1971", "1971-Mar-11"),
+                                             ("13/3/1971", "1971-Mar-13"), ("3/13/1971", "1971-Mar-13"), ("1971/03/11", "1971-Mar-11"), ("1971-Mar-11", "1971-Mar-11"), ("1971-dec-01", "1971-Dec-01"), ("31 Feb 1971", nil), ("11 Mar 71", nil), ("soon", nil)]
             let times: [(String, String?)] = [("02:50", "02:50:00"), ("2:50", "02:50:00"), ("2:50 am", "02:50:00"), ("2.50pm", "14:50:00"), ("0250", "02:50:00"), ("14", "14:00:00"), ("12 am", "00:00:00"),
                                              ("12:30 pm", "12:30:00"), ("09:15:30", "09:15:30"), ("25:00", nil), ("13 pm", nil), ("noonish", nil)]
             var held = 0

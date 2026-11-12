@@ -178,10 +178,10 @@ final class Store: ObservableObject {
         style = ChartStyle(rawValue: defaults.string(forKey: "style") ?? "") ?? .south
         showHelp = defaults.object(forKey: "showHelp") as? Bool ?? true
         if let data = try? Data(contentsOf: file), let saved = try? JSONDecoder().decode([Birth].self, from: data) {
-            births = saved
+            births = saved.map { $0.settled }
         } else {
             // a first run opens on one example, so the window shows a chart rather than an empty list
-            births = [Birth(name: "Example: New Delhi", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209)]
+            births = [Birth(name: "Example: New Delhi", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209).settled]
         }
         current = births.first?.id
     }
@@ -207,7 +207,7 @@ final class Store: ObservableObject {
     // MARK: births
 
     func add() {
-        let birth = Birth()
+        let birth = Birth().settled
         births.append(birth)
         current = birth.id
         editBirth()
@@ -223,7 +223,7 @@ final class Store: ObservableObject {
 
     /// A chart to explore with: an arbitrary moment and place, not a real person's birth.
     func addSample(_ name: String, date: String, time: String, zone: String, place: String, latitude: Double, longitude: Double) {
-        let birth = Birth(name: "Sample: " + name, date: date, time: time, zone: zone, place: place, latitude: latitude, longitude: longitude)
+        let birth = Birth(name: "Sample: " + name, date: date, time: time, zone: zone, place: place, latitude: latitude, longitude: longitude).settled
         births.append(birth)
         current = birth.id
     }
@@ -232,7 +232,7 @@ final class Store: ObservableObject {
     /// It carries its own ayanamsa, so a reading's dates can be followed without changing other charts.
     func addPublic(_ key: String) {
         guard let entry = PublicCharts.all.first(where: { $0.key == key }) else { return }
-        var birth = entry.birth
+        var birth = entry.birth.settled
         birth.id = UUID()
         births.append(birth)
         current = birth.id
@@ -251,7 +251,7 @@ final class Store: ObservableObject {
         applySettings()
         guard let birth else { chart = nil; return }
         guard let jd = birth.julianDay, let zoneHours = birth.zoneHours else {
-            problem = "The date reads as YYYY-MM-DD, the time as HH:MM:SS, and the zone as a name like Asia/Kolkata."
+            problem = "The date reads as YYYY-MMM-DD (1971-Mar-11), the time as HH:MM:SS, and the zone as a name like Asia/Kolkata."
             return
         }
         let engine = engine, node = node, ayanamsa = ayanamsa, day = jd + rectify / 86400, id = birth.id
@@ -299,7 +299,7 @@ final class Store: ObservableObject {
         formatter.timeZone = zone
         let new = old.addingTimeInterval(rectify)
         formatter.dateFormat = "yyyy-MM-dd"
-        let date = formatter.string(from: new)
+        let date = Birth.writtenDate(formatter.string(from: new)) ?? formatter.string(from: new)
         formatter.dateFormat = "HH:mm:ss"
         let time = formatter.string(from: new)
         rectify = 0

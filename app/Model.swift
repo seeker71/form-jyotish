@@ -75,7 +75,17 @@ struct Birth: Codable, Identifiable, Hashable {
     }
 
     /// the date and time in the one form the app writes them, when they can be read
-    var writtenDate: String? { Birth.readDate(date).map { String(format: "%04d-%02d-%02d", $0.year, $0.month, $0.day) } }
+    /// A date is written year, month by name, day (1971-Mar-11), so month and day cannot be taken for each other.
+    static func write(_ d: (year: Int, month: Int, day: Int)) -> String { String(format: "%04d-%@-%02d", d.year, months[d.month - 1].capitalized, d.day) }
+    static func writtenDate(_ words: String) -> String? { readDate(words).map(write) }
+    var writtenDate: String? { Birth.writtenDate(date) }
+    /// this birth with its date, and the dates of its life events, in the form the app writes
+    var settled: Birth {
+        var birth = self
+        if let written = writtenDate { birth.date = written }
+        birth.events = events?.map { var event = $0; if let written = Birth.writtenDate(event.date) { event.date = written }; return event }
+        return birth
+    }
     var writtenTime: String? { Birth.readTime(time).map { String(format: "%02d:%02d:%02d", $0.hour, $0.minute, $0.second) } }
 
     var julianDay: Double? { moment.map { $0.timeIntervalSince1970 / 86400 + 2440587.5 } }

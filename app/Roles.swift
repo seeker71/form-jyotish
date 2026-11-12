@@ -136,8 +136,8 @@ struct EventsCard: View {
         }
     }
     private func julianDay(_ text: String) -> Double? {
-        let parts = text.split(separator: "-").compactMap { Int($0) }
-        guard parts.count == 3, (1...12).contains(parts[1]), (1...31).contains(parts[2]) else { return nil }
+        guard let read = Birth.readDate(text) else { return nil }
+        let parts = [read.year, read.month, read.day]
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = store.zone
         return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: 12)).map { $0.timeIntervalSince1970 / 86400 + 2440587.5 }
@@ -152,7 +152,7 @@ struct EventsCard: View {
                 ForEach(events) { $event in
                     VStack(alignment: .leading, spacing: 3) {
                         HStack(spacing: 8) {
-                            TextField("YYYY-MM-DD", text: $event.date).frame(width: 104)
+                            TextField("1971-Mar-11", text: $event.date).frame(width: 104).onSubmit { if let written = Birth.writtenDate(event.date) { event.date = written } }
                             TextField("What happened", text: $event.note)
                             Button { events.wrappedValue.removeAll { $0.id == event.id } } label: { Image(systemName: "minus.circle") }
                                 .buttonStyle(.plain).foregroundStyle(.secondary).help("Remove this event")

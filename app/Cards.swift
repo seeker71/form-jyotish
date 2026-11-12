@@ -289,8 +289,8 @@ struct BirthForm: View {
                     Text("Place"); TextField("City, country", text: birth.place).focused($focus, equals: .place).onSubmit { store.lookUpPlace(); placeBefore = birth.wrappedValue.place }.frame(minWidth: 150)
                 }
                 GridRow {
-                    Text("Date"); TextField("1971-03-11 or 11 Mar 1971", text: birth.date).focused($focus, equals: .date).onSubmit { resolve(.date) }.frame(minWidth: 130)
-                        .foregroundStyle(birth.wrappedValue.writtenDate == nil ? .red : .primary).help("Any common form: 1971-03-11, 11 Mar 1971, 11.3.1971. It is written out in full when you leave the field; red means it cannot be read yet.")
+                    Text("Date"); TextField("1971-Mar-11", text: birth.date).focused($focus, equals: .date).onSubmit { resolve(.date) }.frame(minWidth: 130)
+                        .foregroundStyle(birth.wrappedValue.writtenDate == nil ? .red : .primary).help("Any common form: 1971-03-11, 11 Mar 1971, 11.3.1971. It is written as 1971-Mar-11 when you leave the field, so month and day cannot be taken for each other; red means it cannot be read yet.")
                     Text("Time"); TextField("02:50 or 2:50 am", text: birth.time).focused($focus, equals: .time).onSubmit { resolve(.time) }.frame(minWidth: 110)
                         .foregroundStyle(birth.wrappedValue.writtenTime == nil ? .red : .primary).help("The clock time at the birthplace: 02:50, 2:50 am, 0250. It is written out as 02:50:00 when you leave the field; red means it cannot be read yet.")
                 }
