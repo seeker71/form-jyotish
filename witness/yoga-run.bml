@@ -11,12 +11,15 @@
 //             Jupiter in an angle from the Moon is Kesari; Venus in the 2nd is Su-shubha
 //   lifted:   the Moon exalted in the lagna under Jupiter's aspect is Gauri; the Sun in its fall with the
 //             lord of its sign beside it is Neecha-bhanga
+//   lagnas:   Jupiter exalted in the 4th from the lagna and the Sun and the 7th from the Moon is Hamsa from all
+//             three lagnas, the case Light on Life gives; in `teachers` it recurs from the Moon only
 //   ./fkwu witness/yoga-run.bml   ->  one verdict line
 import engine/num.bml;
 import engine/strength.bml;
 import engine/yoga.bml;
 section [form.bml] {
  def wy-has(ys, name) = !nil?(ys |> filter(y => (String) y[0] == name));
+ def wy-why(ys, name, words) = !nil?(ys |> filter(y => (String) y[0] == name && str_find(y[3], words, 0) >= 0));
  def wy-all(xs) = nil?(xs) ? true : xs[0] && wy-all(xs[1:]);
  def wy-lons(s) = s |> map(x => x * 30.0 + 10.0);
  def wy-read(s, asc) = yg-yogas(s, wy-lons(s), asc);
@@ -35,7 +38,8 @@ section [form.bml] {
    wy-has(cart, "Shakata yoga") && !wy-has(einstein, "Shakata yoga"),
    wy-has(teachers, "Saraswati yoga") && wy-has(teachers, "Mala yoga"),
    wy-has(fortune, "Mahabhagya yoga") && wy-has(fortune, "Viparita raja yoga") && wy-has(fortune, "Kesari yoga") && wy-has(fortune, "Su-shubha yoga") && !wy-has(einstein, "Mahabhagya yoga"),
-   wy-has(lifted, "Gauri yoga") && wy-has(lifted, "Neecha-bhanga raja yoga") && !wy-has(fortune, "Gauri yoga")];
+   wy-has(lifted, "Gauri yoga") && wy-has(lifted, "Neecha-bhanga raja yoga") && !wy-has(fortune, "Gauri yoga"),
+   wy-why(wy-read([0, 9, 5, 2, 3, 1, 8, 6, 0], 0), "Hamsa yoga", "all three lagnas") && wy-why(teachers, "Hamsa yoga", "from the Moon as well, so the yoga recurs from two lagnas")];
   let held = len(claims |> filter(c => c));
   "yoga witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims " + value_str(claims);
  }

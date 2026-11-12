@@ -74,11 +74,13 @@ section [form.bml] {
    let limits = jc-combust()[i]; let retro = jn-norm180(later[i] - now[i]) < 0.0;
    i > 0 && jc-abs(jn-norm180(now[i] - now[0])) < (retro ? limits[1] : limits[0]);
   }
-  def jc-seven(i, now, later) {
+  // lat is the latitude north of the ecliptic; nearing says the graha is closing on the Sun
+  def jc-seven(i, now, later, lats) {
    i >= 7 ? [] : cons(jc-moving(jc-grahas()[i][0], jc-grahas()[i][1], now[i], later[i],
-    [jc-pair("status", jc-q(jc-status(i, now))), jc-pair("combust", jc-bool(jc-burnt(i, now, later))),
+    [jc-pair("lat", jc-num(lats[i])), jc-pair("nearing", jc-bool(jc-abs(jn-norm180(later[i] - later[0])) < jc-abs(jn-norm180(now[i] - now[0])))),
+     jc-pair("status", jc-q(jc-status(i, now))), jc-pair("combust", jc-bool(jc-burnt(i, now, later))),
      jc-pair("baladi", jc-q(st-baladi(floor(now[i] / 30.0), now[i] - 30.0 * floor(now[i] / 30.0)))), jc-pair("jagradadi", jc-q(st-jagradadi(i, floor(now[i] / 30.0)))),
-     jc-pair("deeptadi", jc-q(st-deeptadi(i, floor(now[i] / 30.0), now |> map(x => floor(x / 30.0)), jc-burnt(i, now, later))))]), jc-seven(i + 1, now, later));
+     jc-pair("deeptadi", jc-q(st-deeptadi(i, floor(now[i] / 30.0), now |> map(x => floor(x / 30.0)), jc-burnt(i, now, later))))]), jc-seven(i + 1, now, later, lats));
   }
   def jc-nodes(rahu, later) = [jc-moving("Ra", "Rahu", rahu, later, []), jc-moving("Ke", "Ketu", jn-norm360(rahu + 180.0), jn-norm360(later + 180.0), [])];
   def jc-lons(path, segs, rows, jd, ay) = rows |> map(g => jn-norm360(sk-tropical(path, segs, g[2], jd)[0] - ay));
@@ -98,10 +100,10 @@ section [form.bml] {
 
   // ---- Krishnamurti Paddhati: the same sky under Krishnamurti's ayanamsa, with Placidus cusps ----
   def jc-shift(xs, by) = xs |> map(x => jn-norm360(x + by));
-  def jc-kp(jd, lat, lon, by, dpsi, now, later, rahu, rahu1, far, far1) {
+  def jc-kp(jd, lat, lon, by, dpsi, now, later, rahu, rahu1, far, far1, lats) {
    let cusps = sk-placidus(jd, lat, lon) |> map(c => jn-norm360(c - sk-ayanamsa-kp(jd) - dpsi)); let n = jc-shift(now, by); let l = jc-shift(later, by);
    jc-obj([jc-pair("ayanamsa", jc-num(sk-ayanamsa-kp(jd) + dpsi)), jc-pair("cusps", jc-arr(cusps |> map(c => jc-obj(jc-place(c))))),
-    jc-pair("grahas", jc-arr(append(jc-seven(0, n, l), jc-nodes(jn-norm360(rahu + by), jn-norm360(rahu1 + by))))),
+    jc-pair("grahas", jc-arr(append(jc-seven(0, n, l, lats), jc-nodes(jn-norm360(rahu + by), jn-norm360(rahu1 + by))))),
     jc-pair("outer", jc-arr(jc-far(jc-outer(), jc-shift(far, by), jc-shift(far1, by)))),
     jc-pair("fortuna", jc-obj(jc-place(jn-norm360(cusps[0] + n[1] - n[0]))))]);
   }
@@ -132,10 +134,31 @@ section [form.bml] {
    let eps = sk-obliquity(sk-century(jd)); let ra = jn-deg(jn-atan2(jn-sind(sun) * jn-cosd(eps), jn-cosd(sun)));
    jc-abs(jn-norm180(lst - ra + 180.0));
   }
-  def jc-day(ev, sun, moon) {
+  def jc-day(ev, sun, moon, ends) {
    let apart = jn-norm360(moon - sun);
    jc-obj([jc-pair("tithi", jc-num(floor(apart / 12.0))), jc-pair("yoga", jc-num(floor(jn-norm360(sun + moon) / (360.0 / 27.0)))), jc-pair("karana", jc-num(floor(apart / 6.0))),
+    jc-pair("tithi_end", jc-num(ends[0])), jc-pair("karana_end", jc-num(ends[1])), jc-pair("nak_end", jc-num(ends[2])), jc-pair("yoga_end", jc-num(ends[3])),
     jc-pair("sunrise_before", jc-opt(ev[0])), jc-pair("sunrise", jc-opt(ev[2])), jc-pair("sunset", jc-opt(ev[3])), jc-pair("sunrise_after", jc-opt(ev[4]))]);
+  }
+
+  // ---- when the limbs of the day end ----
+  // a moving angle at a moment: kind 0 is the Moon from the Sun, 1 the Moon's sidereal longitude, 2 the Sun's and the Moon's added
+  def jc-angle(path, segs, mode, kind, jd) {
+   let moon = sk-tropical(path, segs, 301, jd)[0];
+   kind == 1 ? jn-norm360(moon - sk-ayanamsa-of(path, segs, jd, mode)) :
+   kind == 0 ? jn-norm360(moon - sk-tropical(path, segs, 10, jd)[0]) : jn-norm360(moon + sk-tropical(path, segs, 10, jd)[0] - 2.0 * sk-ayanamsa-of(path, segs, jd, mode));
+  }
+  // the moment the angle reaches `target`, stepping by its rate in degrees a day
+  def jc-reach(path, segs, mode, kind, target, rate, jd, more) {
+   let next = jd + jn-norm180(target - jc-angle(path, segs, mode, kind, jd)) / rate;
+   more <= 0 ? next : jc-reach(path, segs, mode, kind, target, rate, next, more - 1);
+  }
+  def jc-limb-end(path, segs, mode, kind, step, rate, jd) = jc-reach(path, segs, mode, kind, (floor(jc-angle(path, segs, mode, kind, jd) / step) + 1) * step, rate, jd, 2);
+  // the moments the running [tithi, karana, nakshatra, yoga] end
+  def jc-limb-ends(path, segs, mode, jd, now, later) {
+   let sun = jn-norm180(later[0] - now[0]) * 24.0; let moon = jn-norm180(later[1] - now[1]) * 24.0;
+   [jc-limb-end(path, segs, mode, 0, 12.0, moon - sun, jd), jc-limb-end(path, segs, mode, 0, 6.0, moon - sun, jd),
+    jc-limb-end(path, segs, mode, 1, 360.0 / 27.0, moon, jd), jc-limb-end(path, segs, mode, 2, 360.0 / 27.0, moon + sun, jd)];
   }
 
   // ---- the other nakshatra dashas ----
@@ -206,7 +229,7 @@ section [form.bml] {
   def jc-chart-read(path, segs, jd, lat, lon, node, mode, zone) {
    let soon = jd + 1.0 / 24.0; let ay = sk-ayanamsa-of(path, segs, jd, mode); let ay1 = sk-ayanamsa-of(path, segs, soon, mode);
    let dpsi = sk-nutation(sk-century(jd))[0]; let rise = sk-rising(jd, lat, lon);
-   let now = jc-lons(path, segs, jc-grahas(), jd, ay); let later = jc-lons(path, segs, jc-grahas(), soon, ay1);
+   let trop = jc-grahas() |> map(g => sk-tropical(path, segs, g[2], jd)); let now = trop |> map(p => jn-norm360(p[0] - ay)); let lats = trop |> map(p => p[1]); let later = jc-lons(path, segs, jc-grahas(), soon, ay1);
    let rahu = jn-norm360(sk-node-of-date(path, segs, jd, node) - ay); let rahu1 = jn-norm360(sk-node-of-date(path, segs, soon, node) - ay1);
    let asc = jn-norm360(rise[0] - ay - dpsi); let mc = jn-norm360(rise[1] - ay - dpsi);
    let far = jc-lons(path, segs, jc-outer(), jd, ay); let far1 = jc-lons(path, segs, jc-outer(), soon, ay1);
@@ -214,15 +237,15 @@ section [form.bml] {
    jc-obj([jc-pair("jd", jc-num(jd)), jc-pair("ayanamsa", jc-num(ay + dpsi)), jc-pair("ayanamsa_mode", jc-q(mode)), jc-pair("delta_t", jc-num(sk-delta-t(jd))), jc-pair("node", jc-q(node)),
     jc-pair("sidereal_time", jc-num(rise[2])), jc-pair("sun_tropical", jc-num(jn-norm360(now[0] + ay + dpsi))),
     jc-pair("asc", jc-obj(jc-place(asc))), jc-pair("mc", jc-obj(jc-place(mc))),
-    jc-pair("grahas", jc-arr(append(jc-seven(0, now, later), jc-nodes(rahu, rahu1)))),
+    jc-pair("grahas", jc-arr(append(jc-seven(0, now, later, lats), jc-nodes(rahu, rahu1)))),
     jc-pair("outer", jc-arr(jc-far(jc-outer(), far, far1))),
-    jc-pair("kp", jc-kp(jd, lat, lon, ay - sk-ayanamsa-kp(jd), dpsi, now, later, rahu, rahu1, far, far1)),
+    jc-pair("kp", jc-kp(jd, lat, lon, ay - sk-ayanamsa-kp(jd), dpsi, now, later, rahu, rahu1, far, far1, lats)),
     jc-pair("bhrigu", jc-obj(jc-place(jc-between(rahu, now[1])))),
     jc-pair("bhavas", jc-arr(jc-bhavas(jc-mids(asc, mc), 0))),
     jc-pair("aspects", jc-arr(yg-aspects(signs) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
     jc-pair("yogas", jc-arr(yg-yogas-at(append(signs, [floor(rahu / 30.0), floor(jn-norm360(rahu + 180.0) / 30.0)]), append(now, [rahu, jn-norm360(rahu + 180.0)]), asc)
       |> map(y => jc-obj([jc-pair("name", jc-q(y[0])), jc-pair("group", jc-q(y[1])), jc-pair("grahas", jc-arr(y[2] |> map(i => jc-q(jc-nine()[i])))), jc-pair("why", jc-q(y[3]))])))),
-    jc-pair("day", jc-day(ev, now[0], now[1])),
+    jc-pair("day", jc-day(ev, now[0], now[1], jc-limb-ends(path, segs, mode, jd, now, later))),
     jc-pair("ashtakavarga", jc-arr(st-ashtakavarga(append(signs, [floor(asc / 30.0)])) |> map(r => jc-arr(r |> map(x => jc-num(x)))))),
     jc-pair("shadbala", jc-arr(st-shadbala(now, now |> map(x => jn-norm360(x + ay + dpsi)), asc, mc, jc-midnight-arc(rise[2], now[0] + ay + dpsi, jd), jd, ev,
       floor(jd + zone / 24.0 + 0.5), floor(jd + zone / 24.0 + 1.5) % 7, sk-century(jd)) |> map(r => jc-obj([jc-pair("name", jc-q(r[0])), jc-pair("values", jc-arr(r[1] |> map(x => jc-num(x))))])))),

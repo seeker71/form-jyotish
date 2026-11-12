@@ -44,9 +44,16 @@ section [form.bml] {
   def yg-aspects(s) = st-seven() |> map(i => yg-offsets(i) |> map(o => (s[i] + o) % 12));
 
   // ---- the five mahapurusha yogas ----
+  // Light on Life weighs a mahapurusha yoga by the lagnas it recurs from: the ascendant, the Moon and the Sun
+  def yg-recurs(s, asc, i) {
+   let moon = yg-kendra(s[1], s[i]); let sun = yg-kendra(s[0], s[i]);
+   !yg-kendra(asc, s[i]) ? "" : moon && sun ? "; it stands in an angle from the Moon and from the Sun as well, so the yoga recurs from all three lagnas, its fullest form" :
+    moon ? "; it stands in an angle from the Moon as well, so the yoga recurs from two lagnas" : sun ? "; it stands in an angle from the Sun as well, so the yoga recurs from two lagnas" :
+    "; it is not in an angle from the Moon or the Sun, so the yoga holds from the lagna alone";
+  }
   def yg-mahapurusha(s, asc) {
    let hits = [[2, "Ruchaka"], [3, "Bhadra"], [4, "Hamsa"], [5, "Malavya"], [6, "Shasha"]] |> filter(r => yg-high(s, r[0]) && yg-good(asc, s[r[0]]));
-   hits |> map(r => [r[1] + " yoga", "Mahapurusha", [r[0]], yg-names()[r[0]] + " in its own or exalted sign, " + (yg-kendra(asc, s[r[0]]) ? "in an angle from the lagna" : "in a trine from the lagna (the extended form; an angle gives the full form)")]);
+   hits |> map(r => [r[1] + " yoga", "Mahapurusha", [r[0]], yg-names()[r[0]] + " in its own or exalted sign, " + (yg-kendra(asc, s[r[0]]) ? "in an angle from the lagna" : "in a trine from the lagna (the extended form; an angle gives the full form)") + yg-recurs(s, asc, r[0])]);
   }
   // ---- yogas of the Moon and the Sun: who flanks them ----
   def yg-lunar(s, asc) {

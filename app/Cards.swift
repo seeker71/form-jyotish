@@ -34,6 +34,7 @@ enum Catalog {
            CardInfo(id: "dashas", title: "Vimshottari periods", keywords: "dasha list mahadasha antardasha pratyantardasha sookshma", wide: true),
            CardInfo(id: "panchanga", title: "Panchanga: the five limbs of the day", keywords: "panchanga vara weekday hora tithi karana yoga nakshatra gandanta day", wide: true),
            CardInfo(id: "gochara", title: "Transits from the Moon (gochara)", keywords: "gochara vedha moon chandra lagna transit favourable", wide: true),
+           CardInfo(id: "dina", title: "The day now: five limbs", keywords: "panchanga today muhurta tithi vara hora nakshatra karana yoga now choose time", wide: true),
            CardInfo(id: "transit-dates", title: "Transit dates", keywords: "gochara ingress station retrograde sade sati exact dates events", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
            CardInfo(id: "ashtakavarga", title: "Ashtakavarga", keywords: "strength bindus bhinna sarva points", wide: true),
@@ -50,7 +51,7 @@ enum Catalog {
     static let shared: [String: CGFloat] = [
         "grahas": 560, "birth": 440, "edges": 420, "reading": 420, "dasha-context": 440, "yogas": 440, "dashas": 420, "other-dashas": 440,
         "karakas": 440, "arudhas": 600, "chara-dasha": 440, "kp-grahas": 540, "kp-cusps": 540, "kp-houses": 540, "kp-planets": 540,
-        "transit-dates": 440, "gochara": 560, "panchanga": 520, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
+        "transit-dates": 440, "gochara": 560, "dina": 520, "panchanga": 520, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
     /// long cards: beside another card they scroll within the height on screen, so their neighbour stays in view
     static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events", "transit-dates"]
 
@@ -224,6 +225,7 @@ struct Card: View {
                 case "avasthas": AvasthaTable(chart: chart)
                 case "transits": TransitTable(natal: chart)
                 case "gochara": GocharaCard(natal: chart)
+                case "dina": DayNowCard(natal: chart)
                 case "panchanga": PanchangaCard(chart: chart)
                 case "transit-dates": TransitDates(natal: chart)
                 case "kp-grahas": KPGrahas(kp: chart.kp)

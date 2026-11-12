@@ -42,13 +42,27 @@ struct FormJyotishApp: App {
             hold("the birth hour is the hour of Mars", time?.hora == "Ma")
             let limbs5 = chart.panchanga(zoneHours: birth.zoneHours ?? 0)
             hold("the panchanga has its seven rows", limbs5.map(\.id) == ["Vara", "Hora", "Tithi", "Karana", "Yoga", "Nakshatra", "Gandanta"])
-            hold("the tithi is Krishna Saptami", limbs5.first { $0.id == "Tithi" }?.value == "Krishna Saptami")
+            hold("the tithi is Krishna Saptami", limbs5.first { $0.id == "Tithi" }?.value.hasPrefix("Krishna Saptami, until Fri ") == true)
             hold("the Sun in the 10th has directional strength", chart.graha("Su").map { chart.finer($0).supports.contains { $0.hasPrefix("Directional strength") } } == true)
             hold("Jupiter in the 9th is without the directional strength it has in the 1st, and is not marked weak for it", chart.graha("Ju").map { !chart.finer($0).strains.contains { $0.hasPrefix("Without directional") } } == true)
             hold("Mercury's period names its yogas and its dispositor", chart.activation(of: "Me").contains { $0.hasPrefix("It takes part in") } && chart.activation(of: "Me").contains { $0.hasPrefix("Its dispositor Jupiter") })
             hold("Rahu's period is read through its sign lord Saturn", chart.activation(of: "Ra").first?.contains("sign lord Saturn") == true)
             hold("Mercury and Mars read together end with the count from the dasha lord", chart.joint("Me", "Ma").last?.hasPrefix("Counted from Mercury, Mars stands in the 11th") == true)
             hold("a graha read with itself gives nothing", chart.joint("Me", "Me").isEmpty)
+            hold("each of the seven carries its latitude and whether it nears the Sun", chart.grahas.prefix(7).allSatisfy { $0.lat != nil && $0.nearing != nil } && abs(chart.graha("Mo")?.lat ?? 9) < 5.4)
+            hold("the running tithi ends after the birth and within its span", chart.day.tithi_end.map { $0 > chart.jd && $0 - chart.jd < 1.2 } == true && chart.day.karana_end.map { $0 <= (chart.day.tithi_end ?? 0) + 0.0001 } == true)
+            hold("the Moon in Jyeshtha is read in a sharp nakshatra", chart.panchanga(zoneHours: birth.zoneHours ?? 0).first { $0.id == "Nakshatra" }?.words.contains("sharp (tikshna) nakshatra: the Moon there inclines") == true)
+            hold("a later day read against the birth names the rising sign and what its lord serves", chart.panchanga(zoneHours: 0, natal: chart).first { $0.id == "Lagna" }?.words.contains("under its rising sign") == true)
+            // the planetary war Light on Life reads on the evening of 20 April 1889: the sky gives Venus the higher latitude
+            if let war = try? engine.chart(julianDay: 2411113.2347, latitude: 48.25, longitude: 13.03, node: "mean", ayanamsa: "lahiri", zoneHours: 0.87), let venus = war.graha("Ve"), let mars = war.graha("Ma") {
+                hold("in the war of 1889 Venus prevails by latitude, against the lower-longitude rule", war.finer(venus).supports.contains { $0.contains("so Venus prevails; the lower-longitude rule") } && war.finer(mars).strains.contains { $0.contains("Venus 6.3° north, so Venus prevails") })
+            } else { hold("the sky of 1889 could be read", false) }
+            for other in PublicCharts.all {
+                guard let b = Optional(other.birth), let c = try? engine.chart(for: b, node: b.node ?? "mean", ayanamsa: b.ayanamsa ?? "lahiri") else { continue }
+                for g in c.grahas { if c.war(of: g) != nil { let f = c.finer(g); print("seen in \(other.key): " + (f.supports + f.strains).filter { $0.contains("planetary war") }.joined()) } }
+                for g in c.grahas where g.combust == true { print("seen in \(other.key): \(g.id) " + (c.factors(for: g).strains.first { $0.hasPrefix("Combust") } ?? "")) }
+            }
+            hold("the tithi limb names when it ends", chart.panchanga(zoneHours: birth.zoneHours ?? 0).first { $0.id == "Tithi" }?.value.contains(", until ") == true)
             print("house check: \(held) of \(asked) hold")
             exit(held == asked ? 0 : 1)
         }

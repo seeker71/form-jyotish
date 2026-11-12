@@ -36,6 +36,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   and sunset.
 - The sixteen vargas of Parashara (D1 to D60) for the lagna and every graha.
 - Vimshottari to four levels: mahadasha, antardasha, pratyantardasha and sookshma dasha.
+- The engine reads each graha's latitude, whether a combust graha is closing on the Sun or leaving it, and the
+  moment each limb of the day ends. A planetary war goes to the higher latitude, as Light on Life gives the
+  rule; a mahapurusha yoga says which of the three lagnas it recurs from; and a card gives the five limbs of
+  the day the time bar stands at, with the rising sign, weighed in the birth chart for choosing a time.
 - The twelve houses judged by three limbs, the house, its lord and its karaka, after Hart de Fouw and Robert
   Svoboda's Light on Life (Phaladipika 15): what supports each limb beside what asks more of it, and where
   the three agree. Dispositors, period lords in transit, and transits counted from the Moon with vedha.

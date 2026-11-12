@@ -122,6 +122,9 @@ struct Graha: Codable, Identifiable {
     var retro: Bool
     var status: String?
     var combust: Bool?
+    /// degrees north of the ecliptic, and whether the graha is closing on the Sun (the seven grahas only)
+    var lat: Double?
+    var nearing: Bool?
     /// the avasthas: by age, by wakefulness, by mood (the seven grahas only)
     var baladi: String?
     var jagradadi: String?
@@ -196,6 +199,11 @@ struct Day: Codable {
     var tithi: Int
     var yoga: Int
     var karana: Int
+    /// the moments (UTC Julian days) the running tithi, karana, Moon's nakshatra and yoga end
+    var tithi_end: Double?
+    var karana_end: Double?
+    var nak_end: Double?
+    var yoga_end: Double?
     var sunrise_before: Double?
     var sunrise: Double?
     var sunset: Double?

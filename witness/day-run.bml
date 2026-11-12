@@ -1,0 +1,44 @@
+// Witness: latitude north of the ecliptic, and the moments the limbs of the day end.
+//
+// Reference: JPL Horizons, geocentric observer ecliptic longitude and latitude (quantity 31), read 2026-11-12:
+//   Moon   2000-Jan-01 12:00 UT   latitude  5.1707422
+//   Venus  1889-Apr-20 17:38 UT   latitude  6.3491180
+//   Mars   1889-Apr-20 17:38 UT   latitude  0.1597867
+// That April evening Mars and Venus stand within one degree of longitude, the planetary war Light on Life
+// reads; the sky gives Venus the higher latitude.
+// The new moon of 6 January 2000 fell at 18:14 UT: the tithi running that day ends there.
+//   ./fkwu witness/day-run.bml   ->  one verdict line
+import engine/num.bml;
+import engine/spk.bml;
+import engine/sky.bml;
+import engine/strength.bml;
+import engine/yoga.bml;
+import engine/jaimini.bml;
+import engine/chart.bml;
+section [form.bml] {
+ def wd-abs(x) = x < 0.0 ? 0.0 - x : x;
+ def wd-lat(path, segs, id, jd) = sk-tropical(path, segs, id, jd)[1];
+ // how far an angle stands from a multiple of step, degrees
+ def wd-off(x, step) { let r = x / step; let f = r - floor(r); (f < 0.5 ? f : 1.0 - f) * step; }
+ def wd-ends(path, segs, jd) {
+  let ay = sk-ayanamsa(jd); let ay1 = sk-ayanamsa(jd + 1.0 / 24.0);
+  jc-limb-ends(path, segs, "lahiri", jd, jc-lons(path, segs, jc-grahas(), jd, ay), jc-lons(path, segs, jc-grahas(), jd + 1.0 / 24.0, ay1));
+ }
+ def wd-run(path) {
+  let segs = js-segments(path); let war = 2411112.5 + (17.0 + 38.0 / 60.0) / 24.0; let start = 2451549.5; let ends = wd-ends(path, segs, start);
+  let venus = wd-lat(path, segs, 2, war); let mars = wd-lat(path, segs, 4, war);
+  let text = jc-chart(path, 2451545.0, 28.6139, 77.209, "mean", "lahiri", 5.5);
+  let claims = [
+   wd-abs(wd-lat(path, segs, 301, 2451545.0) - 5.1707422) * 3600.0 < 0.5,
+   wd-abs(venus - 6.3491180) * 3600.0 < 0.5 && wd-abs(mars - 0.1597867) * 3600.0 < 0.5,
+   venus > mars && wd-abs(jn-norm180(sk-sidereal(path, segs, 2, war) - sk-sidereal(path, segs, 4, war))) < 1.0,
+   wd-abs(ends[0] - (start + (18.0 + 14.0 / 60.0) / 24.0)) < 0.001,
+   wd-off(jc-angle(path, segs, "lahiri", 0, ends[0]), 12.0) < 0.00001 && wd-off(jc-angle(path, segs, "lahiri", 0, ends[1]), 6.0) < 0.00001 &&
+    wd-off(jc-angle(path, segs, "lahiri", 1, ends[2]), 360.0 / 27.0) < 0.00001 && wd-off(jc-angle(path, segs, "lahiri", 2, ends[3]), 360.0 / 27.0) < 0.00001,
+   ends[1] > start && ends[1] <= ends[0] && ends[2] > start && ends[2] - start < 1.2 && ends[3] > start && ends[3] - start < 1.2,
+   str_find(text, "\"lat\":", 0) >= 0 && str_find(text, "\"nearing\":", 0) >= 0 && str_find(text, "\"tithi_end\":", 0) >= 0 && str_find(text, "\"yoga_end\":", 0) >= 0];
+  let held = len(claims |> filter(c => c));
+  "day witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims " + value_str(claims) + " (latitudes within 0.5 arcsec of Horizons; Venus north of Mars in the war of 1889; the new moon within 90 s; each limb ends on its boundary)";
+ }
+ print_str(wd-run("data/de440s.bsp"));
+}
