@@ -383,5 +383,5 @@ extension Report {
         return words + " " + Lore.balance
     }
 
-    var transitPages: [(Int) -> AnyView] { transit.map { [transitPage($0)] } ?? [] }
+    var transitPages: [(Int) -> AnyView] { transit.map { [transitPage($0), transitReadPage($0)] } ?? [] }
 }

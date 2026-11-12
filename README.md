@@ -36,6 +36,9 @@ the old one's place the next time the app starts (or at once with Restart now).
   and sunset.
 - The sixteen vargas of Parashara (D1 to D60) for the lagna and every graha.
 - Vimshottari to four levels: mahadasha, antardasha, pratyantardasha and sookshma dasha.
+- The twelve houses judged by three limbs, the house, its lord and its karaka, after Hart de Fouw and Robert
+  Svoboda's Light on Life (Phaladipika 15): what supports each limb beside what asks more of it, and where
+  the three agree. Dispositors, period lords in transit, and transits counted from the Moon with vedha.
 - Jaimini: the seven chara karakas and the karakamsa, the twelve arudha padas (with a pada chart), sign
   aspects, and the Chara dasha after K.N. Rao with its twelve equal sub-periods.
 - Nine more nakshatra dashas with their sub-periods: Ashtottari, Yogini, Shodashottari, Dwadashottari,

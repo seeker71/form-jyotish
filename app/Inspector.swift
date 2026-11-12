@@ -129,6 +129,8 @@ struct Inspector: View {
                 section("In the sky of the moment")
                 fact("Rasi", "\(Names.signs[t.sign]) \(Names.dms(t.deg))" + (t.retro && t.id != "Ra" && t.id != "Ke" ? " ℞" : ""))
                 fact("House", "\(house(t.sign, from: chart.asc.sign)) from the lagna, \(house(t.sign, from: moon)) from the Moon")
+                if let row = chart.gochara(sky: sky).first(where: { $0.id == code }) { note(chart.gocharaWords(row)) }
+                if let words = chart.slowPassing(code, sky: sky) { note(words) }
             }
             let glances = chart.aspectedSigns(by: code), seenBy = chart.aspecting(sign: g.sign)
             if !glances.isEmpty {

@@ -431,6 +431,7 @@ struct Report {
         var makers: [(Int) -> AnyView] = [{ _ in cover }, particulars, glancePage, birthChart, bhavaPage]
         makers += vargaPages
         makers += strengthPages
+        makers.append(statesPage)
         makers += wordPages
         makers += housePages
         makers.append(jaiminiPage)

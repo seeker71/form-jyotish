@@ -40,6 +40,7 @@ enum Glossary {
         ("Kendra", "The angles: houses 1, 4, 7 and 10. Grahas here act strongly and visibly.", "Guide"),
         ("Trikona", "The trines: houses 1, 5 and 9, the houses of fortune and merit.", "Guide"),
         ("Dusthana", "The difficult houses: 6, 8 and 12. Houses of effort and release. Grahas here, and these houses' lords, work through service, depth and letting go, and build the capacity to meet what comes.", "Guide"),
+        ("Vedha", "An opening through which a transit's good is lost. Counted from the birth Moon, each favourable place of a graha has one other place; a graha standing there cancels the favourable passage while it stays.", nil),
         ("Upachaya", "The growing houses: 3, 6, 10 and 11. Their results improve with time and effort; malefics do well here.", "Guide"),
         ("Varga", "A divisional chart: each sign divided into equal parts, each part assigned a sign. Each varga examines one area of life more finely.", "Vargas"),
         ("Navamsa", "The ninth-part chart (D9), the most used varga. It is read beside the birth chart for a graha's real strength, and for marriage.", "Vargas"),

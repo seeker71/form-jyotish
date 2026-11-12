@@ -110,10 +110,9 @@ extension Chart {
         let house = house(ofSign: g.sign), own = Chart.signLords[g.sign] == g.id
         if let from = lordOf, from != house { limb.notes.append("As lord of the \(Chart.ordinal(from)) placed in the \(Chart.ordinal(house)), it joins the matters of \(Lore.houseNames[from - 1].lowercased()) with those of \(Lore.houseNames[house - 1].lowercased()).") }
         if [3, 6, 10, 11].contains(house) { limb.notes.append("It stands in the \(Chart.ordinal(house)), a growing house (upachaya): what it gives \([3, 6].contains(house) ? "is slow at first and improves with time" : "is good and grows better with time").") }
-        if g.combust == true { limb.notes.append("Combust: the outer matters of the houses it rules ask more, while its inner qualities are lit by the Sun.") }
         if g.status == "Exalt." { limb.supports.append("Exalted in \(Names.signs[g.sign])") }
         if own { limb.supports.append("In its own sign, \(Names.signs[g.sign])") }
-        if let weak = weakness(g) { limb.strains.append("\(weak.prefix(1).uppercased() + weak.dropFirst()): it gives through effort") }
+        if let weak = weakness(g) { limb.strains.append("\(weak.prefix(1).uppercased() + weak.dropFirst()): \(g.combust == true ? "the outer matters of its houses ask more, while its inner qualities are lit by the Sun" : "it gives through effort")") }
         if [1, 4, 7, 10, 5, 9].contains(house) { limb.supports.append("Placed in the \(Chart.ordinal(house)), \([5, 9].contains(house) ? "a trine" : "an angle")") }
         else if [6, 8, 12].contains(house) {
             if own { limb.supports.append("In the \(Chart.ordinal(house)), yet in its own sign, which holds it") }

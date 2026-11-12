@@ -43,7 +43,7 @@ final class Feed {
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
-    static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits", "Annual", "Match"]
+    nonisolated static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits", "Annual", "Match"]
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
@@ -57,7 +57,7 @@ final class Store: ObservableObject {
         "Strength": ["chart:0", "ashtakavarga", "shadbala", "avasthas"],
         "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
-        "Transits": ["chart:0", "transit-dates", "transits", "timeline"],
+        "Transits": ["chart:0", "transit-dates", "transits", "gochara", "timeline"],
     ]
     /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
     static let layoutVersion = 2

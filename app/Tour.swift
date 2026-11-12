@@ -156,6 +156,7 @@ extension Help {
         case "arudhas": return "Each pada is found by counting from the house to its lord and as far again."
         case "chara-dasha": return "Jaimini's chara dasha of signs, as taught by K.N. Rao."
         case "kp-grahas", "kp-cusps", "kp-houses", "kp-planets": return "Krishnamurti Paddhati: the KP ayanamsa, Placidus cusps, and significators graded by star lord and occupancy."
+        case "gochara": return "Favourable places from the Moon after Phaladipika 26, with vedha and the giving third of the sign."
         case "transits": return "The sky of the time bar's moment under this chart's ayanamsa, with houses counted from the birth lagna and the birth Moon."
         case "transit-dates": return "Sign changes and stations found by search, each to within a minute."
         case "match": return "Ashtakoota by the standard tables, 36 points, counted from the bride's Moon to the groom's."
@@ -172,7 +173,7 @@ extension Help {
         switch id {
         case "yogas": return "Rest the pointer on a yoga to light its grahas in every chart; click it for its rule and meaning."
         case "grahas", "shadbala", "ashtakavarga", "avasthas", "aspects", "transits", "kp-grahas": return "Rest the pointer on a row to light that graha on every card. Click a column heading for what it measures."
-        case "houses": return "Click a row to pick that house everywhere; its meaning opens under the row."
+        case "houses": return "Click a row to pick that house everywhere; under the row it is judged by its three limbs: the house, its lord and its karaka."
         case "timeline", "dashas", "other-dashas", "chara-dasha": return "Click a period to read about it, and use Go there to move the whole desk to its start."
         case "dasha-context", "transit-dates": return "Step the time bar and watch this card follow the moment."
         case "glossary": return "Type any word. Each entry says what it is and what it is in the open chart."

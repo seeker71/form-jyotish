@@ -12,6 +12,33 @@ struct FormJyotishApp: App {
         if arguments.contains("--save-public") { print("public charts added: \(PublicCharts.saveAll())"); exit(0) }
         if arguments.contains("--update-helper") { UpdateHelper.run(); exit(0) }
         // `FormJyotish --entry-check`: dates and times as people type them, each read to the one form the app writes
+        // `FormJyotish --house-check`: the judgement of the twelve houses on a public chart, held to what was read and checked by hand
+        if arguments.contains("--house-check") {
+            let defaults = UserDefaults.standard
+            let engine = Engine(root: URL(fileURLWithPath: defaults.string(forKey: "enginePath") ?? Engine.defaultRoot), kernel: URL(fileURLWithPath: defaults.string(forKey: "kernelPath") ?? Engine.defaultKernel))
+            guard let birth = PublicCharts.all.first(where: { $0.key == "einstein" })?.birth, let chart = try? engine.chart(for: birth, node: birth.node ?? "mean", ayanamsa: birth.ayanamsa ?? "lahiri") else { print("house check: the chart could not be read"); exit(1) }
+            var held = 0, asked = 0
+            func hold(_ what: String, _ truth: Bool) { asked += 1; if truth { held += 1 } else { print("house check: \(what) does not hold") } }
+            for house in 1...12 {
+                let limbs = chart.limbs(ofHouse: house)
+                hold("house \(house) has a house limb and a lord limb", limbs.first?.id == "house" && limbs.contains { $0.id == "lord" })
+                hold("house \(house) has a karaka limb unless its lord is its karaka", limbs.contains { $0.id == "karaka" } != (chart.lord(ofHouse: house) == Lore.bhavaKarakas[house - 1].code))
+                hold("house \(house) says where its limbs stand", !chart.confluence(ofHouse: house).isEmpty)
+            }
+            // Mithuna rises: the 7th is Dhanu, its lord Jupiter stands in the 9th, its karaka Venus is exalted in the 10th
+            let seventh = chart.limbs(ofHouse: 7)
+            hold("the 7th lord is Jupiter", seventh.first { $0.id == "lord" }?.graha == "Ju")
+            hold("Venus as karaka of the 7th is supported", (seventh.first { $0.id == "karaka" }?.leaning ?? 0) > 0)
+            hold("Saturn's aspect is named on the 7th house", seventh[0].strains.contains { $0.hasPrefix("Saturn") })
+            hold("the 2nd house has its limbs agree in asking more", chart.limbs(ofHouse: 2).allSatisfy { $0.leaning < 0 })
+            hold("the Moon is waning and counts as a malefic", !chart.benefic("Mo"))
+            hold("Jupiter's dispositor is Saturn", chart.graha("Ju").flatMap { chart.dispositor(of: $0) }?.id == "Sa")
+            let rows = chart.gochara(sky: chart)
+            hold("the count from the Moon has nine rows and the Moon is 1st from itself", rows.count == 9 && rows.first { $0.id == "Mo" }?.fromMoon == 1)
+            hold("a favourable place always names its vedha", rows.allSatisfy { $0.favourable == ($0.vedhaPlace != nil) })
+            print("house check: \(held) of \(asked) hold")
+            exit(held == asked ? 0 : 1)
+        }
         if arguments.contains("--entry-check") {
             let dates: [(String, String?)] = [("1971-03-11", "1971-Mar-11"), ("1971-3-11", "1971-Mar-11"), ("11 Mar 1971", "1971-Mar-11"), ("March 11, 1971", "1971-Mar-11"), ("11.3.1971", "1971-Mar-11"),
                                              ("13/3/1971", "1971-Mar-13"), ("3/13/1971", "1971-Mar-13"), ("1971/03/11", "1971-Mar-11"), ("1971-Mar-11", "1971-Mar-11"), ("1971-dec-01", "1971-Dec-01"), ("31 Feb 1971", nil), ("11 Mar 71", nil), ("soon", nil)]
@@ -70,6 +97,7 @@ struct FormJyotishApp: App {
     /// `FormJyotish --probe-tabs`: press each workspace tab with a real mouse event sent to the window, and say
     /// whether the workspace followed. A witness that the tabs answer clicks, not only accessibility presses.
     private func probeTabs() {
+        makeKey(after: 1)
         // with --probe-banner the update banner stands above the tabs, as it does after an update is fetched
         if CommandLine.arguments.contains("--probe-banner") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { updater.state = .ready(999) } }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -110,6 +138,8 @@ struct FormJyotishApp: App {
             if let step = value("--tour").flatMap({ Int($0) }) { store.tour(to: step - 1) }
             if value("--about") != nil { store.explanation = Help.about(card: value("--about") ?? "") }
             if let code = value("--focus") { store.hover = .graha(code) }
+            // --only-card gochara shows that card alone in the workspace (a snapshot writes no layout)
+            if let card = value("--only-card") { store.layout[store.workspace] = [card] }
             if arguments.contains("--now") { store.goNow() }
             if let house = value("--pick-house").flatMap({ Int($0) }), let chart = store.chart { store.pick = .sign(chart.sign(ofHouse: house)) }
             if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }
@@ -126,6 +156,7 @@ struct FormJyotishApp: App {
     /// `FormJyotish --probe-tour`: start the walk-through, press Next, Next, Back and End with real mouse events
     /// sent to the window, and say whether the step and the workspace followed each press.
     private func probeTour() {
+        makeKey(after: 1.5)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { store.tour(to: 0) }
         let presses: [(button: String, step: Int?)] = [("next", 1), ("next", 2), ("next", 3), ("next", 4), ("next", 5), ("next", 6), ("back", 5), ("end", nil)]
         var held = 0
@@ -193,10 +224,17 @@ struct FormJyotishApp: App {
 
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
     /// event, and say whether the explanation came up.
+    /// a click on a window that is not key only brings it forward, so each click witness makes its window key first
+    private func makeKey(after seconds: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { NSApp.activate(ignoringOtherApps: true); NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil })?.makeKeyAndOrderFront(nil) }
+    }
+
     private func probePalette() {
         store.paletteSeed = "shad"
+        makeKey(after: 1)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { store.paletteShown = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            guard NSApp.windows.contains(where: { $0.isKeyWindow }) else { print("probe: the window could not be made key, so no click was tried"); exit(2) }
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let spot = Palette.spots["what-Shadbala"] else { print("probe: the palette lists no What is Shadbala?"); exit(1) }
             let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
             for kind in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {

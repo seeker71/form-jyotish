@@ -101,23 +101,6 @@ struct DashaContext: View {
         return text
     }
 
-    /// a period lord in transit, read as Phaladipika's chapter on dashas has it: by the sign it passes, against its strength at birth
-    private func lordPassing(_ code: String, role: String, _ sky: Chart) -> String? {
-        guard !(["Ra", "Ke"].contains(code)), let now = sky.graha(code), let natal = chart.graha(code) else { return nil }
-        let house = Chart.ordinal(chart.house(ofSign: now.sign)), status = now.status ?? ""
-        var text = "\(name(code)), lord of the \(role), is passing through \(Names.signs[now.sign]), the \(house) house from the lagna."
-        let hard = ["Debil.", "Enemy", "Grt.En."].contains(status) || now.combust == true
-        let good = ["Exalt.", "Own", "Grt.Fr.", "Friend"].contains(status) || (now.retro && !["Su", "Mo"].contains(code))
-        if hard { text += " It is \(sky.weakness(now) ?? "under strain") there: a period lord so placed in transit is read as a stretch that asks more in the matters of the \(house) house." }
-        else if good {
-            let how = status == "Exalt." ? "exalted" : status == "Own" ? "in its own sign" : ["Grt.Fr.", "Friend"].contains(status) ? "in a friend's sign" : "retrograde"
-            text += " It is \(how) there, which is read as bringing the \(house) house forward"
-            text += chart.weakness(natal).map { "; the verse adds that the graha be strong at birth as well, and at birth it is \($0), so the help comes in smaller measure." } ?? ", the more so as it is not weakened at birth."
-        }
-        if now.sign == natal.sign { text += " It is passing over its own place in the birth chart, which is read as waking what it promises there." }
-        return text
-    }
-
     var body: some View {
         let day = store.viewDay ?? chart.jd
         let running = Vimshottari.running(at: day, in: chart.dasha, depth: 3)
@@ -150,8 +133,8 @@ struct DashaContext: View {
                 Divider()
                 heading(store.sky == nil ? "What is passing" : "What is passing at this moment")
                 if let sky = store.sky {
-                    if let text = lordPassing(running[0].lord, role: roles[0], sky) { words(text) }
-                    if running.count > 1, running[1].lord != running[0].lord, let text = lordPassing(running[1].lord, role: roles[1], sky) { words(text) }
+                    if let text = chart.periodLordPassing(running[0].lord, role: roles[0], sky: sky) { words(text) }
+                    if running.count > 1, running[1].lord != running[0].lord, let text = chart.periodLordPassing(running[1].lord, role: roles[1], sky: sky) { words(text) }
                     ForEach(["Sa", "Ju", "Ra"], id: \.self) { code in if let text = passing(code, sky) { words(text) } }
                     GoLink(title: "Open Transits", workspace: "Transits")
                 } else {

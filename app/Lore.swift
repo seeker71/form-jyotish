@@ -164,6 +164,11 @@ extension Chart {
                                     words: "The mahadasha of \(name(maha)) is running, with the antardasha of \(name(antar)). \(name(maha)) \(ruled.isEmpty ? "rules no house" : "rules the " + ruled.map(Chart.ordinal).joined(separator: " and "))\(standing).",
                                     grahas: [maha, antar], workspace: "Dasha", pick: .period(lords: [maha], start: running[0].start, end: running[0].end)))
         }
+        let agreed = (1...12).map { ($0, limbs(ofHouse: $0).map(\.leaning)) }
+        let firm = agreed.filter { $0.1.allSatisfy { $0 > 0 } }.map(\.0), asking = agreed.filter { $0.1.allSatisfy { $0 < 0 } }.map(\.0)
+        let named = { (list: [Int]) in list.map { "\(Chart.ordinal($0)) (\(Lore.houseNames[$0 - 1].lowercased()))" }.joined(separator: ", ") }
+        let both = [firm.isEmpty ? nil : "House, lord and karaka agree in support for the \(named(firm)).", asking.isEmpty ? nil : "\(firm.isEmpty ? "House, lord and karaka" : "They") agree in asking more for the \(named(asking)): there care and steady effort build capacity."].compactMap { $0 }
+        lines.append(GlanceLine(heading: "Where the houses are firm", words: both.isEmpty ? "No house has its three limbs, the house, its lord and its karaka, all saying the same thing: each house reads as mixed." : both.joined(separator: " ") + " The other houses read as mixed.", signs: (firm + asking).map { sign(ofHouse: $0) }, workspace: "Guide"))
         return lines
     }
 }
