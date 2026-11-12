@@ -51,7 +51,7 @@ final class Store: ObservableObject {
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
-        "Overview": ["chart:0", "chart:5", "moon", "grahas", "edges", "birth", "timeline"],
+        "Overview": ["chart:0", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "other-dashas", "events"],
         "Strength": ["chart:0", "ashtakavarga", "shadbala", "avasthas"],

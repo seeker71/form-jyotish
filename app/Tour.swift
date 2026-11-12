@@ -156,6 +156,7 @@ extension Help {
         case "arudhas": return "Each pada is found by counting from the house to its lord and as far again."
         case "chara-dasha": return "Jaimini's chara dasha of signs, as taught by K.N. Rao."
         case "kp-grahas", "kp-cusps", "kp-houses", "kp-planets": return "Krishnamurti Paddhati: the KP ayanamsa, Placidus cusps, and significators graded by star lord and occupancy."
+        case "panchanga": return "Weekday counted from sunrise; hours as twelfths of the day and of the night; gandanta within 3°20′ of a water-fire joint."
         case "gochara": return "Favourable places from the Moon after Phaladipika 26, with vedha and the giving third of the sign."
         case "transits": return "The sky of the time bar's moment under this chart's ayanamsa, with houses counted from the birth lagna and the birth Moon."
         case "transit-dates": return "Sign changes and stations found by search, each to within a minute."

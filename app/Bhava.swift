@@ -51,7 +51,8 @@ extension Chart {
     func weakness(_ g: Graha) -> String? {
         var words: [String] = []
         if g.status == "Debil." { words.append("debilitated") }
-        if g.status == "Enemy" || g.status == "Grt.En." { words.append("in an enemy's sign") }
+        // an enemy's sign is judged by natural enmity toward the sign's lord, as the book's table has it
+        if g.status != "Debil.", g.status != "Exalt.", Lore.natural[g.id]?[Chart.signLords[g.sign]] == -1 { words.append("in an enemy's sign") }
         if g.combust == true { words.append("combust") }
         return words.isEmpty ? nil : words.joined(separator: " and ")
     }
@@ -76,10 +77,10 @@ extension Chart {
         var limb = Limb(id: "house", title: "The house")
         let inside = grahas.filter { $0.sign == sign }.map(\.id), seen = aspecting(sign: sign).filter { !inside.contains($0) }
         for (code, verb) in inside.map({ ($0, "stands in it") }) + seen.map({ ($0, "aspects it") }) {
-            let ruled = housesRuled(by: code), who = called(code)
+            let ruled = housesRuled(by: code), article = ["Su", "Mo"].contains(code), who = (article ? "The " : "") + called(code)
             let trine = ruled.filter { [5, 9].contains($0) }, trik = ruled.filter { [6, 8, 12].contains($0) }
             let frail = graha(code).flatMap(weakness).map { ", though it is \($0)" } ?? ""
-            if code == lord { limb.supports.append("Its own lord \(who) \(verb): a lord looks after its own house\(frail)") }
+            if code == lord { limb.supports.append("Its own lord \(article ? "the " : "")\(called(code)) \(verb): a lord looks after its own house\(frail)") }
             else if !trine.isEmpty && trik.isEmpty { limb.supports.append("\(who), lord of the \(trine.map(Chart.ordinal).joined(separator: " and ")), \(verb): a trine lord helps the house it touches\(frail)") }
             else if benefic(code) { limb.supports.append("\(who), a natural benefic, \(verb)\(frail)") }
             else { limb.strains.append("\(who), a natural malefic, \(verb): its matters ask for \(Chart.asks[code] ?? "care")") }
@@ -119,6 +120,9 @@ extension Chart {
             else { limb.strains.append("Placed in the \(Chart.ordinal(house)), a dusthana: it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }
         }
         if g.retro && !["Ra", "Ke"].contains(g.id) { limb.supports.append("Retrograde: strong in whatever it indicates") }
+        if inMulatrikona(g) { limb.supports.append("In its mulatrikona: very strong for good") }
+        if let strong = Lore.digBala[g.id], house == strong { limb.supports.append("Directional strength in the \(Chart.ordinal(house))") }
+        if g.baladi == "Mrita" { limb.notes.append("It is in Mrita avastha, which tempers what it gives without reversing it.") }
         let company = grahas.filter { $0.sign == g.sign && $0.id != g.id }.map(\.id) + aspecting(sign: g.sign).filter { $0 != g.id }
         let fair = Array(Set(company.filter { benefic($0) })).sorted(), harsh = Array(Set(company.filter { !benefic($0) })).sorted()
         if !fair.isEmpty { limb.supports.append("With or aspected by benefics (\(fair.map(called).joined(separator: ", ")))") }

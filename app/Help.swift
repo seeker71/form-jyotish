@@ -48,6 +48,7 @@ enum Help {
         case "timeline": return "Life as a sequence of graha periods. The top row is the mahadasha; the rows below divide it further. The blue line is the moment in the time bar. Narrow the span to see finer periods."
         case "dashas": return "The same periods as a list. Open a period with its arrow to see its nine parts; click a period to read it in the inspector."
         case "transit-dates": return "What the sky does next, with exact times: a graha entering a sign, turning retrograde or direct, or crossing the degree of a birth graha. Each line says which house that is from the birth lagna and Moon. Click a line to move the whole desk to that moment."
+        case "panchanga": return "The birth day by its five limbs: the weekday and the planetary hour with their lords, the tithi and how far through it the birth fell, the karana, and the yoga of Sun and Moon. It also marks any point standing at a gandanta."
         case "gochara": return "Each graha's passage counted from the birth Moon: whether the place is one of its favourable ones, whether a graha in the vedha place cancels it, and whether it is in the third of the sign where it gives. Move the time bar and it follows."
         case "transits": return "Where each graha is at the moment in the time bar, and which house that is counted from the birth lagna and from the birth Moon."
         case "shadbala": return "Six kinds of strength, added up. A graha with 1.00 or more in the last row has the strength the tradition asks of it. Hover a row's name for what it measures."

@@ -36,6 +36,19 @@ struct FormJyotishApp: App {
             let rows = chart.gochara(sky: chart)
             hold("the count from the Moon has nine rows and the Moon is 1st from itself", rows.count == 9 && rows.first { $0.id == "Mo" }?.fromMoon == 1)
             hold("a favourable place always names its vedha", rows.allSatisfy { $0.favourable == ($0.vedhaPlace != nil) })
+            // 14 March 1879 was a Friday; at 11:30 the sixth hour of the day ran, which on a Friday is the hour of Mars
+            let time = chart.varaAndHora(zoneHours: birth.zoneHours ?? 0)
+            hold("the birth weekday is Friday", time?.weekday == 5)
+            hold("the birth hour is the hour of Mars", time?.hora == "Ma")
+            let limbs5 = chart.panchanga(zoneHours: birth.zoneHours ?? 0)
+            hold("the panchanga has its seven rows", limbs5.map(\.id) == ["Vara", "Hora", "Tithi", "Karana", "Yoga", "Nakshatra", "Gandanta"])
+            hold("the tithi is Krishna Saptami", limbs5.first { $0.id == "Tithi" }?.value == "Krishna Saptami")
+            hold("the Sun in the 10th has directional strength", chart.graha("Su").map { chart.finer($0).supports.contains { $0.hasPrefix("Directional strength") } } == true)
+            hold("Jupiter in the 9th is without the directional strength it has in the 1st, and is not marked weak for it", chart.graha("Ju").map { !chart.finer($0).strains.contains { $0.hasPrefix("Without directional") } } == true)
+            hold("Mercury's period names its yogas and its dispositor", chart.activation(of: "Me").contains { $0.hasPrefix("It takes part in") } && chart.activation(of: "Me").contains { $0.hasPrefix("Its dispositor Jupiter") })
+            hold("Rahu's period is read through its sign lord Saturn", chart.activation(of: "Ra").first?.contains("sign lord Saturn") == true)
+            hold("Mercury and Mars read together end with the count from the dasha lord", chart.joint("Me", "Ma").last?.hasPrefix("Counted from Mercury, Mars stands in the 11th") == true)
+            hold("a graha read with itself gives nothing", chart.joint("Me", "Me").isEmpty)
             print("house check: \(held) of \(asked) hold")
             exit(held == asked ? 0 : 1)
         }
@@ -79,7 +92,9 @@ struct FormJyotishApp: App {
                             kernel: URL(fileURLWithPath: defaults.string(forKey: "kernelPath") ?? Engine.defaultKernel))
         // with --public <key> the report is of that public chart, and no saved chart is read
         let known = arguments.firstIndex(of: "--public").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }.flatMap { key in PublicCharts.all.first { $0.key == key }?.birth }
-        guard let birth = known ?? Store().births.first else { print("no saved chart"); exit(1) }
+        // with --example the report is of the sample chart, an arbitrary moment and place
+        let example = arguments.contains("--example") ? Birth(name: "Sample: New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) : nil
+        guard let birth = known ?? example ?? Store().births.first else { print("no saved chart"); exit(1) }
         do {
             let node = birth.node ?? option("node") ?? "mean", ayanamsa = birth.ayanamsa ?? option("ayanamsa") ?? "lahiri"
             let chart = try engine.chart(for: birth, node: node, ayanamsa: ayanamsa)

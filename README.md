@@ -39,6 +39,9 @@ the old one's place the next time the app starts (or at once with Restart now).
 - The twelve houses judged by three limbs, the house, its lord and its karaka, after Hart de Fouw and Robert
   Svoboda's Light on Life (Phaladipika 15): what supports each limb beside what asks more of it, and where
   the three agree. Dispositors, period lords in transit, and transits counted from the Moon with vedha.
+- The running period read by what a dasha activates (yogas, houses ruled, occupied and aspected, company,
+  dispositor, karaka), and the two period lords read for confluence or conflict. The panchanga of the birth
+  day with weekday and hour lords. Mulatrikona, directional strength, avastha measures, planetary war, gandanta.
 - Jaimini: the seven chara karakas and the karakamsa, the twelve arudha padas (with a pada chart), sign
   aspects, and the Chara dasha after K.N. Rao with its twelve equal sub-periods.
 - Nine more nakshatra dashas with their sub-periods: Ashtottari, Yogini, Shodashottari, Dwadashottari,

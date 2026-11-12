@@ -81,6 +81,8 @@ struct DashaContext: View {
                 }
                 ForEach(weighed.supports, id: \.self) { Label($0, systemImage: "plus.circle").font(.callout).foregroundStyle(.green).labelStyle(FactLabel()) }
                 ForEach(weighed.strains, id: \.self) { Label($0, systemImage: "minus.circle").font(.callout).foregroundStyle(.orange).labelStyle(FactLabel()) }
+                Text("What its period brings forward").font(.callout).fontWeight(.semibold).padding(.top, 2)
+                ForEach(chart.activation(of: code), id: \.self) { Text($0).font(.callout).fixedSize(horizontal: false, vertical: true) }
             }
         }
     }
@@ -128,6 +130,7 @@ struct DashaContext: View {
                     if let a = chart.graha(running[0].lord), let b = chart.graha(running[1].lord) {
                         heading("The two lords together")
                         words("\(name(b.id)) stands \(Chart.ordinal((b.sign - a.sign + 12) % 12 + 1)) from \(name(a.id)): they are \(Lore.mutual((b.sign - a.sign + 12) % 12 + 1)). \(Lore.regard(a.id, b.id) ?? "")")
+                        ForEach(chart.joint(a.id, b.id), id: \.self) { words($0) }
                     }
                 }
                 Divider()
@@ -143,7 +146,7 @@ struct DashaContext: View {
                         Button("Go to now") { store.goNow() }.controlSize(.small)
                     }
                 }
-                Text("A period brings forward what its lord holds in the chart; transits act within what the period allows. " + Lore.balance).font(.footnote).foregroundStyle(.secondary)
+                Text(Lore.periodPrinciple + " Transits act within what the period allows. " + Lore.balance).font(.footnote).foregroundStyle(.secondary)
             }
         }
     }

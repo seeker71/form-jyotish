@@ -11,7 +11,7 @@ struct YogaMeaning {
 
 extension Lore {
     /// The principle the yogas are read under: a yoga gives in the measure of its grahas' standing.
-    static let yogaPrinciple = "A yoga gives in the measure of its grahas. A supportive yoga shows fully when its grahas stand strong (own or exalted sign, free of combustion); a point of attention weighs most when its grahas stand weak, and lightly when they stand strong. Each row states the rule met, the tradition's reading, and a reading to work with."
+    static let yogaPrinciple = "A yoga gives in the measure of its grahas. A yoga is taught together with what breaks it. A supportive yoga shows fully when its grahas stand strong (own or exalted sign, free of combustion); a point of attention weighs most when its grahas stand weak, and lightly when they stand strong. Each row states the rule met, the tradition's reading, and a reading to work with."
 
     private static func m(_ tradition: String, _ reading: String) -> YogaMeaning { YogaMeaning(tradition: tradition, reading: reading) }
 
@@ -266,6 +266,8 @@ extension Lore {
             if g.combust == true { marks.append("combust") }
             return marks.isEmpty ? nil : "\(Names.lords[code] ?? code) \(marks.joined(separator: " and "))"
         }
-        return notes.isEmpty ? nil : "Standing of its grahas: " + notes.joined(separator: "; ") + "."
+        let parts = [notes.isEmpty ? nil : "Standing of its grahas: " + notes.joined(separator: "; ") + ".", chart.yogaConditions(yoga),
+                     yoga.group.lowercased().contains("raja") || yoga.name.lowercased().contains("raja") ? chart.rajaBhanga : nil].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 }

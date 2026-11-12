@@ -70,6 +70,7 @@ extension Lore {
         ]
         var lines = [words[status] ?? status,
                      "Dignity is reckoned from the lord of the sign a graha stands in: natural friendship between the two, joined with where they stand from each other in this chart. \(who) is in \(Names.signs[sign]), whose lord is \(Names.lords[Chart.signLords[sign]] ?? "")."]
+        if let scale = Lore.dignityScale[status] { lines.append("By the scale the tradition gives, a graha so placed shows about \(scale) of its potential strength. Strength is the power to act; whether that eases or asks more depends on the graha's nature and the houses it rules.") }
         if combust { lines.append("Combust: \(who) stands close to the Sun and is hidden in its light. Its matters work inwardly, close to the self.") }
         return Explanation(title: "\(who): \(status)\(combust ? ", combust" : "")", group: "Dignity", lines: lines, workspace: "Strength", term: "Dignity")
     }

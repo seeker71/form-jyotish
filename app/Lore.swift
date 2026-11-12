@@ -83,6 +83,8 @@ extension Chart {
         case "Grt.En.": strains.append("In the sign of a graha it is much at odds with")
         default: break
         }
+        let fine = finer(g)
+        supports += fine.supports; strains += fine.strains
         if [1, 4, 7, 10].contains(house) { supports.append("In an angle, the \(Chart.ordinal(house)) house") }
         else if [5, 9].contains(house) { supports.append("In a trine, the \(Chart.ordinal(house)) house") }
         else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }
