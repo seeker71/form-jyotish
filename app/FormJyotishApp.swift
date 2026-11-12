@@ -110,6 +110,7 @@ struct FormJyotishApp: App {
             if let step = value("--tour").flatMap({ Int($0) }) { store.tour(to: step - 1) }
             if value("--about") != nil { store.explanation = Help.about(card: value("--about") ?? "") }
             if let code = value("--focus") { store.hover = .graha(code) }
+            if arguments.contains("--now") { store.goNow() }
             if let house = value("--pick-house").flatMap({ Int($0) }), let chart = store.chart { store.pick = .sign(chart.sign(ofHouse: house)) }
             if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }
         }
@@ -162,7 +163,7 @@ struct FormJyotishApp: App {
         func click(_ key: String) -> Bool {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }), let spot = PickRow.spots[key] else { print("probe: \(key) reported no place"); return false }
             let point = NSPoint(x: spot.midX, y: window.frame.height - spot.midY)
-            print("probe: \(key) at \(Int(spot.midX)),\(Int(spot.midY)) of window \(Int(window.frame.width))x\(Int(window.frame.height)), scale \(store.textScale), hit \(window.contentView?.hitTest(point).map { String(describing: type(of: $0)) } ?? "nothing")")
+            print("probe: \(key) at \(Int(spot.midX)),\(Int(spot.midY)) of window \(Int(window.frame.width))x\(Int(window.frame.height)), scale \(store.textScale), key \(window.isKeyWindow), active \(NSApp.isActive), hit \(window.contentView?.hitTest(point).map { String(describing: type(of: $0)) } ?? "nothing")")
             func event(_ kind: NSEvent.EventType) -> NSEvent? {
                 NSEvent.mouseEvent(with: kind, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
             }
@@ -171,7 +172,10 @@ struct FormJyotishApp: App {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { if let up = event(.leftMouseUp) { window.sendEvent(up) } }
             return true
         }
+        // a click on a window that is not key only brings it forward, so the witness makes its window key first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { NSApp.activate(ignoringOtherApps: true); NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil })?.makeKeyAndOrderFront(nil) }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            guard NSApp.windows.contains(where: { $0.isKeyWindow }) else { print("probe: the window could not be made key, so no click was tried"); exit(2) }
             guard click("row:Ju") else { exit(1) }
             // the pick opens the inspector and the desk settles again before the next click can land
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -210,7 +214,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() }; if CommandLine.arguments.contains("--probe-table") { probeTable() } }
+                .onAppear { updater.check(); if CommandLine.arguments.contains("--example") { store.ephemeral = true; store.addSample("New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) }; if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() }; if CommandLine.arguments.contains("--probe-table") { probeTable() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

@@ -91,7 +91,8 @@ struct DashaContext: View {
         let fromMoon = (g.sign - moon.sign + 12) % 12 + 1, bindus = chart.sarva[g.sign]
         var text = "\(name(code)) is passing through \(Names.signs[g.sign])\(g.retro && code != "Ra" ? ", retrograde" : ""): the \(Chart.ordinal(chart.house(ofSign: g.sign))) from the lagna and the \(Chart.ordinal(fromMoon)) from the Moon, a sign holding \(bindus) bindus (\(bindus >= 30 ? "well supported" : bindus <= 24 ? "lightly supported" : "about average"))."
         if code == "Ju" || code == "Sa" {
-            let reach = (code == "Ju" ? [5, 7, 9] : [3, 7, 10]).map { Chart.ordinal(chart.house(ofSign: (g.sign + $0 - 1) % 12)) }.joined(separator: ", ")
+            let reached = (code == "Ju" ? [5, 7, 9] : [3, 7, 10]).map { Chart.ordinal(chart.house(ofSign: (g.sign + $0 - 1) % 12)) }
+            let reach = "\(reached[0]), \(reached[1]) and \(reached[2])"
             let natal = chart.graha(code).flatMap { chart.weakness($0) }
             text += " From there it aspects the \(reach) houses. \(code == "Ju" ? "Jupiter's passage is read as easing the houses it touches" : "Saturn's passage is read as asking for work and patience in the houses it touches")\(natal.map { ", in the measure of its place at birth, where it is \($0)" } ?? "")."
         }

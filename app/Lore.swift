@@ -95,7 +95,8 @@ extension Chart {
             let names = hem.who.map { Names.lords[$0] ?? $0 }.joined(separator: ", ")
             if hem.helps { supports.append("Shubha-kartari: benefics on both sides (\(names))") } else { strains.append("Papa-kartari: malefics on both sides (\(names)): asks for clear boundaries") }
         }
-        if g.combust == true { strains.append("Combust: close to the Sun, working inwardly") }
+        if g.combust == true { strains.append("Combust: the outer matters of its houses ask more; its inner qualities are lit by the Sun") }
+        if g.retro, !["Ra", "Ke"].contains(g.id) { supports.append("Retrograde: near the earth, and strong in whatever it indicates") }
         if let line = dispositorLine(g) { if line.helps { supports.append(line.words) } else { strains.append(line.words) } }
         let seenBy = aspecting(sign: g.sign).filter { $0 != g.id }
         for code in seenBy where ["Ju", "Ve", "Me"].contains(code) { supports.append("Aspected by \(Names.lords[code] ?? code)") }

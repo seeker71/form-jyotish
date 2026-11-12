@@ -432,6 +432,7 @@ struct Report {
         makers += vargaPages
         makers += strengthPages
         makers += wordPages
+        makers += housePages
         makers.append(jaiminiPage)
         makers += dashaPages
         makers += kpPages

@@ -9,6 +9,8 @@ struct Limb: Identifiable {
     var graha: String? = nil
     var supports: [String] = []
     var strains: [String] = []
+    /// what is neither for nor against: how the limb works
+    var notes: [String] = []
     /// 1 when more speaks for the limb than against it, -1 the other way, 0 when they balance
     var leaning: Int { supports.count == strains.count ? 0 : supports.count > strains.count ? 1 : -1 }
 }
@@ -91,15 +93,24 @@ extension Chart {
         }
         let places = [4, 8, 12, 5, 9].map { (sign + $0 - 1) % 12 }
         let around = grahas.filter { places.contains($0.sign) && !benefic($0.id) }.map(\.id)
-        if around.count >= 2 { limb.strains.append("Malefics in the 4th, 8th, 12th or the trines from it (\(around.map(called).joined(separator: ", ")))") }
+        if around.count >= 4 { limb.strains.append("Most of the malefics stand in the 4th, 8th, 12th or the trines from it (\(around.map(called).joined(separator: ", ")))") }
+        let karaka = Lore.bhavaKarakas[house - 1].code
+        let kin: [Int: String] = [3: "younger siblings", 4: "the mother", 5: "children", 7: "the partner", 9: "the father", 11: "elder siblings"]
+        let own = house == 9 ? "Su" : karaka
+        if let who = kin[house], inside.contains(own), Chart.signLords[sign] != own, !(own == "Mo" && moonWaxing) {
+            limb.strains.append("\(called(own)), the significator of \(who), stands in the house of \(who): read as asking more care in that relationship")
+        }
         if inside.isEmpty && seen.isEmpty { limb.supports.append("No graha stands in it or aspects it: it answers through its lord alone") }
         return limb
     }
 
     /// a graha as the lord or the karaka of a house: its strength, its placing, its company and its dispositor
-    private func grahaLimb(_ g: Graha, id: String, title: String) -> Limb {
+    private func grahaLimb(_ g: Graha, id: String, title: String, lordOf: Int? = nil) -> Limb {
         var limb = Limb(id: id, title: title, graha: g.id)
         let house = house(ofSign: g.sign), own = Chart.signLords[g.sign] == g.id
+        if let from = lordOf, from != house { limb.notes.append("As lord of the \(Chart.ordinal(from)) placed in the \(Chart.ordinal(house)), it joins the matters of \(Lore.houseNames[from - 1].lowercased()) with those of \(Lore.houseNames[house - 1].lowercased()).") }
+        if [3, 6, 10, 11].contains(house) { limb.notes.append("It stands in the \(Chart.ordinal(house)), a growing house (upachaya): what it gives \([3, 6].contains(house) ? "is slow at first and improves with time" : "is good and grows better with time").") }
+        if g.combust == true { limb.notes.append("Combust: the outer matters of the houses it rules ask more, while its inner qualities are lit by the Sun.") }
         if g.status == "Exalt." { limb.supports.append("Exalted in \(Names.signs[g.sign])") }
         if own { limb.supports.append("In its own sign, \(Names.signs[g.sign])") }
         if let weak = weakness(g) { limb.strains.append("\(weak.prefix(1).uppercased() + weak.dropFirst()): it gives through effort") }
@@ -127,7 +138,7 @@ extension Chart {
     func limbs(ofHouse house: Int) -> [Limb] {
         var list = [houseLimb(house)]
         let lord = lord(ofHouse: house), karaka = Lore.bhavaKarakas[house - 1].code
-        if let g = graha(lord) { list.append(grahaLimb(g, id: "lord", title: "Its lord, \(called(lord))")) }
+        if let g = graha(lord) { list.append(grahaLimb(g, id: "lord", title: "Its lord, \(called(lord))", lordOf: house)) }
         if karaka != lord, let g = graha(karaka) { list.append(grahaLimb(g, id: "karaka", title: "Its karaka, \(called(karaka))")) }
         return list
     }
@@ -163,6 +174,7 @@ struct HouseJudgement: View {
                     }
                     ForEach(limb.supports, id: \.self) { Label($0, systemImage: "plus.circle").font(.callout).foregroundStyle(.green).labelStyle(FactLabel()) }
                     ForEach(limb.strains, id: \.self) { Label($0, systemImage: "minus.circle").font(.callout).foregroundStyle(.orange).labelStyle(FactLabel()) }
+                    ForEach(limb.notes, id: \.self) { Text($0).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                     if limb.supports.isEmpty && limb.strains.isEmpty { Text("Nothing marked either way.").font(.callout).foregroundStyle(.secondary) }
                 }
             }
