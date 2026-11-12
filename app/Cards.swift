@@ -268,6 +268,8 @@ struct BirthForm: View {
     @FocusState private var focus: Field?
     @State private var left: Field?
     @State private var placeBefore = ""
+    /// the chart whose place the cursor entered: a place is looked up only for the chart it was typed into
+    @State private var placeOf: Birth.ID?
 
     /// A field resolves when the cursor leaves it: the date and time are written out in full, and a changed
     /// place is looked up and written as matched, with its latitude, longitude and time zone.
@@ -276,7 +278,7 @@ struct BirthForm: View {
         switch field {
         case .date: if let written = store.births[index].writtenDate { store.births[index].date = written }
         case .time: if let written = store.births[index].writtenTime { store.births[index].time = written }
-        case .place: if store.births[index].place != placeBefore, !store.births[index].place.isEmpty { store.lookUpPlace() }
+        case .place: if store.births[index].id == placeOf, store.births[index].place != placeBefore, !store.births[index].place.isEmpty { store.lookUpPlace() }
         }
     }
     var body: some View {
@@ -310,8 +312,9 @@ struct BirthForm: View {
             .onChange(of: focus) { now in
                 resolve(left)
                 left = now
-                if now == .place { placeBefore = birth.wrappedValue.place }
+                if now == .place { placeBefore = birth.wrappedValue.place; placeOf = birth.wrappedValue.id }
             }
+            .onChange(of: store.current) { _ in placeOf = nil; left = nil; focus = nil }
             if let source = birth.wrappedValue.source, !source.isEmpty {
                 Text("Source. " + source).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
             }

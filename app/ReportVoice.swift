@@ -9,6 +9,7 @@ extension Lore {
         ("NASA JPL DE440", "The planetary ephemeris every position is read from. The app's positions are checked against NASA's Horizons service and against Swiss Ephemeris, and agree within a fraction of an arcsecond.", "https://ssd.jpl.nasa.gov/horizons/"),
         ("Brihat Parashara Hora Shastra", "Houses and their lords, dignities, aspects, vargas, yogas, the dashas, ashtakavarga. The arudha pada rule follows its chapter on padas: a pada falling on its own house moves to the tenth from it, one falling on the seventh to the fourth.", "https://archive.org/download/BPHSEnglish/BPHS%20-%201%20RSanthanam.pdf"),
         ("Parashara, verse by verse", "The chapters on padas and on the karakas, with translation.", "https://enjoylearningsanskrit.com/scriptures/parashara/chapter-29"),
+        ("Hart de Fouw and Robert Svoboda, Light on Life", "The way of reading the app follows. A house is judged by three limbs, the house, its lord and its karaka, after Phaladipika 15.1 and 15.6. Strength is kept apart from influence. A graha is read with its dispositor. A period lord's transit is read against its strength at birth, and transits are counted from the lagna first. The rules are stated in the app's own words.", nil),
         ("B.V. Raman, Graha and Bhava Balas", "Shadbala, row by row.", nil),
         ("K.N. Rao, Jaimini's Chara Dasha", "The order and years of the Chara dasha.", nil),
         ("K.S. Krishnamurti, Krishnamurti Paddhati", "The KP ayanamsa, sub-lords and significators.", nil),

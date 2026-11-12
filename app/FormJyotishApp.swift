@@ -110,6 +110,7 @@ struct FormJyotishApp: App {
             if let step = value("--tour").flatMap({ Int($0) }) { store.tour(to: step - 1) }
             if value("--about") != nil { store.explanation = Help.about(card: value("--about") ?? "") }
             if let code = value("--focus") { store.hover = .graha(code) }
+            if let house = value("--pick-house").flatMap({ Int($0) }), let chart = store.chart { store.pick = .sign(chart.sign(ofHouse: house)) }
             if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
@@ -172,7 +173,8 @@ struct FormJyotishApp: App {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             guard click("row:Ju") else { exit(1) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            // the pick opens the inspector and the desk settles again before the next click can land
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 let picked = store.pick?.graha == "Ju"
                 print("probe: clicked the Jupiter row at \(PickRow.spots["row:Ju"].map { "\(Int($0.midX)),\(Int($0.midY))" } ?? "?") -> picked \(store.pick.map { String(describing: $0) } ?? "nothing")\(picked ? "" : "  MISSED")")
                 guard let key = heading(), click(key) else { print("probe: no heading with an explanation stands in the window; places \(PickRow.spots.mapValues { "\(Int($0.midX)),\(Int($0.midY))" })"); exit(1) }

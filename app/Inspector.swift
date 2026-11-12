@@ -182,6 +182,8 @@ struct Inspector: View {
         if !padas.isEmpty { fact("Arudhas here", padas.map { $0 == 1 ? "AL" : $0 == 12 ? "UL" : "A\($0)" }.joined(separator: ", ")) }
         if !chart.aspecting(sign: sign).isEmpty { HStack { Text("Aspected by").foregroundStyle(.secondary).frame(width: 84, alignment: .leading); ForEach(chart.aspecting(sign: sign), id: \.self) { chip($0) } } }
         note("The \(Chart.ordinal(chart.house(ofSign: sign))) house covers \(Lore.houses[chart.house(ofSign: sign) - 1]). It is \(Lore.houseKind(chart.house(ofSign: sign))).")
+        section("Judging the \(Chart.ordinal(chart.house(ofSign: sign))) house")
+        HouseJudgement(chart: chart, house: chart.house(ofSign: sign))
         section(here.isEmpty ? "No graha stands here at birth" : "Here at birth")
         ForEach(here) { g in HStack { chip(g.id); Text(Names.dms(g.deg)).foregroundStyle(.secondary) } }
         if let sky = store.sky {

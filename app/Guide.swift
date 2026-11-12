@@ -139,6 +139,7 @@ struct HousesCard: View {
                         Text("\(Lore.houses[house - 1].prefix(1).uppercased() + Lore.houses[house - 1].dropFirst()). It is \(Lore.houseKind(house)).")
                             .font(.footnote).foregroundStyle(.secondary).frame(width: 596, alignment: .leading).fixedSize(horizontal: false, vertical: true)
                     }
+                    if chosen { HouseJudgement(chart: chart, house: house).frame(width: 596, alignment: .leading).padding(.top, 4) }
                 }
                 .padding(.vertical, 3).padding(.horizontal, 6)
                 .background(RoundedRectangle(cornerRadius: 5).fill(Color.accentColor.opacity(chosen ? 0.22 : near ? 0.09 : 0)))

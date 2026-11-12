@@ -90,8 +90,30 @@ struct DashaContext: View {
         guard let g = sky.graha(code), let moon = chart.graha("Mo") else { return nil }
         let fromMoon = (g.sign - moon.sign + 12) % 12 + 1, bindus = chart.sarva[g.sign]
         var text = "\(name(code)) is passing through \(Names.signs[g.sign])\(g.retro && code != "Ra" ? ", retrograde" : ""): the \(Chart.ordinal(chart.house(ofSign: g.sign))) from the lagna and the \(Chart.ordinal(fromMoon)) from the Moon, a sign holding \(bindus) bindus (\(bindus >= 30 ? "well supported" : bindus <= 24 ? "lightly supported" : "about average"))."
+        if code == "Ju" || code == "Sa" {
+            let reach = (code == "Ju" ? [5, 7, 9] : [3, 7, 10]).map { Chart.ordinal(chart.house(ofSign: (g.sign + $0 - 1) % 12)) }.joined(separator: ", ")
+            let natal = chart.graha(code).flatMap { chart.weakness($0) }
+            text += " From there it aspects the \(reach) houses. \(code == "Ju" ? "Jupiter's passage is read as easing the houses it touches" : "Saturn's passage is read as asking for work and patience in the houses it touches")\(natal.map { ", in the measure of its place at birth, where it is \($0)" } ?? "")."
+        }
         if code == "Sa", [12, 1, 2].contains(fromMoon) { text += " This is Sade Sati, Saturn's passage over the Moon: a season for maturing and consolidating." }
         if code == "Sa", [4, 8].contains(fromMoon) { text += " Saturn in the \(Chart.ordinal(fromMoon)) from the Moon is a passage traditionally read as a time to simplify and build resilience." }
+        return text
+    }
+
+    /// a period lord in transit, read as Phaladipika's chapter on dashas has it: by the sign it passes, against its strength at birth
+    private func lordPassing(_ code: String, role: String, _ sky: Chart) -> String? {
+        guard !(["Ra", "Ke"].contains(code)), let now = sky.graha(code), let natal = chart.graha(code) else { return nil }
+        let house = Chart.ordinal(chart.house(ofSign: now.sign)), status = now.status ?? ""
+        var text = "\(name(code)), lord of the \(role), is passing through \(Names.signs[now.sign]), the \(house) house from the lagna."
+        let hard = ["Debil.", "Enemy", "Grt.En."].contains(status) || now.combust == true
+        let good = ["Exalt.", "Own", "Grt.Fr.", "Friend"].contains(status) || (now.retro && !["Su", "Mo"].contains(code))
+        if hard { text += " It is \(sky.weakness(now) ?? "under strain") there: a period lord so placed in transit is read as a stretch that asks more in the matters of the \(house) house." }
+        else if good {
+            let how = status == "Exalt." ? "exalted" : status == "Own" ? "in its own sign" : ["Grt.Fr.", "Friend"].contains(status) ? "in a friend's sign" : "retrograde"
+            text += " It is \(how) there, which is read as bringing the \(house) house forward"
+            text += chart.weakness(natal).map { "; the verse adds that the graha be strong at birth as well, and at birth it is \($0), so the help comes in smaller measure." } ?? ", the more so as it is not weakened at birth."
+        }
+        if now.sign == natal.sign { text += " It is passing over its own place in the birth chart, which is read as waking what it promises there." }
         return text
     }
 
@@ -127,6 +149,8 @@ struct DashaContext: View {
                 Divider()
                 heading(store.sky == nil ? "What is passing" : "What is passing at this moment")
                 if let sky = store.sky {
+                    if let text = lordPassing(running[0].lord, role: roles[0], sky) { words(text) }
+                    if running.count > 1, running[1].lord != running[0].lord, let text = lordPassing(running[1].lord, role: roles[1], sky) { words(text) }
                     ForEach(["Sa", "Ju", "Ra"], id: \.self) { code in if let text = passing(code, sky) { words(text) } }
                     GoLink(title: "Open Transits", workspace: "Transits")
                 } else {

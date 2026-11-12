@@ -96,6 +96,7 @@ extension Chart {
             if hem.helps { supports.append("Shubha-kartari: benefics on both sides (\(names))") } else { strains.append("Papa-kartari: malefics on both sides (\(names)): asks for clear boundaries") }
         }
         if g.combust == true { strains.append("Combust: close to the Sun, working inwardly") }
+        if let line = dispositorLine(g) { if line.helps { supports.append(line.words) } else { strains.append(line.words) } }
         let seenBy = aspecting(sign: g.sign).filter { $0 != g.id }
         for code in seenBy where ["Ju", "Ve", "Me"].contains(code) { supports.append("Aspected by \(Names.lords[code] ?? code)") }
         for code in seenBy where ["Sa", "Ma"].contains(code) { strains.append("Aspected by \(Names.lords[code] ?? code): asks for \(code == "Sa" ? "patience and structure" : "courage and directness")") }
