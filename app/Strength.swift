@@ -185,7 +185,7 @@ extension Report {
                 }
                 Rectangle().fill(Ink.rule).frame(width: 458, height: 0.7)
                 ForEach(KeyFactorsCard.legend, id: \.0) { item in Text("\(item.0): \(item.1).").italic().fixedSize(horizontal: false, vertical: true).frame(width: 452, alignment: .leading) }
-                Text("The rules follow Light on Life, chapters 4 and 9. Friendship is the natural relationship with the lord of the sign. Combustion states the distance from the Sun: the closer, the stronger. The Moon is read by its light, strong from the fifth day of the waxing half to the tenth of the waning. Strength is a graha's power to act; what it acts for is read from its nature and the houses it rules. The pages that weigh each graha give every factor in full.")
+                Text("The rules follow Light on Life, chapters 4 and 9. Friendship is the natural relationship with the lord of the sign. Combustion states the distance from the Sun: the closer, the stronger. The Moon is read by its light: new within 30° of the Sun, dark within 72° of it, full within 30° of the full point. Strength is a graha's power to act; what it acts for is read from its nature and the houses it rules. The pages that weigh each graha give every factor in full.")
                     .italic().fixedSize(horizontal: false, vertical: true).frame(width: 452, alignment: .leading)
             }
             .font(Ink.times(9)).at(76, 130)

@@ -36,6 +36,7 @@ enum Catalog {
            CardInfo(id: "gochara", title: "Transits from the Moon (gochara)", keywords: "gochara vedha moon chandra lagna transit favourable", wide: true),
            CardInfo(id: "dina", title: "The day now: five limbs", keywords: "panchanga today muhurta tithi vara hora nakshatra karana yoga now choose time", wide: true),
            CardInfo(id: "transit-dates", title: "Transit dates", keywords: "gochara ingress station retrograde sade sati exact dates events", wide: true),
+           CardInfo(id: "bala-sky", title: "The sky at birth: Moon, eclipse, retrogression, combustion, war", keywords: "moon full new waxing waning dark bright eclipse lunar solar retrograde combust planetary war graha yuddha", wide: true),
            CardInfo(id: "bala-table", title: "Graha strength and weakness", keywords: "strength weakness own sign exaltation debilitation dig bala retrograde combust planetary war table light on life", wide: true),
            CardInfo(id: "bala-keys", title: "Primary and secondary strength", keywords: "strength weakness primary secondary benefic malefic flanked friend enemy full new moon eclipse", wide: true),
            CardInfo(id: "bala-relations", title: "Graha relations", keywords: "friends neutrals enemies mitra sama shatru natural friendship camps", wide: true),
@@ -222,6 +223,7 @@ struct Card: View {
                 case "dasha-context": DashaContext(chart: chart)
                 case "other-dashas": OtherDashas(chart: chart)
                 case "dashas": DashaList(chart: chart)
+                case "bala-sky": StrengthSky(chart: chart)
                 case "bala-table": StrengthSheet(chart: chart)
                 case "bala-keys": KeyFactorsCard(chart: chart)
                 case "bala-relations": RelationsCard(chart: chart)

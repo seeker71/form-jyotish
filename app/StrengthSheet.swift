@@ -25,18 +25,35 @@ extension Chart {
         guard let sun = graha("Su"), let moon = graha("Mo") else { return 90 }
         return (moon.lon - sun.lon + 360).truncatingRemainder(dividingBy: 360)
     }
-    /// Light on Life: the Moon is strong from the fifth day after the new Moon to the tenth day after the full
-    var moonBright: Bool { (4...24).contains(day.tithi) }
-    var moonFull: Bool { (156...204).contains(elongation) }
-    var moonNew: Bool { elongation < 12 || elongation > 348 }
+    /// degrees between the Moon and the Sun, 0 at the new Moon to 180 at the full
+    var sunGap: Double { min(elongation, 360 - elongation) }
+    /// the Moon's light at birth: new within 30° of the Sun (a primary weakness), dark within 72° of it, full within
+    /// 30° of the full point (a primary strength), bright between
+    var moonNew: Bool { sunGap < 30 }
+    var moonFull: Bool { sunGap > 150 }
+    var moonBright: Bool { sunGap >= 72 }
+    var moonWord: String { moonNew ? "new" : moonFull ? "full" : moonBright ? "bright" : "dark" }
 
+    /// how far the birth stands from the exact new or full Moon, and how far the lights stand from the nearer node
+    var syzygy: (solar: Bool, off: Double, node: Graha, nodeGap: Double)? {
+        let solar = sunGap < 90
+        guard let light = graha(solar ? "Su" : "Mo"), let node = grahas.suffix(2).min(by: { apart(light.lon, $0.lon) < apart(light.lon, $1.lon) }) else { return nil }
+        return (solar, solar ? sunGap : 180 - sunGap, node, apart(light.lon, node.lon))
+    }
+    /// the kind of eclipse a new or full Moon gives at this distance from a node
+    static func eclipseKind(solar: Bool, nodeGap: Double) -> String? {
+        let steps: [(Double, String)] = solar ? [(10, "a total solar eclipse"), (12, "a total or partial solar eclipse"), (15.5, "a partial solar eclipse"), (18.5, "a possible partial solar eclipse")]
+                                              : [(3.75, "a total lunar eclipse"), (6, "a total or partial lunar eclipse"), (9.5, "a partial lunar eclipse"), (12.5, "a possible partial lunar eclipse")]
+        return steps.first { nodeGap < $0.0 }?.1
+    }
     /// a luminary born within half a day of an eclipse: the kind of eclipse and the node it fell by
     func eclipsed(_ g: Graha) -> (kind: String, node: String)? {
-        guard ["Su", "Mo"].contains(g.id) else { return nil }
-        let solar = elongation < 6 || elongation > 354, lunar = abs(elongation - 180) < 6
-        guard solar || lunar, let node = grahas.suffix(2).min(by: { apart(g.lon, $0.lon) < apart(g.lon, $1.lon) }) else { return nil }
-        return apart(g.lon, node.lon) < (solar ? 15 : 12) ? (solar ? "a solar eclipse" : "a lunar eclipse", node.name) : nil
+        guard ["Su", "Mo"].contains(g.id), let s = syzygy, s.off < 6, let kind = Chart.eclipseKind(solar: s.solar, nodeGap: s.nodeGap) else { return nil }
+        return (kind, s.node.name)
     }
+
+    /// how deep a combustion is, by degrees from the Sun
+    func combustGrade(_ g: Graha) -> String { let d = sunDistance(g); return d < 3 ? "Totally" : d < 6 ? "Seriously" : d < 9 ? "Generally" : "Lightly" }
 
     /// the first or the last degree of a sign
     func sandhi(_ g: Graha) -> String? { g.deg < 1 ? "first" : g.deg >= 29 ? "last" : nil }
@@ -64,13 +81,14 @@ extension Chart {
         else if g.status == "Own" { k.primaryStrength.append(inMulatrikona(g) ? "Mulatrikona" : "Own sign") }
         if g.retro, Lore.five.contains(g.id) { k.primaryStrength.append("Retrograde") }
         if let strong = Lore.digBala[g.id], house(ofSign: g.sign) == strong { k.primaryStrength.append("Dig bala") }
-        if g.id == "Mo", moonBright { k.primaryStrength.append(moonFull ? "Full Moon" : "Bright Moon") }
+        if g.id == "Mo", moonFull { k.primaryStrength.append("Full Moon, \(moonWaxing ? "waxing" : "waning")") }
+        if g.id == "Mo", !moonFull, !moonNew { if moonBright { k.secondaryStrength.append("Bright Moon, \(moonWaxing ? "waxing" : "waning")") } else { k.secondaryWeakness.append("Dark Moon, \(moonWaxing ? "waxing" : "waning")") } }
 
         if g.sign == (high + 6) % 12, node || g.status == "Debil." { k.primaryWeakness.append("Debilitated") }
-        if g.combust == true, Lore.five.contains(g.id) { k.primaryWeakness.append(String(format: "Combust, %.1f° from the Sun", sunDistance(g))) }
+        if g.combust == true, Lore.five.contains(g.id) { k.primaryWeakness.append(String(format: "\(combustGrade(g)) combust, %.1f° from the Sun", sunDistance(g))) }
         if let war = war(of: g), !war.prevails { k.primaryWeakness.append("Lost the war with \(name(war.with.id))") }
-        if eclipsed(g) != nil { k.primaryWeakness.append("Eclipsed") }
-        if g.id == "Mo", !moonBright { k.primaryWeakness.append(moonNew ? "New Moon" : "Dark Moon") }
+        if let eclipse = eclipsed(g) { k.primaryWeakness.append("Born on \(eclipse.kind)") }
+        if g.id == "Mo", moonNew { k.primaryWeakness.append("New Moon, \(moonWaxing ? "waxing" : "waning")") }
 
         let around = company(g)
         for one in around where one.benefic { k.secondaryStrength.append((one.joined ? "With " : "Aspect of ") + name(one.id)) }
@@ -104,7 +122,7 @@ extension Chart {
     /// how close the combustion is: the closer, the stronger
     func combustLead(_ g: Graha) -> String {
         let d = sunDistance(g), orb = Lore.combustOrb[g.id].map { g.retro ? $0.retro : $0.direct }
-        let depth = d < 3 ? "the deepest part of a combustion (within 3°)" : d < 6 ? "close enough to be strongly felt (within 6°)" : "the lighter, outer part of its range" + (orb.map { String(format: " of %.0f°", $0) } ?? "")
+        let depth = d < 3 ? "totally combust (within 3°)" : d < 6 ? "seriously combust (3° to 6°)" : d < 9 ? "generally combust (6° to 9°)" : "lightly, in the outer part of its range" + (orb.map { String(format: " of %.0f°", $0) } ?? "")
         return String(format: "Combust, %.1f° from the Sun, ", d) + depth
     }
     func combustTail(_ g: Graha) -> String {
@@ -135,11 +153,13 @@ extension Chart {
     func lightAndJoint(_ g: Graha) -> (supports: [String], strains: [String]) {
         var supports: [String] = [], strains: [String] = []
         if g.id == "Mo" {
-            let tithi = Names.tithi(day.tithi)
-            if moonBright { supports.append("\(moonFull ? "Close to full" : "Bright") (\(tithi)): from the fifth day of the waxing half to the tenth of the waning the Moon is strong") }
-            else { strains.append("\(moonNew ? "At the new Moon" : "Dark") (\(tithi)): within five days of the new Moon it gives least light; its strength is small for outer matters and turns inward") }
+            let facts = String(format: "\(moonWaxing ? "waxing" : "waning"), \(Names.tithi(day.tithi)), %.0f° from the Sun", sunGap)
+            if moonFull { supports.append("Full Moon (\(facts)): within 30° of the full point, a primary strength: stamina, resilience and plenty of light for outer matters") }
+            else if moonBright { supports.append("Bright Moon (\(facts)): more than 72° from the Sun, with light enough to give steadily") }
+            else if moonNew { strains.append("New Moon (\(facts)): within 30° of the Sun, a primary weakness: little light for outer matters, a mind turned inward that asks for more care") }
+            else { strains.append("Dark Moon (\(facts)): within 72° of the Sun: more inward and sensitive, with less stamina for outer matters") }
         }
-        if let eclipse = eclipsed(g) { strains.append("Born within half a day of \(eclipse.kind) by \(eclipse.node): \(who(g.id)) is read as eclipsed, its light turned inward") }
+        if let eclipse = eclipsed(g) { strains.append("Born on \(eclipse.kind) by \(eclipse.node): \(who(g.id)) is read as eclipsed, its light turned inward") }
         if let edge = sandhi(g), !Chart.gandanta(sign: g.sign, deg: g.deg) { strains.append("In the \(edge) degree of \(Names.signs[g.sign]), a joint between two signs (sandhi): ill-defined for outer matters, often apt for inner work") }
         let harsh = { (count: Int) in self.grahas.contains { $0.id != g.id && $0.sign == (g.sign + count - 1) % 12 && !self.benefic($0.id) } }
         if harsh(4) && harsh(8) && harsh(12) { strains.append("Malefics stand in the 4th, 8th and 12th from it (Phaladipika 15)") }
@@ -208,19 +228,19 @@ struct StrengthSheet: View {
         list.append(SheetCell(text: five ? (g.retro ? "Retrograde" : "direct") : "—", width: widths[4], met: five && g.retro))
         list.append(SheetCell(text: Names.signs[(high + 6) % 12], width: widths[5], met: g.sign == (high + 6) % 12, helps: false))
         let orb = Lore.combustOrb[g.id].map { g.retro ? $0.retro : $0.direct }
-        list.append(SheetCell(text: !five ? "—" : g.combust == true ? String(format: "Combust, %.1f° from the Sun", chart.sunDistance(g)) : String(format: "clear: %.0f° away, range %.0f°", chart.sunDistance(g), orb ?? 0), width: widths[6], met: five && g.combust == true, helps: false))
+        list.append(SheetCell(text: !five ? "—" : g.combust == true ? String(format: "\(chart.combustGrade(g)) combust, %.1f° from the Sun", chart.sunDistance(g)) : String(format: "clear: %.0f° away, range %.0f°", chart.sunDistance(g), orb ?? 0), width: widths[6], met: five && g.combust == true, helps: false))
         let war = chart.war(of: g)
         list.append(SheetCell(text: !five ? "—" : war.map { ($0.prevails ? "Prevails over " : "Yields to ") + name($0.with.id) } ?? "none", width: widths[7], met: war != nil, helps: war?.prevails ?? true))
         return list
     }
 
     var body: some View {
-        let moon = chart.graha("Mo"), lights = chart.grahas.prefix(2).compactMap { g in chart.eclipsed(g).map { "\(Names.lords[g.id] ?? g.id) eclipsed (\($0.kind) by \($0.node))" } }
+        let moon = chart.graha("Mo"), lights = chart.grahas.prefix(2).compactMap { g in chart.eclipsed(g).map { "\(Names.lords[g.id] ?? g.id) born on \($0.kind) by \($0.node)" } }
         ScrollView(.horizontal) {
             VStack(alignment: .leading, spacing: 1) {
                 SheetRow(graha: nil, cells: zip(["Graha", "Own sign (+)", "Exaltation (+)", "Dig bala (+)", "Retrograde (+)", "Debilitated (−)", "Combustion (−)", "Planetary war (±)"], widths).map { SheetCell(text: $0, width: $1, header: true) })
                 ForEach(chart.grahas) { g in SheetRow(graha: g.id, cells: cells(g)) }
-                Text("Sun and Moon take no retrogression, combustion or war; their further measure is the Moon's light and eclipses. Here the Moon is \(chart.moonBright ? (chart.moonFull ? "close to full: strong" : "bright: strong") : (chart.moonNew ? "at the new Moon: weak for outer matters" : "dark: weak for outer matters")) (\(Names.tithi(chart.day.tithi))\(moon == nil ? "" : String(format: ", %.0f° from the Sun", chart.elongation > 180 ? 360 - chart.elongation : chart.elongation)))\(lights.isEmpty ? "; neither light is eclipsed" : "; " + lights.joined(separator: ", ")). A lit cell is a rule this chart meets: green adds strength, orange asks more.")
+                Text("Sun and Moon take no retrogression, combustion or war; their further measure is the Moon's light and eclipses. Here the Moon is \(chart.moonWaxing ? "waxing" : "waning") and \(chart.moonWord) (\(Names.tithi(chart.day.tithi))\(moon == nil ? "" : String(format: ", %.0f° from the Sun", chart.elongation > 180 ? 360 - chart.elongation : chart.elongation)))\(lights.isEmpty ? "; neither light is eclipsed" : "; " + lights.joined(separator: ", ")). A lit cell is a rule this chart meets: green adds strength, orange asks more.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     .frame(width: widths.reduce(0, +), alignment: .leading).padding(.top, 6)
             }

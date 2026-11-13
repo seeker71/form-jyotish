@@ -63,9 +63,18 @@ struct FormJyotishApp: App {
             if let book = try? engine.chart(julianDay: 2407422.9514, latitude: 48.4, longitude: 10.0, node: "mean", ayanamsa: "lahiri", zoneHours: 0.667), let mercury = book.graha("Me"), let venus = book.graha("Ve"), let mars = book.graha("Ma") {
                 let names = Set(book.yogas.map(\.name))
                 hold("the yogas the book reads in Einstein's chart are found", ["Budhaditya yoga", "Neecha-bhanga raja yoga", "Maha-parivartana yoga", "Pravrajya yoga", "Saraswati yoga"].allSatisfy { names.contains($0) })
-                hold("the primary factors name Mercury debilitated and combust, and Venus exalted", book.keyFactors(mercury).primaryWeakness.first == "Debilitated" && book.keyFactors(mercury).primaryWeakness.contains { $0.hasPrefix("Combust, ") } && book.keyFactors(venus).primaryStrength.contains("Exalted"))
+                hold("the primary factors name Mercury debilitated and combust, and Venus exalted", book.keyFactors(mercury).primaryWeakness.first == "Debilitated" && book.keyFactors(mercury).primaryWeakness.contains { $0.contains(" combust, ") } && book.keyFactors(venus).primaryStrength.contains("Exalted"))
+                hold("Einstein was not born on an eclipse, and no planetary war stands in his chart", book.grahas.prefix(2).allSatisfy { book.eclipsed($0) == nil } && book.grahas.allSatisfy { book.war(of: $0) == nil })
+                if let lunar = try? engine.chart(julianDay: 2451564.697, latitude: 28.6, longitude: 77.2, node: "mean", ayanamsa: "lahiri", zoneHours: 5.5), let moon = lunar.graha("Mo") {
+                    hold("a birth at the total lunar eclipse of 21 January 2000 is read as born on a lunar eclipse, the Moon full", lunar.eclipsed(moon)?.kind.contains("lunar eclipse") == true && lunar.moonFull && lunar.keyFactors(moon).primaryWeakness.contains { $0.hasPrefix("Born on ") })
+                    print("seen at the lunar eclipse: " + (lunar.eclipsed(moon).map { "\($0.kind) by \($0.node)" } ?? "none"))
+                }
+                if let solar = try? engine.chart(julianDay: 2451401.96, latitude: 48.1, longitude: 11.6, node: "mean", ayanamsa: "lahiri", zoneHours: 2), let sun = solar.graha("Su") {
+                    hold("a birth at the solar eclipse of 11 August 1999 is read as born on a solar eclipse, the Moon new", solar.eclipsed(sun)?.kind.contains("solar eclipse") == true && solar.moonNew)
+                    print("seen at the solar eclipse: " + (solar.eclipsed(sun).map { "\($0.kind) by \($0.node)" } ?? "none"))
+                }
                 hold("a combustion states its distance from the Sun", book.factors(for: mercury).strains.contains { $0.hasPrefix("Combust, ") && $0.contains("° from the Sun") })
-                hold("the Moon is read by its light and never as combust", book.graha("Mo").map { m in !book.factors(for: m).strains.contains { $0.hasPrefix("Combust") } && (book.factors(for: m).supports + book.factors(for: m).strains).contains { $0.contains("the Moon is strong") || $0.contains("new Moon") } } == true)
+                hold("the Moon is read by its light and never as combust", book.graha("Mo").map { m in !book.factors(for: m).strains.contains { $0.hasPrefix("Combust") } && (book.factors(for: m).supports + book.factors(for: m).strains).contains { $0.hasPrefix("Bright Moon (waning, Krishna Saptami, 99° from the Sun)") } } == true)
                 hold("friendship is the natural one: the Sun in Meena is the guest of its friend Jupiter", book.graha("Su").map { book.keyFactors($0).secondaryStrength.contains("Friend's sign (Jupiter)") } == true)
                 hold("Mercury and Jupiter have directional strength in the 1st, and Venus is without it in the 10th", Lore.digBala["Me"] == 1 && Lore.digBala["Ju"] == 1 && !book.keyFactors(venus).primaryStrength.contains("Dig bala"))
                 hold("Mercury and Jupiter have directional strength in the 1st, and two of the four in Meena are combust", mercury.status == "Debil." && mercury.combust == true && book.house(ofSign: mercury.sign) == 10 && book.grahas.filter { $0.sign == 11 && $0.combust == true }.count == 2)

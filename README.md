@@ -40,8 +40,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   moment each limb of the day ends. A planetary war goes to the higher latitude, as Light on Life gives the
   rule; a mahapurusha yoga says which of the three lagnas it recurs from; and a card gives the five limbs of
   the day the time bar stands at, with the rising sign, weighed in the birth chart for choosing a time.
-- Light on Life is the main reference for the rules of reading. The Strength desk opens on its rules of graha
-  strength and weakness: a table of own sign, exaltation, directional strength, retrogression, debilitation,
+- Light on Life is the main reference for the rules of reading. The Strength desk opens on the sky at birth,
+  drawn from the chart: the Moon new, dark, bright or full and waxing or waning, whether the birth fell on a
+  solar or lunar eclipse, and which planets are retrograde, combust (graded by degrees from the Sun) or at
+  war. Then the rules of graha strength and weakness: a table of own sign, exaltation, directional strength, retrogression, debilitation,
   combustion and planetary war with this chart's grahas marked in it; the primary and secondary factors each
   graha meets; the natural relationships and whose guest each graha is; and three charts of rulership,
   exaltation and dig bala on the chart's own lagna.
