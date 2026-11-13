@@ -21,16 +21,7 @@ enum Lore {
     static let houseNames = ["Self", "Resources", "Effort", "Home", "Creation", "Service", "The other", "Renewal", "Fortune", "Action", "Gains", "Release"]
 
     /// how the houses group: the groups a reader weighs before anything else
-    static func houseKind(_ house: Int) -> String {
-        switch house {
-        case 1: return "an angle and a trine (kendra and trikona): the strongest place"
-        case 4, 7, 10: return "an angle (kendra): grahas here act strongly"
-        case 5, 9: return "a trine (trikona): the houses of fortune"
-        case 6, 8, 12: return "a dusthana, a house of effort and release: what is met here builds capacity\(house == 6 ? ", and the 6th also grows with time (upachaya)" : house == 8 ? ", through depth and renewal" : ", through letting go")"
-        case 3, 11: return "a growing house (upachaya): results improve with effort and time"
-        default: return "a neutral house: neither angle nor trine"
-        }
-    }
+    static func houseKind(_ house: Int) -> String { houseClassLine(house) }
 
     static let elements = ["fire", "earth", "air", "water"], modes = ["movable", "fixed", "dual"]
     static let signSymbols = ["the ram", "the bull", "the pair", "the crab", "the lion", "the maiden", "the scales", "the scorpion", "the archer", "the sea-creature", "the water-bearer", "the fishes"]

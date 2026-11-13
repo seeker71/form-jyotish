@@ -34,6 +34,8 @@ struct ChartMark: Identifiable {
     var retro = false
     /// the sign a click on this mark picks, when it is not a graha (the lagna's own sign)
     var sign: Int? = nil
+    /// what the pointer is told about a mark that is a label, not a graha
+    var note: String? = nil
     var id: String { (transit ? "t-" : "") + code }
 }
 
@@ -86,7 +88,7 @@ struct ChartView: View {
             .onTapGesture { store.pick = pick }
             .onHover { inside in store.hover = inside ? pick : (store.hover == pick ? nil : store.hover) }
             .accessibilityLabel("\(mark.transit ? "transit " : "")\(mark.label)")
-            .help(mark.code == "As" ? (Help.term("Lagna") ?? "") : mark.sign != nil ? "The arudha pada \(mark.code): the image a house casts" : (mark.transit ? "In the sky of the moment. " : "") + Help.graha(mark.code) + (mark.retro ? " Retrograde." : ""))
+            .help(mark.note != nil ? mark.note! : mark.code == "As" ? (Help.term("Lagna") ?? "") : mark.sign != nil ? "The arudha pada \(mark.code): the image a house casts" : (mark.transit ? "In the sky of the moment. " : "") + Help.graha(mark.code) + (mark.retro ? " Retrograde." : ""))
     }
 
     private func labels(_ sign: Int, perRow: Int, size: CGFloat) -> some View {

@@ -73,6 +73,10 @@ struct FormJyotishApp: App {
                     hold("a birth at the solar eclipse of 11 August 1999 is read as born on a solar eclipse, the Moon new", solar.eclipsed(sun)?.kind.contains("solar eclipse") == true && solar.moonNew)
                     print("seen at the solar eclipse: " + (solar.eclipsed(sun).map { "\($0.kind) by \($0.node)" } ?? "none"))
                 }
+                hold("the 4th house is judged with all four of its karakas: Mercury its lord, then the Moon, Venus and Mars", book.limbs(ofHouse: 4).count == 5 && book.limbs(ofHouse: 4).last?.graha == "Ma")
+                hold("the 6th is a trik-sthana and an upachaya of artha, the 5th a trikona of dharma", Lore.houseClasses(6).map(\.name) == ["Trik", "Upachaya", "Apoklima"] && Lore.aim(of: 6) == "Artha" && Lore.aim(of: 5) == "Dharma" && Lore.houseClasses(5).first?.name == "Trikona")
+                hold("the nine grahas are counted across the four aims", (0..<4).map { book.grahas(inAim: $0).count }.reduce(0, +) == 9)
+                print("seen in the four aims: " + (0..<4).map { "\(Lore.aimsOfLife[$0].name) \(book.grahas(inAim: $0).map(\.id).joined(separator: " "))" }.joined(separator: "; "))
                 hold("a combustion states its distance from the Sun", book.factors(for: mercury).strains.contains { $0.hasPrefix("Combust, ") && $0.contains("° from the Sun") })
                 hold("the Moon is read by its light and never as combust", book.graha("Mo").map { m in !book.factors(for: m).strains.contains { $0.hasPrefix("Combust") } && (book.factors(for: m).supports + book.factors(for: m).strains).contains { $0.hasPrefix("Bright Moon (waning, Krishna Saptami, 99° from the Sun)") } } == true)
                 hold("friendship is the natural one: the Sun in Meena is the guest of its friend Jupiter", book.graha("Su").map { book.keyFactors($0).secondaryStrength.contains("Friend's sign (Jupiter)") } == true)

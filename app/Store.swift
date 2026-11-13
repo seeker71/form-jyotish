@@ -47,7 +47,7 @@ final class Store: ObservableObject {
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "chart:0", "reading", "houses", "glossary", "sources"],
+        "Guide": ["guide", "chart:0", "reading", "houses", "bhava-classes", "bhava-karakas", "bhava-meanings", "graha-meanings", "glossary", "sources"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],

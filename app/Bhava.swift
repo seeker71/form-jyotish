@@ -141,20 +141,23 @@ extension Chart {
     /// the three limbs of a house
     func limbs(ofHouse house: Int) -> [Limb] {
         var list = [houseLimb(house)]
-        let lord = lord(ofHouse: house), karaka = Lore.bhavaKarakas[house - 1].code
+        let lord = lord(ofHouse: house)
         if let g = graha(lord) { list.append(grahaLimb(g, id: "lord", title: "Its lord, \(called(lord))", lordOf: house)) }
-        if karaka != lord, let g = graha(karaka) { list.append(grahaLimb(g, id: "karaka", title: "Its karaka, \(called(karaka))")) }
+        // every karaka of the house is a limb: the 4th has four, the 10th four, the 6th and 9th two
+        for (n, karaka) in Lore.houseKarakas[house - 1].enumerated() where karaka.code != lord {
+            if let g = graha(karaka.code) { list.append(grahaLimb(g, id: n == 0 ? "karaka" : "karaka\(n)", title: "Its karaka for \(karaka.matter), \(called(karaka.code))")) }
+        }
         return list
     }
 
     /// what the limbs say together
     func confluence(ofHouse house: Int) -> String {
-        let limbs = limbs(ofHouse: house), leanings = limbs.map(\.leaning), karaka = Lore.bhavaKarakas[house - 1]
-        let same = lord(ofHouse: house) == karaka.code ? " Here the lord is also the karaka (\(karaka.matter)), so it counts twice." : ""
+        let limbs = limbs(ofHouse: house), leanings = limbs.map(\.leaning), lord = lord(ofHouse: house)
+        let same = Lore.houseKarakas[house - 1].first { $0.code == lord }.map { " Here the lord is also the karaka for \($0.matter), so it counts twice." } ?? ""
         let matters = Lore.houseNames[house - 1].lowercased()
         if leanings.allSatisfy({ $0 > 0 }) { return "House, lord and karaka agree: more speaks for each than against it, so the matters of \(matters) are well supported. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)" }
         if leanings.allSatisfy({ $0 < 0 }) { return "House, lord and karaka agree in asking more: the matters of \(matters) are where care and steady effort are called for, and where capacity is built. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)" }
-        let words = zip(limbs, leanings).map { "\($0.0.id == "house" ? "the house" : $0.0.id == "lord" ? "the lord" : "the karaka") \($0.1 > 0 ? "is supported" : $0.1 < 0 ? "asks more" : "is balanced")" }.joined(separator: ", ")
+        let words = zip(limbs, leanings).map { "\($0.0.id == "house" ? "the house" : $0.0.id == "lord" ? "the lord" : "the karaka " + called($0.0.graha ?? "")) \($0.1 > 0 ? "is supported" : $0.1 < 0 ? "asks more" : "is balanced")" }.joined(separator: ", ")
         return "The limbs do not agree (\(words)), so no single factor settles the matters of \(matters): they are read as mixed, each limb giving in its own measure.\(same)"
     }
 }
@@ -173,7 +176,6 @@ struct HouseJudgement: View {
                         Text(limb.title).font(.callout).fontWeight(.semibold)
                         if let code = limb.graha {
                             Button("open") { store.pick = .graha(code) }.buttonStyle(.link).font(.caption)
-                            if limb.id == "karaka" { Text(Lore.bhavaKarakas[house - 1].matter).font(.caption).foregroundStyle(.secondary) }
                         }
                     }
                     ForEach(limb.supports, id: \.self) { Label($0, systemImage: "plus.circle").font(.callout).foregroundStyle(.green).labelStyle(FactLabel()) }

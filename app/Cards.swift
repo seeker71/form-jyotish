@@ -25,6 +25,10 @@ enum Catalog {
            CardInfo(id: "glossary", title: "Glossary", keywords: "dictionary terms words meaning search look up what is", wide: true),
            CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
            CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
+           CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
+           CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
+           CardInfo(id: "bhava-meanings", title: "Bhava significations", keywords: "house meanings significations tanu dhana bhratri sukha putra shatru kalatra mrityu bhagya karma labha vyaya", wide: true),
+           CardInfo(id: "graha-meanings", title: "Graha significations", keywords: "planet meanings significations rulerships soul mind father mother essence people nature", wide: true),
            CardInfo(id: "houses", title: "The twelve houses", keywords: "bhava lords areas of life", wide: true),
            CardInfo(id: "moon", title: "Chandra chart", keywords: "moon chandra lagna", wide: false),
            CardInfo(id: "grahas", title: "Grahas", keywords: "planets table positions nakshatra lords dignity", wide: true),
@@ -217,6 +221,10 @@ struct Card: View {
                 case "chara-dasha": CharaDashaCard(chart: chart)
                 case "guide": GuideCard(chart: chart)
                 case "reading": ReadingCard(chart: chart)
+                case "bhava-classes": BhavaClassCard(chart: chart)
+                case "bhava-karakas": BhavaKarakaCard(chart: chart)
+                case "bhava-meanings": BhavaMeaningsCard(chart: chart)
+                case "graha-meanings": GrahaMeaningsCard(chart: chart)
                 case "houses": HousesCard(chart: chart)
                 case "grahas": GrahaTable(chart: chart)
                 case "timeline": DashaTimeline(chart: chart)

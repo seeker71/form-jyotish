@@ -47,6 +47,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   combustion and planetary war with this chart's grahas marked in it; the primary and secondary factors each
   graha meets; the natural relationships and whose guest each graha is; and three charts of rulership,
   exaltation and dig bala on the chart's own lagna.
+- The houses and grahas as the book teaches them: the classes of houses (kendra, trikona, trik, dusthana,
+  maraka, upachaya) and the four aims of life as four trines, drawn on the chart's lagna with its grahas
+  counted in each aim; every significator of each house and where it stands; what each house and each graha
+  stands for. Every karaka of a house is weighed as a limb when the house is judged.
 - The twelve houses judged by three limbs, the house, its lord and its karaka, after Hart de Fouw and Robert
   Svoboda's Light on Life (Phaladipika 15): what supports each limb beside what asks more of it, and where
   the three agree. Dispositors, period lords in transit, and transits counted from the Moon with vedha.

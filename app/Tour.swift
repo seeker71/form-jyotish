@@ -141,6 +141,7 @@ extension Help {
         if id.hasPrefix("chart:") { return "One of Parashara's sixteen vargas: each graha is placed by the part of its sign it occupies. Houses are whole signs from the varga lagna." }
         switch id {
         case "grahas": return "Degrees within the sign; nakshatra and pada; lords as rasi · star · sub, the sub by the Vimshottari division of the star. C marks a combust graha. Motion is in degrees a day; a negative value is retrograde."
+        case "bhava-classes", "bhava-karakas", "bhava-meanings", "graha-meanings": return "After Light on Life, chapters 4 and 6. Houses are whole signs counted from the lagna. Every karaka of a house is weighed as a limb in the house's judgement: the 4th and the 10th have four, the 6th and the 9th two."
         case "houses": return "Whole-sign houses. Aspects are full graha drishti. Bindus are the sign's total in the sarvashtakavarga."
         case "reading": return "Sentences drawn from the same figures the other cards show; nothing here is computed apart from them."
         case "shadbala": return "The six strengths follow B.V. Raman's Graha and Bhava Balas. Planetary war is left out. Cheshta and drik bala can differ from other programs by a few virupas. The last row is the ratio to the required minimum."

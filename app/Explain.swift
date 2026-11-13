@@ -51,7 +51,7 @@ extension Lore {
     static func explain(house: Int, fromMoon: Int) -> Explanation {
         Explanation(title: "The \(Chart.ordinal(house)) house", group: "House (bhava)", lines: [
             "The \(Chart.ordinal(house)) house, \(Lore.houseNames[house - 1].lowercased()), covers \(Lore.houses[house - 1]).",
-            Lore.houseKind(house),
+            "It is " + Lore.houseKind(house) + ".", Lore.karakaLine(house), Lore.matterLine(house),
             "Counted from the Moon the same sign is the \(Chart.ordinal(fromMoon)) house, \(Lore.houseNames[fromMoon - 1].lowercased()): \(Lore.houses[fromMoon - 1]). The count from the lagna reads the outer life; the count from the Moon reads how it is felt.",
         ], term: "House (bhava)")
     }

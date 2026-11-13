@@ -171,7 +171,7 @@ extension Chart {
 // MARK: the cards
 
 /// One cell of a study table: a rule, lit when this chart meets it.
-private struct SheetCell: View {
+struct SheetCell: View {
     var text: String
     var width: CGFloat
     var met = false
@@ -193,19 +193,21 @@ private struct SheetCell: View {
     }
 }
 
-private struct SheetRow: View {
+struct SheetRow: View {
     @EnvironmentObject var store: Store
     var graha: String?
+    /// a row that stands for a house picks its sign
+    var sign: Int? = nil
     var cells: [SheetCell]
 
     var body: some View {
-        let near = graha != nil && (store.pick?.graha == graha || store.hover?.graha == graha)
+        let near = (graha != nil && (store.pick?.graha == graha || store.hover?.graha == graha)) || (sign != nil && (store.pick == .sign(sign!) || store.hover == .sign(sign!)))
         HStack(alignment: .top, spacing: 1) { ForEach(cells.indices, id: \.self) { cells[$0] } }
             .fixedSize(horizontal: false, vertical: true)
             .background(near ? Color.accentColor.opacity(0.10) : Color.clear)
             .contentShape(Rectangle())
-            .onTapGesture { if let graha { store.pick = .graha(graha) } }
-            .onHover { inside in if let graha { store.hover = inside ? .graha(graha) : nil } }
+            .onTapGesture { if let graha { store.pick = .graha(graha) } else if let sign { store.pick = .sign(sign) } }
+            .onHover { inside in if let graha { store.hover = inside ? .graha(graha) : nil } else if let sign { store.hover = inside ? .sign(sign) : nil } }
     }
 }
 

@@ -136,7 +136,7 @@ struct HousesCard: View {
                             .frame(width: 44, alignment: .leading)
                     }
                     if store.showHelp || chosen {
-                        Text("\(Lore.houses[house - 1].prefix(1).uppercased() + Lore.houses[house - 1].dropFirst()). It is \(Lore.houseKind(house)).")
+                        Text("\(Lore.houses[house - 1].prefix(1).uppercased() + Lore.houses[house - 1].dropFirst()). It is \(Lore.houseKind(house))." + (chosen ? " " + Lore.matterLine(house) : ""))
                             .font(.footnote).foregroundStyle(.secondary).frame(width: 596, alignment: .leading).fixedSize(horizontal: false, vertical: true)
                     }
                     if chosen { HouseJudgement(chart: chart, house: house).frame(width: 596, alignment: .leading).padding(.top, 4) }

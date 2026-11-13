@@ -33,7 +33,7 @@ extension Report {
     }
 
     var housePages: [(Int) -> AnyView] {
-        let parts = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        let parts = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
         return parts.enumerated().map { index, houses in
             { number in
                 self.page(number, title: "The Houses Judged #\(index + 1)") {
