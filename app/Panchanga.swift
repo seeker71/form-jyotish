@@ -18,7 +18,14 @@ extension Lore {
     static let yogaSense = ["supported", "fondness", "long-lived", "good fortune", "splendour", "large-cheeked", "virtuous", "determination", "spear", "cheek", "growth", "constant",
                             "beating", "thrilling", "diamond", "success", "calamity", "comfort", "obstruction", "auspicious", "accomplished", "amenable", "auspicious", "bright white",
                             "priest or god", "chief", "poor support"]
-    static let panchangaMethod = "The day is counted from sunrise to sunrise. The hours divide the day from sunrise to sunset into twelve and the night into twelve; the first hour belongs to the lord of the weekday. A reading from any one limb holds only where the rest of the chart says the same (Light on Life, chapter 7). Each limb is given with the moment it ends, on the clock of the place; the hour and a later day's rising sign are read for the birth place."
+    static let panchangaMethod = "The day is counted from sunrise to sunrise. The hours divide the day from sunrise to sunset into twelve and the night into twelve; the first hour belongs to the lord of the weekday. A reading from any one limb holds only where the rest of the chart says the same (Light on Life, chapter 7). Each limb is given with the moment it ends, on the clock of the place; the hour and a later day's rising sign are read for the place the card names."
+    /// the five groups of tithis, as they are used in choosing a time: name, sense, what a time under it suits, how a birth under it is read
+    static let tithiGroups: [(name: String, sense: String, suits: String, nature: String)] = [
+        ("Nanda", "joy", "celebration, the arts and what gives delight", "a nature that seeks delight and shares it"),
+        ("Bhadra", "wholesome", "work meant to last, and care for health and home", "a steady nature drawn to sound, lasting work"),
+        ("Jaya", "victory", "effort, contest and getting past an obstacle", "a nature that meets effort and contest with resolve"),
+        ("Rikta", "empty", "clearing, ending and letting go; new ventures are kept for another day", "a nature apt for clearing away and for doing without"),
+        ("Purna", "full", "completing things, and glad occasions", "a nature drawn to completing and fulfilling")]
     /// the seven classes of nakshatras (Brihat Samhita 98, as Light on Life gives them): what a time under each suits, and what a graha there inclines to
     static let nakClasses: [(name: String, members: [Int], suits: String, inclines: String)] = [
         ("fixed (dhruva)", [3, 11, 20, 25], "what is meant to last: foundations, planting, vows, settling into a home", "to stability and permanence"),
@@ -66,7 +73,7 @@ extension Chart {
 
     /// the five limbs of the day, with the hour lord and the gandanta mark. Read on a birth chart it speaks of the
     /// birth; read on a later sky with `natal` given, it speaks of that day and weighs the time lords in the birth chart.
-    func panchanga(zoneHours: Double, natal: Chart? = nil) -> [Limb5] {
+    func panchanga(zoneHours: Double, natal: Chart? = nil, place: String? = nil) -> [Limb5] {
         var limbs: [Limb5] = []
         let base = natal ?? self, later = natal != nil
         let until = { (end: Double?) -> String in
@@ -87,7 +94,7 @@ extension Chart {
             limbs.append(Limb5(id: "Hora", value: "The hour of \(["Su", "Mo"].contains(hora) ? "the " : "")\(called(hora))", words: "The planetary hour is the finest of the time lords. The houses its lord rules and stands in are read as matters close to hand. \(base.standing(hora, birth: later))" + serves(hora, "in its hour, in full"), graha: hora))
             if later {
                 let lord = Chart.signLords[asc.sign]
-                limbs.append(Limb5(id: "Lagna", value: "\(Names.signs[asc.sign]) rising, the sign of \(["Su", "Mo"].contains(lord) ? "the " : "")\(called(lord))", words: "The sign rising at the birth place; it changes about every two hours." + serves(lord, "under its rising sign") + " " + base.standing(lord, birth: true), graha: lord))
+                limbs.append(Limb5(id: "Lagna", value: "\(Names.signs[asc.sign]) rising, the sign of \(["Su", "Mo"].contains(lord) ? "the " : "")\(called(lord))", words: "The sign rising at \(place ?? "the birth place"); it changes about every two hours." + serves(lord, "under its rising sign") + " " + base.standing(lord, birth: true), graha: lord))
             }
         }
         if let sun = graha("Su"), let moon = graha("Mo") {
@@ -98,6 +105,9 @@ extension Chart {
                       : waxing ? "A birth in the bright fortnight: the waxing Moon is read as growth and plenty, and what the chart shows tends to improve with time."
                                : "A birth in the dark fortnight: the waning Moon is read as completion and turning inward; what the chart shows is consolidated more than expanded."
             words += " The \(later ? "moment falls" : "birth fell") \(Int((within * 100).rounded())) percent of the way through the tithi."
+            let group = Lore.tithiGroups[(self.day.tithi % 15) % 5]
+            words += self.day.tithi == 29 ? " Amavasya, the new Moon, is given to the ancestors and to inner work\(later ? "; outer beginnings wait for the waxing Moon" : "")."
+                : " The \(Chart.ordinal(number)) is a \(group.name) tithi (\"\(group.sense)\"): \(later ? "a time under it suits \(group.suits)" : "a birth under it is read as \(group.nature)")."
             if [5, 10, 15].contains(number), hoursLeft < 0.8 { words += " It fell in the last 48 minutes of this tithi, a joint Parashara marks for rites of pacification." }
             if self.day.tithi == 28, !later {
                 let sixth = min(5, Int(within * 6))
@@ -158,7 +168,7 @@ struct PanchangaCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            ForEach(chart.panchanga(zoneHours: natal == nil ? (store.birth?.zoneHours ?? 0) : Double(store.zone.secondsFromGMT(for: Names.date(julianDay: chart.jd))) / 3600, natal: natal)) { limb in
+            ForEach(chart.panchanga(zoneHours: natal == nil ? (store.birth?.zoneHours ?? 0) : Double(store.skyZone.secondsFromGMT(for: Names.date(julianDay: chart.jd))) / 3600, natal: natal, place: natal == nil ? nil : store.skyPlace)) { limb in
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 8) {
                         Text(limb.id).foregroundStyle(.secondary).frame(width: 84, alignment: .leading).help(Help.term(limb.id) ?? "")
@@ -178,10 +188,22 @@ struct PanchangaCard: View {
 struct DayNowCard: View {
     @EnvironmentObject var store: Store
     let natal: Chart
+    @State private var name = ""
 
     var body: some View {
-        if let sky = store.sky { PanchangaCard(chart: sky, natal: natal) }
-        else {
+        if let sky = store.sky {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Text("Read for").foregroundStyle(.secondary)
+                    Text(store.skyPlace).fontWeight(.medium)
+                    TextField("where you are now", text: $name).textFieldStyle(.roundedBorder).frame(width: 190).onSubmit { store.lookUpHere(name); name = "" }
+                    Button("Look up") { store.lookUpHere(name); name = "" }.controlSize(.small).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .help("Sends the place name to Apple's geocoder and reads the later sky from there: sunrise, the hour and the rising sign follow, here and on every transit card.")
+                    if store.here != nil { Button("Birth place") { store.here = nil }.controlSize(.small) }
+                }
+                PanchangaCard(chart: sky, natal: natal)
+            }
+        } else {
             HStack {
                 Text("The desk stands at the birth; the birth day's limbs are in the Panchanga card.").foregroundStyle(.secondary)
                 Button("Go to now") { store.goNow() }.controlSize(.small)
@@ -194,7 +216,7 @@ extension Report {
     func panchangaPage(_ number: Int) -> AnyView { limbsPage(number, heading: "The Five Limbs of the Birth Day", limbs: chart.panchanga(zoneHours: birth.zoneHours ?? 0)) }
     /// the limbs of the day of the report, weighed in the birth chart
     func dayPage(_ sky: Chart) -> (Int) -> AnyView {
-        { number in self.limbsPage(number, heading: "The Five Limbs of the Day of This Report", limbs: sky.panchanga(zoneHours: Double(self.zone.secondsFromGMT(for: Names.date(julianDay: sky.jd))) / 3600, natal: self.chart)) }
+        { number in self.limbsPage(number, heading: "The Five Limbs of the Day of This Report", limbs: sky.panchanga(zoneHours: Double((self.transitZone ?? self.zone).secondsFromGMT(for: Names.date(julianDay: sky.jd))) / 3600, natal: self.chart, place: self.transitPlace)) }
     }
     func limbsPage(_ number: Int, heading: String, limbs: [Limb5]) -> AnyView {
         page(number, title: "Panchanga") {

@@ -70,6 +70,13 @@ final class Store: ObservableObject {
     @Published var sky: Chart?
     /// the moment under view; nil means the birth itself
     @Published var moment: Date? { didSet { readSky() } }
+    /// where a later sky is read from; nil reads it from the birth place
+    struct Here: Codable, Equatable { var place: String; var latitude: Double; var longitude: Double; var zone: String }
+    @Published var here: Here? = Store.trial ? nil : UserDefaults.standard.data(forKey: "here").flatMap { try? JSONDecoder().decode(Here.self, from: $0) } {
+        didSet { if !Store.trial { defaults.set(here.flatMap { try? JSONEncoder().encode($0) }, forKey: "here") }; readSky() }
+    }
+    var skyZone: TimeZone { here.flatMap { TimeZone(identifier: $0.zone) } ?? zone }
+    var skyPlace: String { here?.place ?? birth.flatMap { $0.place.isEmpty ? nil : $0.place } ?? "the birth place" }
     /// seconds added to the birth time while rectifying, not yet written to the birth
     @Published var rectify: Double = 0 { didSet { if rectify != oldValue { readNatal() } } }
     @Published var rectifying = false
@@ -267,8 +274,9 @@ final class Store: ObservableObject {
     func readSky() {
         guard let moment, let birth else { sky = nil; return }
         let engine = engine, node = node, ayanamsa = ayanamsa
-        let zoneHours = Double(zone.secondsFromGMT(for: moment)) / 3600, day = moment.timeIntervalSince1970 / 86400 + 2440587.5
-        skyFeed.submit({ Result { try engine.chart(julianDay: day, latitude: birth.latitude, longitude: birth.longitude, node: node, ayanamsa: ayanamsa, zoneHours: zoneHours) } }) { result in
+        let zoneHours = Double(skyZone.secondsFromGMT(for: moment)) / 3600, day = moment.timeIntervalSince1970 / 86400 + 2440587.5
+        let latitude = here?.latitude ?? birth.latitude, longitude = here?.longitude ?? birth.longitude
+        skyFeed.submit({ Result { try engine.chart(julianDay: day, latitude: latitude, longitude: longitude, node: node, ayanamsa: ayanamsa, zoneHours: zoneHours) } }) { result in
             guard self.moment != nil else { return }
             switch result {
             case .success(let chart): self.sky = chart; self.problem = nil
@@ -334,6 +342,19 @@ final class Store: ObservableObject {
     func resetLayout() { layout[workspace] = Store.standardLayout[workspace] ?? [] }
 
     // MARK: place
+
+    /// Set the place a later sky is read from by its name; an empty name returns to the birth place. The name is sent to Apple's geocoder.
+    func lookUpHere(_ name: String) {
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { here = nil; return }
+        CLGeocoder().geocodeAddressString(name) { marks, error in
+            Task { @MainActor in
+                guard let mark = marks?.first, let location = mark.location, let zone = mark.timeZone else { self.problem = "The place was not found: \(error?.localizedDescription ?? "no match")"; return }
+                let full = [mark.locality, mark.administrativeArea, mark.country].compactMap { $0 }.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.joined(separator: ", ")
+                self.here = Here(place: full.isEmpty ? name : full, latitude: (location.coordinate.latitude * 10000).rounded() / 10000, longitude: (location.coordinate.longitude * 10000).rounded() / 10000, zone: zone.identifier)
+                self.problem = nil
+            }
+        }
+    }
 
     /// Fill latitude, longitude and time zone from the place's name. The name is sent to Apple's geocoder.
     func lookUpPlace() {

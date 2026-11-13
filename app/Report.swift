@@ -137,6 +137,9 @@ struct Report {
     let chart: Chart
     /// the sky at another moment, read for the same place, for the transit page
     var transit: Chart? = nil
+    /// the clock and the name of the place the transit sky is read from, when it is not the birth place
+    var transitZone: TimeZone? = nil
+    var transitPlace: String? = nil
 
     var zone: TimeZone { birth.timeZone ?? TimeZone(secondsFromGMT: 0)! }
     var moment: Date { birth.moment ?? Date() }

@@ -77,9 +77,9 @@ struct MainView: View {
         panel.nameFieldStringValue = "\(birth.name.isEmpty ? "Chart" : birth.name).pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let engine = store.engine, now = Date()
-        let transit = store.sky ?? (try? engine.chart(julianDay: now.timeIntervalSince1970 / 86400 + 2440587.5, latitude: birth.latitude, longitude: birth.longitude,
-                                                      node: store.node, ayanamsa: store.ayanamsa, zoneHours: Double(store.zone.secondsFromGMT(for: now)) / 3600))
-        if Report(birth: birth, chart: chart, transit: transit).write(to: url) { NSWorkspace.shared.open(url) } else { store.problem = "The report could not be written to \(url.path)." }
+        let transit = store.sky ?? (try? engine.chart(julianDay: now.timeIntervalSince1970 / 86400 + 2440587.5, latitude: store.here?.latitude ?? birth.latitude, longitude: store.here?.longitude ?? birth.longitude,
+                                                      node: store.node, ayanamsa: store.ayanamsa, zoneHours: Double(store.skyZone.secondsFromGMT(for: now)) / 3600))
+        if Report(birth: birth, chart: chart, transit: transit, transitZone: store.skyZone, transitPlace: store.skyPlace).write(to: url) { NSWorkspace.shared.open(url) } else { store.problem = "The report could not be written to \(url.path)." }
     }
 }
 

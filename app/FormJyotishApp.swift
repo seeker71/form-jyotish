@@ -57,6 +57,32 @@ struct FormJyotishApp: App {
             if let war = try? engine.chart(julianDay: 2411113.2347, latitude: 48.25, longitude: 13.03, node: "mean", ayanamsa: "lahiri", zoneHours: 0.87), let venus = war.graha("Ve"), let mars = war.graha("Ma") {
                 hold("in the war of 1889 Venus prevails by latitude, against the lower-longitude rule", war.finer(venus).supports.contains { $0.contains("so Venus prevails; the lower-longitude rule") } && war.finer(mars).strains.contains { $0.contains("Venus 6.3° north, so Venus prevails") })
             } else { hold("the sky of 1889 could be read", false) }
+            hold("the 7th is read as a Bhadra tithi", chart.panchanga(zoneHours: birth.zoneHours ?? 0).first { $0.id == "Tithi" }?.words.contains("The 7th is a Bhadra tithi") == true)
+            hold("a later day names the place its rising sign is read from", chart.panchanga(zoneHours: 0, natal: chart, place: "Ubud").first { $0.id == "Lagna" }?.words.hasPrefix("The sign rising at Ubud;") == true)
+            // what Light on Life reads in Einstein's chart, under Lahiri as the book counts it
+            if let book = try? engine.chart(julianDay: 2407422.9514, latitude: 48.4, longitude: 10.0, node: "mean", ayanamsa: "lahiri", zoneHours: 0.667), let mercury = book.graha("Me"), let venus = book.graha("Ve"), let mars = book.graha("Ma") {
+                let names = Set(book.yogas.map(\.name))
+                hold("the yogas the book reads in Einstein's chart are found", ["Budhaditya yoga", "Neecha-bhanga raja yoga", "Maha-parivartana yoga", "Pravrajya yoga", "Saraswati yoga"].allSatisfy { names.contains($0) })
+                hold("Mercury is debilitated and combust in the 10th, and two of the four in Meena are combust", mercury.status == "Debil." && mercury.combust == true && book.house(ofSign: mercury.sign) == 10 && book.grahas.filter { $0.sign == 11 && $0.combust == true }.count == 2)
+                hold("Venus is exalted in the 10th and Mars, lord of the Moon's sign, is exalted", venus.status == "Exalt." && book.house(ofSign: venus.sign) == 10 && mars.status == "Exalt.")
+                hold("the lagna stands in Ardra, within three minutes of Punarvasu", book.asc.nak == 5 && 20 - book.asc.deg < 0.75 && book.asc.sign == 2)
+                hold("Jupiter aspects the lagna", book.aspects[4].contains(book.asc.sign))
+                hold("Malavya recurs from all three lagnas, as the book counts it", book.yogas.contains { $0.name == "Malavya yoga" && $0.why.contains("recurs from all three lagnas (a trine gives the extended form)") })
+                hold("Mercury's cancellation is a raja yoga and the Moon's is not", book.yogas.contains { $0.name == "Neecha-bhanga raja yoga" && $0.grahas == ["Me"] } && book.yogas.contains { $0.name == "Neecha-bhanga" && $0.grahas == ["Mo"] })
+                hold("the first dasha, Mercury's, ends about 12 December 1888", book.dasha.first.map { $0.lord == "Me" && abs($0.end - 2410983.5) < 3 } == true)
+                hold("the Sun has directional strength in the 10th", book.graha("Su").map { book.finer($0).supports.contains { $0.hasPrefix("Directional strength") } } == true)
+            } else { hold("Einstein's chart under Lahiri could be read", false) }
+            // skies found by scanning 2020: a Kala-sarpa yoga, and a mahapurusha yoga recurring from all three lagnas
+            if let sarpa = try? engine.chart(julianDay: 2458904.26, latitude: 28.6139, longitude: 77.209, node: "mean", ayanamsa: "lahiri", zoneHours: 5.5), let yoga = sarpa.yogas.first(where: { $0.name == "Kala-sarpa yoga" }) {
+                let words = sarpa.yogaConditions(yoga) ?? ""
+                print("seen: " + words)
+                hold("a Kala-sarpa yoga says which way it lies and where it gathers", (words.contains("anuloma") || words.contains("viloma")) && words.contains("Its matters gather in the houses"))
+            } else { hold("the Kala-sarpa sky of 2020 could be read", false) }
+            if let three = try? engine.chart(julianDay: 2458859.23, latitude: 28.6139, longitude: 77.209, node: "mean", ayanamsa: "lahiri", zoneHours: 5.5) {
+                let whys = three.yogas.filter { $0.group == "Mahapurusha" }.map { $0.name + ": " + $0.why }
+                print("seen: " + whys.joined(separator: " | "))
+                hold("a mahapurusha yoga says it recurs from all three lagnas", whys.contains { $0.contains("recurs from all three lagnas") })
+            } else { hold("the three-lagna sky of 2020 could be read", false) }
             for other in PublicCharts.all {
                 guard let b = Optional(other.birth), let c = try? engine.chart(for: b, node: b.node ?? "mean", ayanamsa: b.ayanamsa ?? "lahiri") else { continue }
                 for g in c.grahas { if c.war(of: g) != nil { let f = c.finer(g); print("seen in \(other.key): " + (f.supports + f.strains).filter { $0.contains("planetary war") }.joined()) } }
@@ -169,6 +195,8 @@ struct FormJyotishApp: App {
             if let code = value("--focus") { store.hover = .graha(code) }
             // --only-card gochara shows that card alone in the workspace (a snapshot writes no layout)
             if let card = value("--only-card") { store.layout[store.workspace] = [card] }
+            // --here "name|latitude|longitude|zone" reads the later sky from that place
+            if let parts = value("--here")?.split(separator: "|").map(String.init), parts.count == 4, let latitude = Double(parts[1]), let longitude = Double(parts[2]) { store.here = Store.Here(place: parts[0], latitude: latitude, longitude: longitude, zone: parts[3]) }
             if arguments.contains("--now") { store.goNow() }
             if let house = value("--pick-house").flatMap({ Int($0) }), let chart = store.chart { store.pick = .sign(chart.sign(ofHouse: house)) }
             if let codes = value("--glow") { store.glow = codes.split(separator: ",").map(String.init) }

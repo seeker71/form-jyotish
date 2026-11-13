@@ -45,11 +45,13 @@ section [form.bml] {
 
   // ---- the five mahapurusha yogas ----
   // Light on Life weighs a mahapurusha yoga by the lagnas it recurs from: the ascendant, the Moon and the Sun
+  // the book counts Einstein's Malavya, a trine from his Moon, as recurring from all three
+  def yg-seat(ref, sign) = yg-kendra(ref, sign) ? "an angle" : yg-good(ref, sign) ? "a trine" : "";
   def yg-recurs(s, asc, i) {
-   let moon = yg-kendra(s[1], s[i]); let sun = yg-kendra(s[0], s[i]);
-   !yg-kendra(asc, s[i]) ? "" : moon && sun ? "; it stands in an angle from the Moon and from the Sun as well, so the yoga recurs from all three lagnas, its fullest form" :
-    moon ? "; it stands in an angle from the Moon as well, so the yoga recurs from two lagnas" : sun ? "; it stands in an angle from the Sun as well, so the yoga recurs from two lagnas" :
-    "; it is not in an angle from the Moon or the Sun, so the yoga holds from the lagna alone";
+   let moon = yg-seat(s[1], s[i]); let sun = yg-seat(s[0], s[i]); let full = yg-kendra(s[1], s[i]) && yg-kendra(s[0], s[i]);
+   !yg-kendra(asc, s[i]) ? "" : len(moon) > 0 && len(sun) > 0 ? "; it stands in " + moon + " from the Moon and " + sun + " from the Sun as well, so the yoga recurs from all three lagnas" + (full ? ", its fullest form" : " (a trine gives the extended form)") :
+    len(moon) > 0 ? "; it stands in " + moon + " from the Moon as well, so the yoga recurs from two lagnas" : len(sun) > 0 ? "; it stands in " + sun + " from the Sun as well, so the yoga recurs from two lagnas" :
+    "; it is not in an angle or a trine from the Moon or the Sun, so the yoga holds from the lagna alone";
   }
   def yg-mahapurusha(s, asc) {
    let hits = [[2, "Ruchaka"], [3, "Bhadra"], [4, "Hamsa"], [5, "Malavya"], [6, "Shasha"]] |> filter(r => yg-high(s, r[0]) && yg-good(asc, s[r[0]]));
@@ -158,7 +160,9 @@ section [form.bml] {
   }
   def yg-neecha(s, asc) {
    let fallen = st-seven() |> filter(i => s[i] == (st-exalted()[i] + 6) % 12 && yg-any(yg-lifts(s, asc, i)));
-   fallen |> map(i => ["Neecha-bhanga raja yoga", "Cancellation", [i], yg-names()[i] + " is debilitated, and " + value_str(len(yg-lifts(s, asc, i))) + " of the six cancelling conditions hold: " + yg-join(yg-lifts(s, asc, i))]);
+   // Light on Life: the cancellation becomes a raja yoga when the debilitated graha stands in an angle from the lagna
+   fallen |> map(i => [yg-kendra(asc, s[i]) ? "Neecha-bhanga raja yoga" : "Neecha-bhanga", "Cancellation", [i], yg-names()[i] + " is debilitated, and " + value_str(len(yg-lifts(s, asc, i))) + " of the six cancelling conditions hold: " + yg-join(yg-lifts(s, asc, i)) +
+    (yg-kendra(asc, s[i]) ? "; it stands in an angle from the lagna, which makes the cancellation a raja yoga" : "; it stands outside the angles from the lagna, so the debility is cancelled without forming a raja yoga")]);
   }
   // ---- signs exchanged ----
   def yg-exchange-kind(asc, a, b) = yg-in([5, 7, 11], a) || yg-in([5, 7, 11], b) ? "Dainya" : a == 2 || b == 2 ? "Khala" : "Maha";

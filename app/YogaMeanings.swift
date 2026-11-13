@@ -82,6 +82,7 @@ extension Lore {
         "Dainya-parivartana yoga": m("the texts say: foolish and wrongful acts, harsh speech, an unsteady mind, trouble from opponents and obstacles in every venture.", "one house's affairs are tied to a house of strain: its gains come through effort. It asks for steadiness and care in speech."),
         "Khala-parivartana yoga": m("changeable fortune and temper: at times haughty, at times sweet; prosperity alternating with want.", "initiative that runs in bursts. It asks for an even pace."),
         // ---- cancellation ----
+        "Neecha-bhanga": m("the debility is cancelled.", "a weakness that is met and steadied: the graha gives the matters of its houses without the full cost of its fall, though without the rise a raja yoga adds."),
         "Neecha-bhanga raja yoga": m("a rise to power, fame and great wealth, with virtuous deeds.", "a weakness met and turned to strength: what was hard early becomes the ground of achievement. The more of the six conditions hold, the fuller the turn."),
         // ---- points of attention ----
         "Kala-sarpa yoga": m("a pivotal life of great rises and falls; difficulty at the start that can later bloom like the lotus; intensity, ambition and drive.", "a life drawn strongly along one axis. It asks for patience with its turns, and gives focus."),
@@ -205,7 +206,8 @@ extension Lore {
         "Kemadruma yoga": "No true planet (Mars to Saturn) in the 2nd or 12th from the Moon, none with the Moon, and none in an angle from the lagna or the Moon.",
         "Mahabhagya yoga": "For a man: the lagna, the Sun and the Moon in odd signs and a birth by day. For a woman: all three in even signs and a birth by night.",
         "Maha-Lakshmi yoga": "The lord of the 9th and Venus each in their own or exalted sign, in an angle or a trine.",
-        "Neecha-bhanga raja yoga": "A debilitated graha is lifted when the lord of its sign, the lord of its exaltation sign, or the graha exalted in the sign it occupies joins or aspects it, or stands in an angle from the lagna or the Moon: six conditions in all.",
+        "Neecha-bhanga raja yoga": "A debilitated graha is lifted when the lord of its sign, the lord of its exaltation sign, or the graha exalted in the sign it occupies joins or aspects it, or stands in an angle from the lagna or the Moon: six conditions in all. Light on Life counts it a raja yoga when the debilitated graha itself stands in an angle from the lagna.",
+        "Neecha-bhanga": "The same cancellation of a debility, with the debilitated graha outside the angles from the lagna: the fall is lifted and no raja yoga is formed.",
         "Papa-kartari yoga": "Malefics in both the 2nd and the 12th from the lagna.",
         "Shubha-kartari yoga": "Benefics in both the 2nd and the 12th from the lagna.",
         "Maha-parivartana yoga": "Two house lords each in the other's sign. With a lord of the 6th, 8th or 12th it is Dainya; with the lord of the 3rd, Khala; otherwise Maha.",
