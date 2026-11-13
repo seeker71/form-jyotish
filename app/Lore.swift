@@ -76,18 +76,17 @@ extension Chart {
         switch g.status {
         case "Exalt.": supports.append("Exalted in \(Names.signs[g.sign])")
         case "Own": supports.append("In its own sign")
-        case "Grt.Fr.": supports.append("In the sign of a great friend")
-        case "Friend": supports.append("In a friend's sign")
         case "Debil.": strains.append("Debilitated in \(Names.signs[g.sign]): its gifts come through effort")
-        case "Enemy": strains.append("In the sign of a graha it is at odds with")
-        case "Grt.En.": strains.append("In the sign of a graha it is much at odds with")
-        default: break
+        default: if let line = regardLine(g) { if line.helps { supports.append(line.words) } else { strains.append(line.words) } }
         }
         let fine = finer(g)
         supports += fine.supports; strains += fine.strains
+        let light = lightAndJoint(g)
+        supports += light.supports; strains += light.strains
         if [1, 4, 7, 10].contains(house) { supports.append("In an angle, the \(Chart.ordinal(house)) house") }
         else if [5, 9].contains(house) { supports.append("In a trine, the \(Chart.ordinal(house)) house") }
-        else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }
+        else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")" + (g.status == "Own" ? "; in its own sign there, its matters are only slightly held back" : "")) }
+        if [3, 6, 10, 11].contains(house) { supports.append("In an upachaya house: what it signifies " + (house < 10 ? "starts slowly and eases with time" : "is good from the outset and grows with time")) }
         if g.navamsa == g.sign { supports.append("Vargottama: the same sign in the navamsa") }
         if let standing = navamsaStanding(g) {
             if standing.helps { supports.append("In the navamsa: \(standing.word), in \(Names.signs[g.navamsa])") }
@@ -97,19 +96,18 @@ extension Chart {
             let names = hem.who.map { Names.lords[$0] ?? $0 }.joined(separator: ", ")
             if hem.helps { supports.append("Shubha-kartari: benefics on both sides (\(names))") } else { strains.append("Papa-kartari: malefics on both sides (\(names)): asks for clear boundaries") }
         }
-        if g.combust == true {
-            var words = "Combust: the outer matters of its houses ask more; its inner qualities are lit by the Sun"
+        if g.combust == true, g.id != "Mo" {
+            var words = combustLead(g) + ": the outer matters of its houses ask more; its inner qualities are lit by the Sun"
             if let nearing = g.nearing { words += nearing ? ". It is still closing on the Sun, the heavier half of a combustion" : ". It is already drawing away from the Sun, the lighter half of a combustion" }
             let lift = g.status == "Exalt." ? "exalted" : g.status == "Own" ? "in its own sign" : g.navamsa == g.sign ? "vargottama" : nil
             if let lift { words += "; being \(lift), it carries the combustion better" }
+            words += combustTail(g)
             strains.append(words)
         }
-        if g.retro, !["Ra", "Ke"].contains(g.id) { supports.append("Retrograde: near the earth, and strong in whatever it indicates") }
+        if g.retro, !["Ra", "Ke"].contains(g.id) { supports.append(retroWords(g)) }
         if let line = dispositorLine(g) { if line.helps { supports.append(line.words) } else { strains.append(line.words) } }
-        let seenBy = aspecting(sign: g.sign).filter { $0 != g.id }
-        for code in seenBy where ["Ju", "Ve", "Me"].contains(code) { supports.append("Aspected by \(Names.lords[code] ?? code)") }
-        for code in seenBy where ["Sa", "Ma"].contains(code) { strains.append("Aspected by \(Names.lords[code] ?? code): asks for \(code == "Sa" ? "patience and structure" : "courage and directness")") }
-        for node in grahas.suffix(2) where node.sign == g.sign && node.id != g.id { strains.append("Shares its sign with \(node.name): \(node.id == "Ra" ? "amplified, unconventional" : "turned inward")") }
+        let company = companyLines(g)
+        supports += company.supports; strains += company.strains
         if let index {
             let ratio = strengthRatio(index), bindus = ashtakavarga[index][g.sign]
             if ratio >= 1 { supports.append(String(format: "Shadbala %.2f times what is required", ratio)) } else { strains.append(String(format: "Shadbala %.2f of what is required", ratio)) }

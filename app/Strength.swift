@@ -166,5 +166,31 @@ extension Report {
         }
     }
 
-    var strengthPages: [(Int) -> AnyView] { [shadbalaPage, ashtakavargaPage] }
+    /// the primary and secondary factors each graha meets, as Light on Life gives the rules
+    func keyFactorsPage(_ number: Int) -> AnyView {
+        let widths: [CGFloat] = [50, 96, 112, 98, 102]
+        let row = { (cells: [Text], bold: Bool) -> AnyView in
+            AnyView(HStack(alignment: .top, spacing: 0) { ForEach(cells.indices, id: \.self) { cells[$0].fixedSize(horizontal: false, vertical: true).frame(width: widths[$0], alignment: .topLeading) } }
+                .font(Ink.times(bold ? 10 : 9.3)).fontWeight(bold ? .bold : .regular))
+        }
+        let show = { (list: [String]) in Text(list.isEmpty ? "·" : list.joined(separator: "\n")) }
+        return page(number, title: "Strength and Weakness") {
+            title("Graha Strength and Weakness", y: 76)
+            band(x: 65, y: 104, width: 468, height: 18)
+            row([Text("Graha")] + KeyFactorsCard.legend.map { Text($0.0) }, true).at(76, 107)
+            VStack(alignment: .leading, spacing: 7) {
+                ForEach(chart.grahas) { g in
+                    let k = chart.keyFactors(g)
+                    row([lordText(g.id), show(k.primaryStrength), show(k.primaryWeakness), show(k.secondaryStrength), show(k.secondaryWeakness)], false)
+                }
+                Rectangle().fill(Ink.rule).frame(width: 458, height: 0.7)
+                ForEach(KeyFactorsCard.legend, id: \.0) { item in Text("\(item.0): \(item.1).").italic().fixedSize(horizontal: false, vertical: true).frame(width: 452, alignment: .leading) }
+                Text("The rules follow Light on Life, chapters 4 and 9. Friendship is the natural relationship with the lord of the sign. Combustion states the distance from the Sun: the closer, the stronger. The Moon is read by its light, strong from the fifth day of the waxing half to the tenth of the waning. Strength is a graha's power to act; what it acts for is read from its nature and the houses it rules. The pages that weigh each graha give every factor in full.")
+                    .italic().fixedSize(horizontal: false, vertical: true).frame(width: 452, alignment: .leading)
+            }
+            .font(Ink.times(9)).at(76, 130)
+        }
+    }
+
+    var strengthPages: [(Int) -> AnyView] { [keyFactorsPage, shadbalaPage, ashtakavargaPage] }
 }

@@ -31,7 +31,7 @@ extension Chart {
 
     /// the grahas in the signs on either side of a sign, as the kartari yogas read them
     func hemming(of sign: Int, except code: String) -> (word: String, who: [String], helps: Bool)? {
-        let fair = ["Mo", "Me", "Ju", "Ve"], harsh = ["Su", "Ma", "Sa", "Ra", "Ke"]
+        let fair = grahas.map(\.id).filter(benefic), harsh = grahas.map(\.id).filter { !benefic($0) }
         let before = grahas.filter { $0.sign == (sign + 11) % 12 && $0.id != code }.map(\.id), after = grahas.filter { $0.sign == (sign + 1) % 12 && $0.id != code }.map(\.id)
         let harshBoth = before.contains(where: harsh.contains) && after.contains(where: harsh.contains)
         let fairBoth = before.contains(where: fair.contains) && after.contains(where: fair.contains)

@@ -40,6 +40,11 @@ the old one's place the next time the app starts (or at once with Restart now).
   moment each limb of the day ends. A planetary war goes to the higher latitude, as Light on Life gives the
   rule; a mahapurusha yoga says which of the three lagnas it recurs from; and a card gives the five limbs of
   the day the time bar stands at, with the rising sign, weighed in the birth chart for choosing a time.
+- Light on Life is the main reference for the rules of reading. The Strength desk opens on its rules of graha
+  strength and weakness: a table of own sign, exaltation, directional strength, retrogression, debilitation,
+  combustion and planetary war with this chart's grahas marked in it; the primary and secondary factors each
+  graha meets; the natural relationships and whose guest each graha is; and three charts of rulership,
+  exaltation and dig bala on the chart's own lagna.
 - The twelve houses judged by three limbs, the house, its lord and its karaka, after Hart de Fouw and Robert
   Svoboda's Light on Life (Phaladipika 15): what supports each limb beside what asks more of it, and where
   the three agree. Dispositors, period lords in transit, and transits counted from the Moon with vedha.

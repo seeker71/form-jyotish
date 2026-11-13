@@ -53,7 +53,8 @@ extension Chart {
         if g.status == "Debil." { words.append("debilitated") }
         // an enemy's sign is judged by natural enmity toward the sign's lord, as the book's table has it
         if g.status != "Debil.", g.status != "Exalt.", Lore.natural[g.id]?[Chart.signLords[g.sign]] == -1 { words.append("in an enemy's sign") }
-        if g.combust == true { words.append("combust") }
+        if g.combust == true, g.id != "Mo" { words.append("combust") }
+        if g.id == "Mo", !moonBright { words.append("dark, close to the new Moon") }
         return words.isEmpty ? nil : words.joined(separator: " and ")
     }
 
