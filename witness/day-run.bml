@@ -36,7 +36,7 @@ section [form.bml] {
    wd-off(jc-angle(path, segs, "lahiri", 0, ends[0]), 12.0) < 0.00001 && wd-off(jc-angle(path, segs, "lahiri", 0, ends[1]), 6.0) < 0.00001 &&
     wd-off(jc-angle(path, segs, "lahiri", 1, ends[2]), 360.0 / 27.0) < 0.00001 && wd-off(jc-angle(path, segs, "lahiri", 2, ends[3]), 360.0 / 27.0) < 0.00001,
    ends[1] > start && ends[1] <= ends[0] && ends[2] > start && ends[2] - start < 1.2 && ends[3] > start && ends[3] - start < 1.2,
-   str_find(text, "\"lat\":", 0) >= 0 && str_find(text, "\"nearing\":", 0) >= 0 && str_find(text, "\"tithi_end\":", 0) >= 0 && str_find(text, "\"yoga_end\":", 0) >= 0];
+   str_find(text, "\"lat\":", 0) >= 0 && str_find(text, "\"dist\":", 0) >= 0 && str_find(text, "\"nearing\":", 0) >= 0 && str_find(text, "\"tithi_end\":", 0) >= 0 && str_find(text, "\"yoga_end\":", 0) >= 0];
   let held = len(claims |> filter(c => c));
   "day witness: " + (held == len(claims) ? "green" : "red") + " " + value_str(held) + " of " + value_str(len(claims)) + " claims " + value_str(claims) + " (latitudes within 0.5 arcsec of Horizons; Venus north of Mars in the war of 1889; the new moon within 90 s; each limb ends on its boundary)";
  }

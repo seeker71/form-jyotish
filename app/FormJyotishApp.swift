@@ -80,6 +80,11 @@ struct FormJyotishApp: App {
                 hold("the desks the book teaches come first and the additions last", Array(Store.workspaces.suffix(4)).allSatisfy(Store.additions.contains) && Store.workspaces.prefix(7).allSatisfy { !Store.additions.contains($0) })
                 hold("on every desk the book's cards stand before the additions", Store.standardLayout.values.allSatisfy { cards in let first = cards.firstIndex(where: Catalog.additions.contains) ?? cards.count; return cards[first...].allSatisfy { Catalog.additions.contains($0) || $0.hasPrefix("chart:") || ["moon", "dasha-context"].contains($0) } })
                 hold("the ayanamsa at Einstein's birth is near 22 degrees", abs(book.ayanamsa - 22.1) < 0.3)
+                if let war = try? engine.chart(julianDay: 2411113.2347, latitude: 48.25, longitude: 13.03, node: "mean", ayanamsa: "lahiri", zoneHours: 0.87), let v = war.graha("Ve"), let m = war.graha("Ma"), let mv = war.magnitude(v), let mm = war.magnitude(m) {
+                    hold("in the war of 1889 Venus outshines Mars as well as standing higher, and both magnitudes agree with JPL Horizons (-4.276, 1.449) within 0.05", abs(mv + 4.276) < 0.05 && abs(mm - 1.449) < 0.05 && war.brightnessLine(v, m).contains("both tests agree"))
+                    print(String(format: "seen in the war of 1889: Venus magnitude %.2f, Mars magnitude %.2f", mv, mm))
+                }
+                hold("Einstein's Moon is a waning gibbous turning to its last quarter", ["waning gibbous", "last quarter"].contains(book.moonPhase))
                 hold("a combustion states its distance from the Sun", book.factors(for: mercury).strains.contains { $0.hasPrefix("Combust, ") && $0.contains("° from the Sun") })
                 hold("the Moon is read by its light and never as combust", book.graha("Mo").map { m in !book.factors(for: m).strains.contains { $0.hasPrefix("Combust") } && (book.factors(for: m).supports + book.factors(for: m).strains).contains { $0.hasPrefix("Bright Moon (waning, Krishna Saptami, 99° from the Sun)") } } == true)
                 hold("friendship is the natural one: the Sun in Meena is the guest of its friend Jupiter", book.graha("Su").map { book.keyFactors($0).secondaryStrength.contains("Friend's sign (Jupiter)") } == true)

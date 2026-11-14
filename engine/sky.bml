@@ -58,6 +58,9 @@ section [form.bml] {
    [d[0] / r + earth[3] / 299792.458, d[1] / r + earth[4] / 299792.458, d[2] / r + earth[5] / 299792.458];
   }
 
+  // distance from the earth, astronomical units
+  def sk-distance(path, segs, id, et) { let earth = sk-body(path, segs, 399, et); sk-norm(sk-light(path, segs, id, et, earth, 0.0, 2)) / 149597870.7; }
+
   // ---- equator J2000 -> ecliptic J2000 -> mean ecliptic of date ----
   def sk-eps0() = 23.439279444444445;
   def sk-to-ecliptic(v) { let c = jn-cosd(sk-eps0()); let s = jn-sind(sk-eps0()); [v[0], v[1] * c + v[2] * s, v[2] * c - v[1] * s]; }

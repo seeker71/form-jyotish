@@ -74,10 +74,11 @@ section [form.bml] {
    let limits = jc-combust()[i]; let retro = jn-norm180(later[i] - now[i]) < 0.0;
    i > 0 && jc-abs(jn-norm180(now[i] - now[0])) < (retro ? limits[1] : limits[0]);
   }
-  // lat is the latitude north of the ecliptic; nearing says the graha is closing on the Sun
+  def jc-zip(a, b, i) = i >= len(a) ? [] : cons([a[i], b[i]], jc-zip(a, b, i + 1));
+  // lat is the latitude north of the ecliptic, dist the distance from the earth in AU; nearing says the graha is closing on the Sun
   def jc-seven(i, now, later, lats) {
    i >= 7 ? [] : cons(jc-moving(jc-grahas()[i][0], jc-grahas()[i][1], now[i], later[i],
-    [jc-pair("lat", jc-num(lats[i])), jc-pair("nearing", jc-bool(jc-abs(jn-norm180(later[i] - later[0])) < jc-abs(jn-norm180(now[i] - now[0])))),
+    [jc-pair("lat", jc-num(lats[i][0])), jc-pair("dist", jc-num(lats[i][1])), jc-pair("nearing", jc-bool(jc-abs(jn-norm180(later[i] - later[0])) < jc-abs(jn-norm180(now[i] - now[0])))),
      jc-pair("status", jc-q(jc-status(i, now))), jc-pair("combust", jc-bool(jc-burnt(i, now, later))),
      jc-pair("baladi", jc-q(st-baladi(floor(now[i] / 30.0), now[i] - 30.0 * floor(now[i] / 30.0)))), jc-pair("jagradadi", jc-q(st-jagradadi(i, floor(now[i] / 30.0)))),
      jc-pair("deeptadi", jc-q(st-deeptadi(i, floor(now[i] / 30.0), now |> map(x => floor(x / 30.0)), jc-burnt(i, now, later))))]), jc-seven(i + 1, now, later, lats));
@@ -229,7 +230,7 @@ section [form.bml] {
   def jc-chart-read(path, segs, jd, lat, lon, node, mode, zone) {
    let soon = jd + 1.0 / 24.0; let ay = sk-ayanamsa-of(path, segs, jd, mode); let ay1 = sk-ayanamsa-of(path, segs, soon, mode);
    let dpsi = sk-nutation(sk-century(jd))[0]; let rise = sk-rising(jd, lat, lon);
-   let trop = jc-grahas() |> map(g => sk-tropical(path, segs, g[2], jd)); let now = trop |> map(p => jn-norm360(p[0] - ay)); let lats = trop |> map(p => p[1]); let later = jc-lons(path, segs, jc-grahas(), soon, ay1);
+   let trop = jc-grahas() |> map(g => sk-tropical(path, segs, g[2], jd)); let now = trop |> map(p => jn-norm360(p[0] - ay)); let lats = jc-zip(trop |> map(p => p[1]), jc-grahas() |> map(g => sk-distance(path, segs, g[2], sk-et(jd))), 0); let later = jc-lons(path, segs, jc-grahas(), soon, ay1);
    let rahu = jn-norm360(sk-node-of-date(path, segs, jd, node) - ay); let rahu1 = jn-norm360(sk-node-of-date(path, segs, soon, node) - ay1);
    let asc = jn-norm360(rise[0] - ay - dpsi); let mc = jn-norm360(rise[1] - ay - dpsi);
    let far = jc-lons(path, segs, jc-outer(), jd, ay); let far1 = jc-lons(path, segs, jc-outer(), soon, ay1);

@@ -54,15 +54,15 @@ extension Lore {
     /// what each house stands for, by theme
     static let houseMatters: [[(head: String, words: String)]] = [
         [("Body", "constitution, the birthplace, length of life"), ("Health", "vigour, illness and recovery"), ("Character", "temperament, happiness or sorrow, virtue"), ("Appearance", "build and complexion"), ("Standing", "dignity, honour and position"), ("Birth", "the start of life and youth")],
-        [("Family", "the household and those one maintains"), ("Wealth", "savings and movable possessions"), ("Mouth", "food, speech and the voice"), ("Face", "the face, the right eye, the throat"), ("Learning", "what is learned early and by ear")],
+        [("Family", "the household and those one maintains"), ("Wealth", "savings and movable possessions"), ("Mouth", "food, speech, breath and the voice; singers and speakers"), ("Face", "the face, the right eye, the throat"), ("Learning", "what is learned early and by ear")],
         [("Siblings", "the younger ones; neighbours"), ("Courage", "prowess, the arms and hands"), ("Communication", "writing, messages, practical learning"), ("Arts and skills", "drawing, crafts and trades"), ("Short journeys", "quick travel and errands")],
         [("Mother", "the maternal line and the ancestors"), ("Home and land", "houses, fixed property, fields and wells"), ("Education", "schooling up to a degree"), ("Mind (manas)", "feelings, lasting happiness, memory"), ("Vehicles", "all conveyances"), ("Roots", "first values, one's community")],
         [("Children", "children and grandchildren"), ("Creativity", "music, writing, performance"), ("Buddhi", "discernment, counsel, teaching and students"), ("Practice", "mantra, the chosen deity, spiritual effort"), ("Purva punya", "merit brought from before"), ("Speculation", "ventures taken on judgement")],
         [("Opponents", "disputes, lawsuits, theft"), ("Debt", "credit and loans"), ("Illness", "acute illness, injuries, anxieties"), ("Routines", "diet, exercise, daily upkeep"), ("Service", "employees, service work, competition")],
         [("Marriage", "the spouse and courtship"), ("Partners", "business partners and dealings with others"), ("Desire", "attraction and its conduct"), ("Trade", "independent business, the go-between"), ("Journeys", "travel abroad, a journey within a journey")],
-        [("Longevity", "the length of life and its close"), ("Others' money", "inheritance, settlements, a partner's wealth"), ("Hidden knowledge", "Jyotish, yoga, research, depth psychology, the occult"), ("Loss of means", "bankruptcy and reversals"), ("Chronic illness", "what is hard to cure"), ("Transformation", "crisis that opens a breakthrough")],
+        [("Longevity", "the length of life and its close"), ("Others' money", "inheritance, settlements, a partner's wealth"), ("Hidden knowledge", "Jyotish, yoga, research, depth psychology, the occult"), ("Loss of means", "bankruptcy and reversals"), ("Chronic illness", "what is hard to cure"), ("Suffering", "anxieties, disputes, defeat"), ("The hidden", "all unseen parts of nature"), ("Transformation", "crisis that opens a breakthrough")],
         [("Father", "the paternal line"), ("Higher knowledge", "wisdom and advanced study"), ("Bhagya", "fortune, affluence, good karma ripening"), ("Long journeys", "pilgrimage and travel far"), ("Religion", "the guru, devotion and worship"), ("Dharma", "innate ethics and opportunity")],
-        [("Profession", "career, what one does in the world"), ("Authority", "government, leadership, large organisations"), ("Commerce", "trade and business"), ("Status", "fame, position and honours"), ("The sky", "what stands highest and is seen by all")],
+        [("Profession", "career, what one does in the world"), ("Authority", "government, leadership, large organisations"), ("Commerce", "trade and business"), ("Status", "fame, position and honours"), ("The sky", "what stands highest and is seen by all; astronomy and flight")],
         [("Gains", "wealth received"), ("Income", "what the career brings in"), ("Easy money", "investments and windfalls"), ("Elder siblings", "read apart from the 3rd"), ("Friends", "groups, societies and networks"), ("Hopes", "wishes and long-held goals")],
         [("Loss", "outlay of every kind"), ("Expenses", "of body, mind and spirit"), ("Foreign lands", "emigration and life far from home"), ("The bed", "sleep and its pleasures"), ("Seclusion", "hospitals, ashrams, retreats, confinement"), ("Moksha", "liberation and letting go")],
     ]
@@ -73,13 +73,13 @@ extension Lore {
 
     /// what each graha stands for: its essence, the people, the matters, and its body and nature
     static let grahaMeanings: [String: (essence: String, people: String, matters: String, nature: String)] = [
-        "Su": ("the soul (atma)", "the father, rulers, those in authority", "government, fame, vitality, the sense of self", "the heart, the head, the bones; pitta; hot and dry"),
-        "Mo": ("the mind (manas)", "the mother, women, the public", "emotions, memory, perception, nourishment, beauty of face", "blood and the body's fluids, the chest; kapha and vata; white, cool and moist"),
+        "Su": ("the soul (atma)", "the father, rulers, those in authority", "government, fame, vitality, the sense of self, reliability and order", "the heart, the head, the bones; pitta; hot and dry"),
+        "Mo": ("the mind (manas)", "the mother, women, the public", "emotions, memory, perception, imagination, nourishment, the tides, beauty of face", "blood and the body's fluids, the chest, lungs and stomach; kapha and vata; white, cool and moist"),
         "Ma": ("energy in action", "siblings, soldiers, athletes, surgeons", "courage, land and property, contest, anger and pride", "the liver, muscle and marrow; pitta; red"),
         "Me": ("discerning intelligence", "students, traders, writers, friends", "education, communication, commerce, speech and writing, the rational mind", "the nervous system and the skin; all three doshas; versatile, neuter; green"),
         "Ju": ("wisdom", "teachers, advisors, children, the husband", "knowledge, fortune, spirituality, good counsel, growth and optimism", "fat and the liver; kapha; yellow"),
         "Ve": ("desire", "the spouse, women, artists", "marriage, sensuality, harmony, the fine arts, vehicles and comforts", "the reproductive system; kapha and vata; many-coloured"),
-        "Sa": ("karma ripening through time", "elders, workers, renunciates", "longevity, sorrow and endurance, chronic illness, separation, solitude, discipline", "the legs and the nerves; vata; dark; cold and dry"),
+        "Sa": ("karma ripening through time", "elders, workers, renunciates", "longevity, sorrow and endurance, chronic illness, separation, solitude, discipline, patience, responsibility, planning", "the legs and the nerves; vata; dark; cold and dry"),
         "Ra": ("worldly ambition", "foreigners and outsiders", "ambition, disguise, sudden events, attachment, intrigue, poisons", "acts like Saturn, and takes on the grahas joined to it and the lord of its sign"),
         "Ke": ("liberation", "ascetics and healers", "detachment, insight, suddenness, the occult, what is let go", "acts like Mars, and takes on the grahas joined to it and the lord of its sign"),
     ]
@@ -135,7 +135,7 @@ struct BhavaClassCard: View {
                     panel("The twelve bhavas", marks { h in [("\(h) \(Lore.houseSanskrit[h - 1])\n\(Lore.houseNames[h - 1])", Lore.houses[h - 1])] },
                           "The houses counted from this chart's lagna, each with its Sanskrit name. A bhava is a state or condition more than a place. Click a house to open it.")
                     panel("Angles and trines", marks { h in Lore.houseClasses(h).filter { ["Kendra", "Trikona"].contains($0.name) }.map { ($0.name, $0.words) } },
-                          "The kendras (1, 4, 7, 10) are places of action; the trikonas (1, 5, 9) are places of merit and opportunity. Together they are the most valued houses; the 1st is both.")
+                          "The kendras (1, 4, 7, 10) are places of action; the trikonas (1, 5, 9) are places of merit and opportunity. Together they are the most valued houses; the 1st is both. The two axes of the angles, 1 to 7 and 4 to 10, are the chart's corridor of power.")
                     panel("The four aims (purusharthas)", aimMarks,
                           "Dharma in 1, 5, 9; artha in 2, 6, 10; kama in 3, 7, 11; moksha in 4, 8, 12. Each aim is a trine of houses, with this chart's grahas set in them.")
                     panel("Difficulty, closing, improvement", marks { h in Lore.houseClasses(h).filter { ["Trik", "Dusthana", "Maraka", "Upachaya"].contains($0.name) }.map { ($0.name, $0.words) } },
@@ -207,7 +207,7 @@ struct BhavaMeaningsCard: View {
                         SheetCell(text: (Lore.houseClasses(house).map(\.name) + [Lore.aim(of: house)]).joined(separator: ", ") + "\n\(Names.signs[sign]); lord \(Names.lords[lord] ?? lord) \(chart.placing(lord))\n" + (inside.isEmpty ? "No graha in it" : "In it: " + inside.joined(separator: ", ")), width: widths[1], met: !inside.isEmpty),
                         SheetCell(text: Lore.houseMatters[house - 1].map { "\($0.head): \($0.words)" }.joined(separator: "\n"), width: widths[2])])
                 }
-                Text("A bhava is a state or condition more than a place. A house's matters are read through the house, its lord and its karakas together; a lit cell marks a house with grahas standing in it. Click a row to open the house.")
+                Text("A bhava is a state or condition more than a place. A house's matters are read through the house, its lord and its karakas together; a lit cell marks a house with grahas standing in it. Click a row to open the house. Houses also reflect one another: the 5th from the 5th is the 9th and the 9th from the 9th is the 5th, so merit and fortune are read together; the 11th is the 2nd from the 10th, the income of the career; the 4th is the seat of the mind that the 1st stands on; and the 12th from any house is the outlay of that house's matters. For the inner life the 9th is read first, then the 5th, the 12th and the 8th.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).frame(width: widths.reduce(0, +), alignment: .leading).padding(.top, 6)
             }
         }
@@ -228,7 +228,7 @@ struct GrahaMeaningsCard: View {
                         let ruled = chart.housesRuled(by: g.id), signifies = (1...12).filter { h in Lore.houseKarakas[h - 1].contains { $0.code == g.id } }
                         let here = "Stands \(chart.placing(g.id)), in \(Names.signs[g.sign])" + (ruled.isEmpty ? "" : "\nRules the \(ruled.map(Chart.ordinal).joined(separator: " and "))") + (signifies.isEmpty ? "" : "\nKaraka of the \(signifies.map(Chart.ordinal).joined(separator: ", "))")
                         SheetRow(graha: g.id, cells: [
-                            SheetCell(text: Names.lords[g.id] ?? g.id, width: widths[0], tint: Tint.graha(g.id)),
+                            SheetCell(text: (Names.lords[g.id] ?? g.id) + (g.name == Names.lords[g.id] ? "" : "\n" + g.name), width: widths[0], tint: Tint.graha(g.id)),
                             SheetCell(text: m.essence, width: widths[1]), SheetCell(text: m.people, width: widths[2]),
                             SheetCell(text: m.matters, width: widths[3]), SheetCell(text: m.nature, width: widths[4]),
                             SheetCell(text: here, width: widths[5], met: true)])

@@ -124,6 +124,8 @@ struct Graha: Codable, Identifiable {
     var combust: Bool?
     /// degrees north of the ecliptic, and whether the graha is closing on the Sun (the seven grahas only)
     var lat: Double?
+    /// distance from the earth in astronomical units (the seven grahas only)
+    var dist: Double?
     var nearing: Bool?
     /// the avasthas: by age, by wakefulness, by mood (the seven grahas only)
     var baladi: String?

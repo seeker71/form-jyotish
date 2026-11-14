@@ -240,7 +240,7 @@ struct StrengthSheet: View {
         let moon = chart.graha("Mo"), lights = chart.grahas.prefix(2).compactMap { g in chart.eclipsed(g).map { "\(Names.lords[g.id] ?? g.id) born on \($0.kind) by \($0.node)" } }
         ScrollView(.horizontal) {
             VStack(alignment: .leading, spacing: 1) {
-                SheetRow(graha: nil, cells: zip(["Graha", "Own sign (+)", "Exaltation (+)", "Dig bala (+)", "Retrograde (+)", "Debilitated (−)", "Combustion (−)", "Planetary war (±)"], widths).map { SheetCell(text: $0, width: $1, header: true) })
+                SheetRow(graha: nil, cells: zip(["Graha", "Own sign (+)\nsva-rashi", "Exaltation (+)\nuccha", "Dig bala (+)\ndirectional", "Retrograde (+)\nvakra", "Debilitated (−)\nnicha", "Combustion (−)\nasta", "Planetary war (±)\ngraha yuddha"], widths).map { SheetCell(text: $0, width: $1, header: true) })
                 ForEach(chart.grahas) { g in SheetRow(graha: g.id, cells: cells(g)) }
                 Text("Sun and Moon take no retrogression, combustion or war; their further measure is the Moon's light and eclipses. Here the Moon is \(chart.moonWaxing ? "waxing" : "waning") and \(chart.moonWord) (\(Names.tithi(chart.day.tithi))\(moon == nil ? "" : String(format: ", %.0f° from the Sun", chart.elongation > 180 ? 360 - chart.elongation : chart.elongation)))\(lights.isEmpty ? "; neither light is eclipsed" : "; " + lights.joined(separator: ", ")). A lit cell is a rule this chart meets: green adds strength, orange asks more.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -360,9 +360,9 @@ struct StrengthCharts: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack(alignment: .top, spacing: 18) {
-                panel("Own sign (sva-rashi)", own, "The lord of each sign, set on this chart's lagna. A graha at home is steady and gives well. At home here: \(met { Chart.signLords[$0.sign] == $0.id }).")
+                panel("Own sign (sva-rashi)", own, "The lord of each sign, set on this chart's lagna. A graha at home is always stable and gives well. At home here: \(met { Chart.signLords[$0.sign] == $0.id }).")
                 panel("Exaltation (uccha)", exalted, "Each graha is debilitated in the sign opposite. How fully an exaltation gives, or how much a debilitation asks, also rests on the lord of that sign. Exalted here: \(met { $0.sign == (["Ra", "Ke"].contains($0.id) ? 7 : Lore.exalted[$0.id] ?? -1) }); debilitated: \(met { $0.sign == ((["Ra", "Ke"].contains($0.id) ? 7 : Lore.exalted[$0.id] ?? -7) + 6) % 12 }).")
-                panel("Directional strength (dig bala)", directional, "Mercury and Jupiter at the rising, Sun and Mars at midday, Saturn at the setting, Moon and Venus at midnight; each is without it in the house opposite. It is counted by house, so it holds even for a graha that is combust or debilitated. With dig bala here: \(met { Lore.digBala[$0.id] == chart.house(ofSign: $0.sign) }).")
+                panel("Directional strength (dig bala)", directional, "Mercury and Jupiter, the grahas of intelligence and wisdom, at the rising (1st), when the mind is fresh; Sun and Mars, the hottest, at midday (10th); Saturn, lord of shadow, at the setting (7th); Moon and Venus, the brightest of the night, at midnight (4th). Each is without it in the house opposite. It is counted by house, so it holds even for a graha that is combust or debilitated. With dig bala here: \(met { Lore.digBala[$0.id] == chart.house(ofSign: $0.sign) }).")
             }
         }
     }

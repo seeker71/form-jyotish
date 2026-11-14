@@ -55,12 +55,23 @@ struct StrengthSky: View {
         return lines
     }
 
+    private var phaseLine: String {
+        "In the sky it is a \(chart.moonPhase). The Moon has thirty phases (tithis), fifteen in the bright half and fifteen in the dark; where the Sun stands is the new Moon, the first step of the bright half."
+    }
+    /// the Moon's distance north or south of the Sun's path: the declination test of an eclipse
+    private var latitudeLine: String {
+        guard let lat = chart.graha("Mo")?.lat, let s = chart.syzygy else { return "" }
+        let where_ = String(format: "The Moon stood %.1f° %@ of the Sun's path", abs(lat), lat >= 0 ? "north" : "south")
+        guard s.off < 6 else { return where_ + ". An eclipse also needs the two lights within about 1° of each other in declination at the exact new or full Moon." }
+        return where_ + (abs(lat) < 1 ? ", within the 1° of declination an eclipse needs." : ", outside the 1° of declination a central eclipse needs.")
+    }
+
     /// the nodes are the two points where the Moon's path crosses the Sun's; they own no sign and act through others
     private var nodeWords: [String] {
         chart.grahas.suffix(2).map { node in
             let lord = Chart.signLords[node.sign], with = chart.grahas.filter { $0.sign == node.sign && !["Ra", "Ke"].contains($0.id) }.map { name($0.id) }
-            return "\(node.name), the Moon's \(node.id == "Ra" ? "north (ascending) node" : "south (descending) node"), stands in \(Names.signs[node.sign]), the \(Chart.ordinal(chart.house(ofSign: node.sign))) house. It owns no sign and acts like \(["Su", "Mo"].contains(lord) ? "the " : "")\(name(lord)), the lord of that sign (\(chart.placing(lord)))" + (with.isEmpty ? "" : ", and like \(with.joined(separator: " and ")), joined to it") + "."
-        } + ["Eclipses fall where a new or full Moon meets this axis."]
+            return "\(node.name), the Moon's \(node.id == "Ra" ? "north (ascending) node, the head of the dragon" : "south (descending) node, the tail of the dragon"), stands in \(Names.signs[node.sign]), the \(Chart.ordinal(chart.house(ofSign: node.sign))) house. It owns no sign and acts like \(["Su", "Mo"].contains(lord) ? "the " : "")\(name(lord)), the lord of that sign (\(chart.placing(lord)))" + (with.isEmpty ? "" : ", and like \(with.joined(separator: " and ")), joined to it") + "."
+        } + ["The nodes are the two points where the Moon's path crosses the Sun's. They pick up what stands around them and give it out again, for better or for more effort. Eclipses fall where a new or full Moon meets this axis."]
     }
 
     private var eclipseWords: (text: String, met: Bool) {
@@ -121,7 +132,7 @@ struct StrengthSky: View {
         var lines: [String] = []
         for g in five { if let war = chart.war(of: g), war.prevails {
             let north = { (v: Double?) in v.map { String(format: "%.1f° %@", abs($0), $0 >= 0 ? "north" : "south") } ?? "unread" }
-            lines.append(String(format: "\(name(g.id)) and \(name(war.with.id)) are at war, %.2f° apart. \(name(g.id)) stands \(north(g.lat)) of the ecliptic and \(name(war.with.id)) \(north(war.with.lat)): the higher latitude prevails, so \(name(g.id)) wins. Both carry the mark of the fight; the one that yields carries more.", abs(g.lon - war.with.lon)))
+            lines.append(String(format: "\(name(g.id)) and \(name(war.with.id)) are at war, %.2f° apart. \(name(g.id)) stands \(north(g.lat)) of the ecliptic and \(name(war.with.id)) \(north(war.with.lat)): the higher latitude prevails, so \(name(g.id)) wins. Both carry the mark of the fight; the one that yields carries more.", abs(g.lon - war.with.lon)) + chart.brightnessLine(g, war.with))
         } }
         if !lines.isEmpty { return (lines, true) }
         var best: (Graha, Graha, Double)? = nil
@@ -148,8 +159,8 @@ struct StrengthSky: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 section("Rahu and Ketu, the lunar nodes", met: false, helps: true, nodeWords)
-                section("The Moon's light", met: chart.moonFull || chart.moonNew, helps: chart.moonFull, moonWords)
-                section("Eclipse", met: eclipse.met, helps: false, [eclipse.text])
+                section("The Moon's light", met: chart.moonFull || chart.moonNew, helps: chart.moonFull, moonWords + [phaseLine])
+                section("Eclipse", met: eclipse.met, helps: false, [eclipse.text, latitudeLine])
                 section("Planetary war", met: war.met, helps: false, war.lines)
                 section("Retrogression", met: five.contains(where: \.retro), helps: true, retroWords)
                 section("Combustion", met: five.contains { $0.combust == true }, helps: false, combustWords)
