@@ -101,8 +101,8 @@ extension Chart {
         supports += company.supports; strains += company.strains
         if let index {
             let ratio = strengthRatio(index), bindus = ashtakavarga[index][g.sign]
-            if ratio >= 1 { supports.append(String(format: "Shadbala %.2f times what is required", ratio)) } else { strains.append(String(format: "Shadbala %.2f of what is required", ratio)) }
-            if bindus >= 5 { supports.append("\(bindus) of 8 bindus in its own ashtakavarga here") } else if bindus <= 2 { strains.append("Only \(bindus) of 8 bindus in its own ashtakavarga here") }
+            if ratio >= 1 { supports.append(String(format: "Shadbala %.2f times what is required (an addition to the textbook)", ratio)) } else { strains.append(String(format: "Shadbala %.2f of what is required (an addition to the textbook)", ratio)) }
+            if bindus >= 5 { supports.append("\(bindus) of 8 bindus in its own ashtakavarga here (an addition to the textbook)") } else if bindus <= 2 { strains.append("Only \(bindus) of 8 bindus in its own ashtakavarga here (an addition to the textbook)") }
         }
         return (supports, strains)
     }

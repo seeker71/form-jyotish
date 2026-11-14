@@ -24,6 +24,10 @@ struct YogaList: View {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
                                 Text(yoga.name).fontWeight(.semibold)
+                                if Lore.yogaBeyondBook(yoga.name) {
+                                    Text("not in Light on Life").font(.caption2).fontWeight(.bold).foregroundStyle(.white).padding(.horizontal, 6).padding(.vertical, 1).background(Capsule().fill(Catalog.additionTint))
+                                        .help("Light on Life does not name this yoga; it is read here from other classical sources.")
+                                }
                                 ForEach(yoga.grahas, id: \.self) { code in
                                     Text(code).font(.callout).fontWeight(.medium).foregroundStyle(Tint.graha(code))
                                         .onTapGesture { store.pick = .graha(code) }.help(Help.graha(code))
@@ -88,6 +92,8 @@ struct AvasthaTable: View {
                     PickRow(pick: .graha(g.id), cells: zip([g.name, Help.avastha(g.baladi ?? ""), Help.avastha(g.jagradadi ?? ""), Help.avastha(g.deeptadi ?? "")], widths).map { ($0, $1) },
                             tint: Tint.graha(g.id), retro: g.retro)
                 }
+                Text("Baladi, the state by age, is the avastha Light on Life teaches. Jagradadi and Deeptadi are additions from Parashara.")
+                    .font(.caption).foregroundStyle(Catalog.additionTint).padding(.top, 4)
             }
         }
     }

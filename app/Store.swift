@@ -49,7 +49,7 @@ final class Store: ObservableObject {
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "houses", "reading", "glossary", "sources"],
+        "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "rashi-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "houses", "reading", "glossary", "sources"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
@@ -87,6 +87,10 @@ final class Store: ObservableObject {
     /// the step of the walk-through that is open; nil when it is closed
     @Published var tourAt: Int? = nil
     /// guidance for a reader who knows the tradition: each card states its method in place of the plain words
+    /// whether the desks and cards that stand outside the textbook are shown
+    @Published var showAdditions: Bool = UserDefaults.standard.object(forKey: "showAdditions") as? Bool ?? true {
+        didSet { if !Store.trial { defaults.set(showAdditions, forKey: "showAdditions") }; if !showAdditions, Store.additions.contains(workspace) { workspace = "Guide" } }
+    }
     @Published var familiar: Bool = UserDefaults.standard.bool(forKey: "familiar") { didSet { if !Store.trial { defaults.set(familiar, forKey: "familiar") } } }
     /// the guidance level as one choice: learning, familiar, off
     var guidance: String {

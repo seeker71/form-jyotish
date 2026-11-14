@@ -85,6 +85,9 @@ struct FormJyotishApp: App {
                     print(String(format: "seen in the war of 1889: Venus magnitude %.2f, Mars magnitude %.2f", mv, mm))
                 }
                 hold("Einstein's Moon is a waning gibbous turning to its last quarter", ["waning gibbous", "last quarter"].contains(book.moonPhase))
+                hold("Simha rises head first, Mesha back first, Meena both ways; Karka is fruitful and Simha barren", Lore.rising(4).hasPrefix("head") && Lore.rising(0).hasPrefix("back") && Lore.rising(11).hasPrefix("rising both") && Lore.fruitful(3) == "fruitful" && Lore.fruitful(4) == "barren")
+                hold("Venus exalted in Meena, which rises both ways, takes no rising line; Jupiter in head-rising Kumbha grows more benefic", !book.factors(for: venus).supports.contains { $0.contains("-rising rashi") } && book.graha("Ju").map { book.factors(for: $0).supports.contains { $0.hasPrefix("In a head-rising rashi") } } == true)
+                hold("Guru-Chandala is marked as outside the textbook and Gaja-Kesari is not", Lore.yogaBeyondBook("Guru-Chandala yoga") && !Lore.yogaBeyondBook("Gaja-Kesari yoga"))
                 hold("a combustion states its distance from the Sun", book.factors(for: mercury).strains.contains { $0.hasPrefix("Combust, ") && $0.contains("° from the Sun") })
                 hold("the Moon is read by its light and never as combust", book.graha("Mo").map { m in !book.factors(for: m).strains.contains { $0.hasPrefix("Combust") } && (book.factors(for: m).supports + book.factors(for: m).strains).contains { $0.hasPrefix("Bright Moon (waning, Krishna Saptami, 99° from the Sun)") } } == true)
                 hold("friendship is the natural one: the Sun in Meena is the guest of its friend Jupiter", book.graha("Su").map { book.keyFactors($0).secondaryStrength.contains("Friend's sign (Jupiter)") } == true)

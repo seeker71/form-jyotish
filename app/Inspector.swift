@@ -55,7 +55,7 @@ struct Inspector: View {
     /// what this particular reading means (`about`), or the term again where there is no more to say.
     private func fact(_ name: String, _ value: String, about: Explanation? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(name).foregroundStyle(.secondary).underline(true, color: Color.secondary.opacity(0.35)).frame(width: 84, alignment: .leading)
+            Text(name).foregroundStyle(["Shadbala", "Bindus", "Arudhas here", "KP cusps"].contains(name) ? AnyShapeStyle(Catalog.additionTint) : AnyShapeStyle(.secondary)).underline(true, color: Color.secondary.opacity(0.35)).frame(width: 84, alignment: .leading)
                 .contentShape(Rectangle())
                 .onTapGesture { store.explanation = Lore.explain(term: name, chart: store.chart) }
                 .help("Click for what \(name.lowercased()) means")

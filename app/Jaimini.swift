@@ -179,13 +179,16 @@ struct WorkspaceTabs: View {
                 ForEach(Store.workspaces, id: \.self) { name in
                     if name == Store.workspaces.first(where: Store.additions.contains) {
                         Divider().frame(height: 16).padding(.horizontal, 4)
-                        Text("Additions").font(.caption2).foregroundStyle(.tertiary).help("Methods that Light on Life does not teach. They are kept here as optional additions.")
+                        Toggle(isOn: $store.showAdditions) { Text("Additions · not in Light on Life").font(.caption).fontWeight(.semibold) }
+                            .toggleStyle(.checkbox).tint(Catalog.additionTint).foregroundStyle(Catalog.additionTint)
+                            .help("Desks and cards whose methods Light on Life does not teach: Jaimini, KP, the annual chart, matching, shadbala, ashtakavarga and the other dasha systems. Untick to hide them all and keep to the textbook.")
                     }
+                    if store.showAdditions || !Store.additions.contains(name) {
                     Button(name) { store.workspace = name }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 12).padding(.vertical, 5)
                         .fontWeight(store.workspace == name ? .semibold : .regular)
-                        .foregroundStyle(store.workspace == name ? Color.primary : Color.secondary)
+                        .foregroundStyle(Store.additions.contains(name) ? Catalog.additionTint : store.workspace == name ? Color.primary : Color.secondary)
                         .background(Capsule().fill(Color.accentColor.opacity(store.workspace == name ? 0.22 : 0)))
                         .contentShape(Capsule())
                         .help(Help.workspace(name))
@@ -193,6 +196,7 @@ struct WorkspaceTabs: View {
                             let place = geo.frame(in: .global)
                             Color.clear.onAppear { WorkspaceTabs.spots[name] = place }.onChanged(of: place) { WorkspaceTabs.spots[name] = geo.frame(in: .global) }
                         })
+                    }
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 6)

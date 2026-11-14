@@ -26,6 +26,7 @@ enum Catalog {
            CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
            CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
            CardInfo(id: "zodiac", title: "The zodiac: sidereal and tropical", keywords: "ayanamsa precession equinox solstice seasons lahiri chitra spica tropical sidereal moving portion", wide: true),
+           CardInfo(id: "rashi-meanings", title: "Rashi characteristics", keywords: "signs constellations element dosha direction head rising back rising shirshodaya body parts fruitful barren odd even movable fixed dual", wide: true),
            CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
            CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
            CardInfo(id: "bhava-meanings", title: "Bhava significations", keywords: "house meanings significations tanu dhana bhratri sukha putra shatru kalatra mrityu bhagya karma labha vyaya", wide: true),
@@ -65,6 +66,8 @@ enum Catalog {
     /// long cards: beside another card they scroll within the height on screen, so their neighbour stays in view
     /// cards whose method Light on Life does not teach: each is marked, and stands after the book's cards
     static let additions: Set<String> = ["shadbala", "ashtakavarga", "other-dashas", "karakas", "arudhas", "chara-dasha", "kp-grahas", "kp-cusps", "kp-houses", "kp-planets", "annual", "match"]
+    /// the colour that marks whatever stands outside the textbook
+    static let additionTint = Color.purple
     static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events", "transit-dates"]
 
     static func info(_ id: String) -> CardInfo { all.first { $0.id == id } ?? CardInfo(id: id, title: id, keywords: "", wide: true) }
@@ -83,7 +86,7 @@ struct Workspace: View {
     private func rows(width: CGFloat) -> [[String]] {
         let room = width - 32
         var result: [[String]] = [], used = CGFloat.infinity
-        for id in store.cards {
+        for id in store.cards where store.showAdditions || !Catalog.additions.contains(id) {
             guard let need = least(id) else { result.append([id]); used = .infinity; continue }
             if used + 14 + need <= room { result[result.count - 1].append(id); used += 14 + need } else { result.append([id]); used = need }
         }
@@ -165,8 +168,8 @@ struct Card: View {
                 Text(Catalog.info(id).title).font(.headline).help(Help.card(id) + " Drag this title onto another card to move the card there.")
                     .draggable(id)
                 if Catalog.additions.contains(id) {
-                    Text("addition").font(.caption2).foregroundStyle(.secondary).padding(.horizontal, 6).padding(.vertical, 1).overlay(Capsule().stroke(Color.secondary.opacity(0.5)))
-                        .help("A method that Light on Life does not teach. It is kept as an optional addition; the card menu can remove it from this desk.")
+                    Text("ADDITION · not in Light on Life").font(.caption2).fontWeight(.bold).foregroundStyle(.white).padding(.horizontal, 8).padding(.vertical, 2).background(Capsule().fill(Catalog.additionTint))
+                        .help("A method that Light on Life does not teach. It is kept as an optional addition; the Additions switch in the tab bar hides every such card.")
                 }
                 Spacer()
                 Button { store.explanation = Help.about(card: id) } label: { Image(systemName: "questionmark.circle") }
@@ -196,6 +199,8 @@ struct Card: View {
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(targeted ? Color.accentColor : Color.primary.opacity(hovering ? 0.25 : 0.08), lineWidth: targeted ? 2 : 1))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Catalog.additionTint.opacity(Catalog.additions.contains(id) ? 0.07 : 0)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Catalog.additionTint.opacity(Catalog.additions.contains(id) ? 0.85 : 0), style: StrokeStyle(lineWidth: 1.5, dash: [7, 4])))
         .onHover { hovering = $0 }
         .dropDestination(for: String.self) { items, _ in
             guard let moved = items.first, moved != id, store.cards.contains(moved) else { return false }
@@ -229,6 +234,7 @@ struct Card: View {
                 case "guide": GuideCard(chart: chart)
                 case "reading": ReadingCard(chart: chart)
                 case "zodiac": ZodiacCard(chart: chart)
+                case "rashi-meanings": RashiMeaningsCard(chart: chart)
                 case "bhava-classes": BhavaClassCard(chart: chart)
                 case "bhava-karakas": BhavaKarakaCard(chart: chart)
                 case "bhava-meanings": BhavaMeaningsCard(chart: chart)

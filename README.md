@@ -50,7 +50,10 @@ the old one's place the next time the app starts (or at once with Restart now).
 - The desks follow the order the book teaches: Guide (the zodiac and its ayanamsa, graha significations, the
   houses), Strength, Overview, Yogas, Dasha, Transits, Vargas. Methods the book does not teach (Jaimini, KP,
   the annual chart, matching, shadbala, ashtakavarga, other dasha systems) stand last and are marked as
-  additions.
+  additions: purple tabs, a purple dashed frame and an "ADDITION · not in Light on Life" badge on each such
+  card, a mark on each yoga the book does not name, and one switch in the tab bar that hides them all.
+- The twelve rashis by the book's classes (element and dosha, direction, quality, how each rises, the part of
+  the body, fruitfulness, length), and the rule that a head-rising or back-rising rashi colours the graha in it.
 - The houses and grahas as the book teaches them: the classes of houses (kendra, trikona, trik, dusthana,
   maraka, upachaya) and the four aims of life as four trines, drawn on the chart's lagna with its grahas
   counted in each aim; every significator of each house and where it stands; what each house and each graha

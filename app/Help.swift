@@ -37,6 +37,7 @@ enum Help {
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
         case "zodiac": return "The two zodiacs and the ayanamsa between them at this birth, with every position given both ways."
+        case "rashi-meanings": return "The twelve rashis by the textbook's classes: element and dosha, direction, quality, how each rises, the part of the body, and the house each is in this chart."
         case "bhava-classes": return "How the twelve houses are classed, set on this chart's lagna, and the four aims of life as four trines with this chart's grahas counted in each."
         case "bhava-karakas": return "Every significator of each house and where it stands in this chart. A house is judged by the house, its lord and its karakas."
         case "bhava-meanings": return "What each house stands for, by theme, with its classes, its sign, its lord and the grahas in it."

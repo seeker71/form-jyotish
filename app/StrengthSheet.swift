@@ -161,6 +161,9 @@ extension Chart {
         }
         if let eclipse = eclipsed(g) { strains.append("Born on \(eclipse.kind) by \(eclipse.node): \(who(g.id)) is read as eclipsed, its light turned inward") }
         if let edge = sandhi(g), !Chart.gandanta(sign: g.sign, deg: g.deg) { strains.append("In the \(edge) degree of \(Names.signs[g.sign]), a joint between two signs (sandhi): ill-defined for outer matters, often apt for inner work") }
+        // how the rashi rises colours the graha in it (Light on Life, chapter 5)
+        if Lore.headRising.contains(g.sign) { supports.append(benefic(g.id) ? "In a head-rising rashi: a natural benefic there grows more benefic" : "In a head-rising rashi: a natural malefic there loses some of its harshness") }
+        else if Lore.backRising.contains(g.sign) { strains.append(benefic(g.id) ? "In a back-rising rashi: a natural benefic there gives with a little less ease" : "In a back-rising rashi: a natural malefic there presses harder") }
         let harsh = { (count: Int) in self.grahas.contains { $0.id != g.id && $0.sign == (g.sign + count - 1) % 12 && !self.benefic($0.id) } }
         if harsh(4) && harsh(8) && harsh(12) { strains.append("Malefics stand in the 4th, 8th and 12th from it (Phaladipika 15)") }
         else if harsh(5) && harsh(9) { strains.append("Malefics stand in the 5th and 9th from it (Phaladipika 15)") }
@@ -217,18 +220,21 @@ struct StrengthSheet: View {
     let chart: Chart
     private let widths: [CGFloat] = [66, 124, 78, 84, 86, 84, 112, 112]
 
+    /// a sign by its Sanskrit name with the English one beneath
+    private func both(_ signs: [Int]) -> String { signs.map { Names.signs[$0] }.joined(separator: ", ") + "\n" + signs.map { Names.signsWestern[$0] }.joined(separator: ", ") }
+
     private func cells(_ g: Graha) -> [SheetCell] {
         let node = ["Ra", "Ke"].contains(g.id), five = Lore.five.contains(g.id), name = { (code: String) in Names.lords[code] ?? code }
         let own = (0..<12).filter { Chart.signLords[$0] == g.id }, high = node ? 7 : Lore.exalted[g.id] ?? 0, house = chart.house(ofSign: g.sign)
         var list = [SheetCell(text: name(g.id), width: widths[0], tint: Tint.graha(g.id))]
-        list.append(SheetCell(text: node ? "—" : own.map { Names.signs[$0] }.joined(separator: ", "), width: widths[1], met: own.contains(g.sign)))
-        list.append(SheetCell(text: Names.signs[high], width: widths[2], met: g.sign == high))
+        list.append(SheetCell(text: node ? "—" : both(own), width: widths[1], met: own.contains(g.sign)))
+        list.append(SheetCell(text: both([high]), width: widths[2], met: g.sign == high))
         if let strong = Lore.digBala[g.id] {
             let opposite = (strong + 5) % 12 + 1
             list.append(SheetCell(text: house == opposite ? "\(Chart.ordinal(strong)); here \(Chart.ordinal(house)), without it" : "\(Chart.ordinal(strong)) house", width: widths[3], met: house == strong || house == opposite, helps: house == strong))
         } else { list.append(SheetCell(text: "—", width: widths[3])) }
         list.append(SheetCell(text: five ? (g.retro ? "Retrograde" : "direct") : "—", width: widths[4], met: five && g.retro))
-        list.append(SheetCell(text: Names.signs[(high + 6) % 12], width: widths[5], met: g.sign == (high + 6) % 12, helps: false))
+        list.append(SheetCell(text: both([(high + 6) % 12]), width: widths[5], met: g.sign == (high + 6) % 12, helps: false))
         let orb = Lore.combustOrb[g.id].map { g.retro ? $0.retro : $0.direct }
         list.append(SheetCell(text: !five ? "—" : g.combust == true ? String(format: "\(chart.combustGrade(g)) combust, %.1f° from the Sun", chart.sunDistance(g)) : String(format: "clear: %.0f° away, range %.0f°", chart.sunDistance(g), orb ?? 0), width: widths[6], met: five && g.combust == true, helps: false))
         let war = chart.war(of: g)
