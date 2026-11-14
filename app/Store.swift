@@ -43,24 +43,26 @@ final class Feed {
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
-    nonisolated static let workspaces = ["Guide", "Overview", "Vargas", "Dasha", "Strength", "Yogas", "Jaimini", "KP", "Transits", "Annual", "Match"]
+    nonisolated static let workspaces = ["Guide", "Strength", "Overview", "Yogas", "Dasha", "Transits", "Vargas", "Jaimini", "KP", "Annual", "Match"]
+    /// the desks whose methods Light on Life does not teach: they stand last, as additions
+    nonisolated static let additions: Set<String> = ["Jaimini", "KP", "Annual", "Match"]
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "chart:0", "reading", "houses", "bhava-classes", "bhava-karakas", "bhava-meanings", "graha-meanings", "glossary", "sources"],
+        "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "houses", "reading", "glossary", "sources"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
         "Overview": ["chart:0", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
-        "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "other-dashas", "events"],
-        "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-relations", "bala-charts", "chart:0", "ashtakavarga", "shadbala", "avasthas"],
+        "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "events", "other-dashas"],
+        "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-relations", "bala-charts", "chart:0", "avasthas", "shadbala", "ashtakavarga"],
         "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
-        "Transits": ["chart:0", "transit-dates", "transits", "gochara", "dina", "timeline"],
+        "Transits": ["chart:0", "gochara", "dina", "transits", "transit-dates", "timeline"],
     ]
     /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
-    static let layoutVersion = 2
+    static let layoutVersion = 3
 
     @Published var births: [Birth] = [] { didSet { save(); if births.first(where: { $0.id == current }) != oldValue.first(where: { $0.id == current }) { readNatal() } } }
     @Published var current: Birth.ID? { didSet { if current != oldValue { moment = nil; rectify = 0; pick = nil; chart = nil; readNatal() } } }

@@ -5,7 +5,7 @@ import Foundation
 enum Help {
     static func workspace(_ name: String) -> String {
         switch name {
-        case "Guide": return "Where to begin. The steps a reader follows, this chart put in plain sentences, and the twelve houses. Every name is a link."
+        case "Guide": return "Where to begin, in the order the book teaches: the zodiac, what the grahas stand for, how the houses are classed and what they stand for, then this chart read house by house. Every name is a link."
         case "Overview": return "The birth data, the birth chart, the navamsa, the grahas' positions and the dasha timeline. Start here."
         case "Vargas": return "The sixteen divisional charts. Each divides every sign into finer parts and shows one area of life in more detail."
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
@@ -36,6 +36,7 @@ enum Help {
         case "glossary": return "Look up any word used in the app. Each entry says what it is in plain words and, where it applies, what it is in the open chart. Click an entry to pick it; a link opens the workspace where it lives."
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
+        case "zodiac": return "The two zodiacs and the ayanamsa between them at this birth, with every position given both ways."
         case "bhava-classes": return "How the twelve houses are classed, set on this chart's lagna, and the four aims of life as four trines with this chart's grahas counted in each."
         case "bhava-karakas": return "Every significator of each house and where it stands in this chart. A house is judged by the house, its lord and its karakas."
         case "bhava-meanings": return "What each house stands for, by theme, with its classes, its sign, its lord and the grahas in it."

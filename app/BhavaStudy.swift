@@ -132,6 +132,8 @@ struct BhavaClassCard: View {
         ScrollView(.horizontal) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 18) {
+                    panel("The twelve bhavas", marks { h in [("\(h) \(Lore.houseSanskrit[h - 1])\n\(Lore.houseNames[h - 1])", Lore.houses[h - 1])] },
+                          "The houses counted from this chart's lagna, each with its Sanskrit name. A bhava is a state or condition more than a place. Click a house to open it.")
                     panel("Angles and trines", marks { h in Lore.houseClasses(h).filter { ["Kendra", "Trikona"].contains($0.name) }.map { ($0.name, $0.words) } },
                           "The kendras (1, 4, 7, 10) are places of action; the trikonas (1, 5, 9) are places of merit and opportunity. Together they are the most valued houses; the 1st is both.")
                     panel("The four aims (purusharthas)", aimMarks,

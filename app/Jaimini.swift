@@ -177,6 +177,10 @@ struct WorkspaceTabs: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 4) {
                 ForEach(Store.workspaces, id: \.self) { name in
+                    if name == Store.workspaces.first(where: Store.additions.contains) {
+                        Divider().frame(height: 16).padding(.horizontal, 4)
+                        Text("Additions").font(.caption2).foregroundStyle(.tertiary).help("Methods that Light on Life does not teach. They are kept here as optional additions.")
+                    }
                     Button(name) { store.workspace = name }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 12).padding(.vertical, 5)

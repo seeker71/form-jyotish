@@ -25,6 +25,7 @@ enum Catalog {
            CardInfo(id: "glossary", title: "Glossary", keywords: "dictionary terms words meaning search look up what is", wide: true),
            CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
            CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
+           CardInfo(id: "zodiac", title: "The zodiac: sidereal and tropical", keywords: "ayanamsa precession equinox solstice seasons lahiri chitra spica tropical sidereal moving portion", wide: true),
            CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
            CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
            CardInfo(id: "bhava-meanings", title: "Bhava significations", keywords: "house meanings significations tanu dhana bhratri sukha putra shatru kalatra mrityu bhagya karma labha vyaya", wide: true),
@@ -62,6 +63,8 @@ enum Catalog {
         "karakas": 440, "arudhas": 600, "chara-dasha": 440, "kp-grahas": 540, "kp-cusps": 540, "kp-houses": 540, "kp-planets": 540,
         "transit-dates": 440, "gochara": 560, "dina": 520, "panchanga": 520, "ashtakavarga": 520, "avasthas": 620, "aspects": 600, "events": 460]
     /// long cards: beside another card they scroll within the height on screen, so their neighbour stays in view
+    /// cards whose method Light on Life does not teach: each is marked, and stands after the book's cards
+    static let additions: Set<String> = ["shadbala", "ashtakavarga", "other-dashas", "karakas", "arudhas", "chara-dasha", "kp-grahas", "kp-cusps", "kp-houses", "kp-planets", "annual", "match"]
     static let long: Set<String> = ["yogas", "dashas", "other-dashas", "events", "transit-dates"]
 
     static func info(_ id: String) -> CardInfo { all.first { $0.id == id } ?? CardInfo(id: id, title: id, keywords: "", wide: true) }
@@ -161,6 +164,10 @@ struct Card: View {
             HStack {
                 Text(Catalog.info(id).title).font(.headline).help(Help.card(id) + " Drag this title onto another card to move the card there.")
                     .draggable(id)
+                if Catalog.additions.contains(id) {
+                    Text("addition").font(.caption2).foregroundStyle(.secondary).padding(.horizontal, 6).padding(.vertical, 1).overlay(Capsule().stroke(Color.secondary.opacity(0.5)))
+                        .help("A method that Light on Life does not teach. It is kept as an optional addition; the card menu can remove it from this desk.")
+                }
                 Spacer()
                 Button { store.explanation = Help.about(card: id) } label: { Image(systemName: "questionmark.circle") }
                     .buttonStyle(.plain).foregroundStyle(.secondary).accessibilityLabel("About \(Catalog.info(id).title)")
@@ -221,6 +228,7 @@ struct Card: View {
                 case "chara-dasha": CharaDashaCard(chart: chart)
                 case "guide": GuideCard(chart: chart)
                 case "reading": ReadingCard(chart: chart)
+                case "zodiac": ZodiacCard(chart: chart)
                 case "bhava-classes": BhavaClassCard(chart: chart)
                 case "bhava-karakas": BhavaKarakaCard(chart: chart)
                 case "bhava-meanings": BhavaMeaningsCard(chart: chart)

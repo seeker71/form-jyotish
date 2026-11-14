@@ -47,6 +47,10 @@ the old one's place the next time the app starts (or at once with Restart now).
   combustion and planetary war with this chart's grahas marked in it; the primary and secondary factors each
   graha meets; the natural relationships and whose guest each graha is; and three charts of rulership,
   exaltation and dig bala on the chart's own lagna.
+- The desks follow the order the book teaches: Guide (the zodiac and its ayanamsa, graha significations, the
+  houses), Strength, Overview, Yogas, Dasha, Transits, Vargas. Methods the book does not teach (Jaimini, KP,
+  the annual chart, matching, shadbala, ashtakavarga, other dasha systems) stand last and are marked as
+  additions.
 - The houses and grahas as the book teaches them: the classes of houses (kendra, trikona, trik, dusthana,
   maraka, upachaya) and the four aims of life as four trines, drawn on the chart's lagna with its grahas
   counted in each aim; every significator of each house and where it stands; what each house and each graha

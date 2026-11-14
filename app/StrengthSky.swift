@@ -55,6 +55,14 @@ struct StrengthSky: View {
         return lines
     }
 
+    /// the nodes are the two points where the Moon's path crosses the Sun's; they own no sign and act through others
+    private var nodeWords: [String] {
+        chart.grahas.suffix(2).map { node in
+            let lord = Chart.signLords[node.sign], with = chart.grahas.filter { $0.sign == node.sign && !["Ra", "Ke"].contains($0.id) }.map { name($0.id) }
+            return "\(node.name), the Moon's \(node.id == "Ra" ? "north (ascending) node" : "south (descending) node"), stands in \(Names.signs[node.sign]), the \(Chart.ordinal(chart.house(ofSign: node.sign))) house. It owns no sign and acts like \(["Su", "Mo"].contains(lord) ? "the " : "")\(name(lord)), the lord of that sign (\(chart.placing(lord)))" + (with.isEmpty ? "" : ", and like \(with.joined(separator: " and ")), joined to it") + "."
+        } + ["Eclipses fall where a new or full Moon meets this axis."]
+    }
+
     private var eclipseWords: (text: String, met: Bool) {
         guard let s = chart.syzygy else { return ("", false) }
         let moment = s.solar ? "new Moon" : "full Moon", hours = s.off / 0.508
@@ -139,13 +147,14 @@ struct StrengthSky: View {
                 Text("Orange: new and dark. Green: bright and full. The white dot is the Moon at birth.").font(.caption2).foregroundStyle(.secondary).frame(width: 220, alignment: .leading).fixedSize(horizontal: false, vertical: true)
             }
             VStack(alignment: .leading, spacing: 12) {
+                section("Rahu and Ketu, the lunar nodes", met: false, helps: true, nodeWords)
                 section("The Moon's light", met: chart.moonFull || chart.moonNew, helps: chart.moonFull, moonWords)
                 section("Eclipse", met: eclipse.met, helps: false, [eclipse.text])
+                section("Planetary war", met: war.met, helps: false, war.lines)
                 section("Retrogression", met: five.contains(where: \.retro), helps: true, retroWords)
                 section("Combustion", met: five.contains { $0.combust == true }, helps: false, combustWords)
                 strip
                 Text("Degrees from the Sun: 0° to 3° totally combust, 3° to 6° seriously, 6° to 9° generally; beyond that, lightly within each planet's own range. R marks a retrograde planet.").font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                section("Planetary war", met: war.met, helps: false, war.lines)
             }
             .frame(maxWidth: 560, alignment: .leading)
         }
