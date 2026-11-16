@@ -49,7 +49,7 @@ final class Store: ObservableObject {
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
-        "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "rashi-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "houses", "reading", "glossary", "sources"],
+        "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "rashi-elements", "rashi-meanings", "nakshatras", "anatomy", "houses", "reading", "glossary", "sources"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
@@ -62,7 +62,7 @@ final class Store: ObservableObject {
         "Transits": ["chart:0", "gochara", "dina", "transits", "transit-dates", "timeline"],
     ]
     /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
-    static let layoutVersion = 3
+    static let layoutVersion = 4
 
     @Published var births: [Birth] = [] { didSet { save(); if births.first(where: { $0.id == current }) != oldValue.first(where: { $0.id == current }) { readNatal() } } }
     @Published var current: Birth.ID? { didSet { if current != oldValue { moment = nil; rectify = 0; pick = nil; chart = nil; readNatal() } } }

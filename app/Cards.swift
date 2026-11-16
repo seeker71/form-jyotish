@@ -26,6 +26,9 @@ enum Catalog {
            CardInfo(id: "guide", title: "First steps: how a chart is read", keywords: "learn tutorial lesson teach help", wide: true),
            CardInfo(id: "reading", title: "This chart at a glance", keywords: "summary overview plain words", wide: true),
            CardInfo(id: "zodiac", title: "The zodiac: sidereal and tropical", keywords: "ayanamsa precession equinox solstice seasons lahiri chitra spica tropical sidereal moving portion", wide: true),
+           CardInfo(id: "rashi-elements", title: "Rashis: elements and gunas", keywords: "fire earth air water space agni prithvi vayu jala akasha chara sthira dvisvabhava movable fixed dual rajas tamas sattva guna tri-guna pancha maha bhuta", wide: true),
+           CardInfo(id: "nakshatras", title: "Nakshatras: the lunar mansions", keywords: "nakshatra star lunar mansion constellation deity symbol ruler pada ashvini bharani rohini abhijit", wide: true),
+           CardInfo(id: "anatomy", title: "Anatomy of the chart", keywords: "lagna kundali north indian south indian how to read chart layout ascendant bhava rashi numbers", wide: true),
            CardInfo(id: "rashi-meanings", title: "Rashi characteristics", keywords: "signs constellations element dosha direction head rising back rising shirshodaya body parts fruitful barren odd even movable fixed dual", wide: true),
            CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
            CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
@@ -235,6 +238,9 @@ struct Card: View {
                 case "reading": ReadingCard(chart: chart)
                 case "zodiac": ZodiacCard(chart: chart)
                 case "rashi-meanings": RashiMeaningsCard(chart: chart)
+                case "rashi-elements": RashiElementsCard(chart: chart)
+                case "nakshatras": NakshatraCard(chart: chart)
+                case "anatomy": ChartAnatomyCard(chart: chart)
                 case "bhava-classes": BhavaClassCard(chart: chart)
                 case "bhava-karakas": BhavaKarakaCard(chart: chart)
                 case "bhava-meanings": BhavaMeaningsCard(chart: chart)

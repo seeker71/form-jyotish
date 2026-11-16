@@ -5,7 +5,7 @@ import Foundation
 enum Help {
     static func workspace(_ name: String) -> String {
         switch name {
-        case "Guide": return "Where to begin, in the order the book teaches: the zodiac, what the grahas stand for, how the houses are classed and what they stand for, then this chart read house by house. Every name is a link."
+        case "Guide": return "Where to begin, in the order the book teaches: the zodiac, what the grahas stand for, how the houses are classed and what they stand for, the rashis by element and quality, the nakshatras, how the chart is laid out, then this chart read house by house. Every name is a link."
         case "Overview": return "The birth data, the birth chart, the navamsa, the grahas' positions and the dasha timeline. Start here."
         case "Vargas": return "The sixteen divisional charts. Each divides every sign into finer parts and shows one area of life in more detail."
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
@@ -37,6 +37,9 @@ enum Help {
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
         case "zodiac": return "The two zodiacs and the ayanamsa between them at this birth, with every position given both ways."
+        case "rashi-elements": return "The element and the quality of each rashi, drawn on this lagna with the chart's grahas, and how this chart is weighted among them."
+        case "nakshatras": return "The twenty-seven lunar mansions with meaning, span, ruler, deity and symbol, and what of this chart stands in each."
+        case "anatomy": return "How the birth chart is laid out and read, shown on this chart in both the North and the South Indian drawing."
         case "rashi-meanings": return "The twelve rashis by the textbook's classes: element and dosha, direction, quality, how each rises, the part of the body, and the house each is in this chart."
         case "bhava-classes": return "How the twelve houses are classed, set on this chart's lagna, and the four aims of life as four trines with this chart's grahas counted in each."
         case "bhava-karakas": return "Every significator of each house and where it stands in this chart. A house is judged by the house, its lord and its karakas."
