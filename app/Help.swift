@@ -37,6 +37,8 @@ enum Help {
         case "guide": return "A chart is read in a settled order. Each step says what to look at and why, and its link shows that very thing in this chart."
         case "reading": return "The main facts of this chart as sentences. Click a name to read about it in the inspector, or a link to open the workspace that examines it."
         case "zodiac": return "The two zodiacs and the ayanamsa between them at this birth, with every position given both ways."
+        case "lagna-vichara": return "The rising sign read through its lord: what the lagna is, who rules it, where the ruler has gone and how strong it stands, with the lagna's own nature."
+        case "bhava-vichara": return "The rules of house analysis applied to this chart: benefics and malefics by nature and by the houses they rule, what each lord gives from where it stands, and which lords protect their own houses."
         case "rashi-elements": return "The element and the quality of each rashi, drawn on this lagna with the chart's grahas, and how this chart is weighted among them."
         case "nakshatras": return "The twenty-seven lunar mansions with meaning, span, ruler, deity and symbol, and what of this chart stands in each."
         case "anatomy": return "How the birth chart is laid out and read, shown on this chart in both the North and the South Indian drawing."

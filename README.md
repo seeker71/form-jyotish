@@ -55,6 +55,10 @@ the old one's place the next time the app starts (or at once with Restart now).
 - Rashis by element and guna on the chart's lagna, with the chart's grahas counted in each and the rule that a
   lagna and lagna lord of one quality mark the person strongly; the twenty-seven nakshatras with meaning, span,
   ruler, deity, symbol and what of the chart stands in each; and the anatomy of the chart in both drawings.
+- Lagna vichara: the rising sign read through its lord (what the lagna is, who rules it, where the ruler has
+  gone, how strong it stands) with each lagna's nature. Bhava vichara: natural and temporal benefics and
+  malefics, what each house lord gives from where it stands, what steadies it, and the lord that protects its
+  own house. Each house's verdict weighs house, lord and karaka as forty, forty and twenty.
 - The twelve rashis by the book's classes (element and dosha, direction, quality, how each rises, the part of
   the body, fruitfulness, length), and the rule that a head-rising or back-rising rashi colours the graha in it.
 - The houses and grahas as the book teaches them: the classes of houses (kendra, trikona, trik, dusthana,

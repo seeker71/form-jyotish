@@ -29,6 +29,8 @@ enum Catalog {
            CardInfo(id: "rashi-elements", title: "Rashis: elements and gunas", keywords: "fire earth air water space agni prithvi vayu jala akasha chara sthira dvisvabhava movable fixed dual rajas tamas sattva guna tri-guna pancha maha bhuta", wide: true),
            CardInfo(id: "nakshatras", title: "Nakshatras: the lunar mansions", keywords: "nakshatra star lunar mansion constellation deity symbol ruler pada ashvini bharani rohini abhijit", wide: true),
            CardInfo(id: "anatomy", title: "Anatomy of the chart", keywords: "lagna kundali north indian south indian how to read chart layout ascendant bhava rashi numbers", wide: true),
+           CardInfo(id: "lagna-vichara", title: "Lagna vichara: the rising sign", keywords: "lagna ascendant rising sign analysis lagnesha lord of the lagna aries taurus gemini cancer leo virgo libra scorpio sagittarius capricorn aquarius pisces nature type", wide: true),
+           CardInfo(id: "bhava-vichara", title: "Bhava vichara: house analysis", keywords: "house analysis natural benefic malefic temporal benefic malefic positive negative bhava karaka stable unstable universal principles shubha papa tatkalika", wide: true),
            CardInfo(id: "rashi-meanings", title: "Rashi characteristics", keywords: "signs constellations element dosha direction head rising back rising shirshodaya body parts fruitful barren odd even movable fixed dual", wide: true),
            CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
            CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
@@ -241,6 +243,8 @@ struct Card: View {
                 case "rashi-elements": RashiElementsCard(chart: chart)
                 case "nakshatras": NakshatraCard(chart: chart)
                 case "anatomy": ChartAnatomyCard(chart: chart)
+                case "lagna-vichara": LagnaVicharaCard(chart: chart)
+                case "bhava-vichara": BhavaVicharaCard(chart: chart)
                 case "bhava-classes": BhavaClassCard(chart: chart)
                 case "bhava-karakas": BhavaKarakaCard(chart: chart)
                 case "bhava-meanings": BhavaMeaningsCard(chart: chart)

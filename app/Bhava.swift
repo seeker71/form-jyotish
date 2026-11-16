@@ -154,11 +154,11 @@ extension Chart {
     func confluence(ofHouse house: Int) -> String {
         let limbs = limbs(ofHouse: house), leanings = limbs.map(\.leaning), lord = lord(ofHouse: house)
         let same = Lore.houseKarakas[house - 1].first { $0.code == lord }.map { " Here the lord is also the karaka for \($0.matter), so it counts twice." } ?? ""
-        let matters = Lore.houseNames[house - 1].lowercased()
-        if leanings.allSatisfy({ $0 > 0 }) { return "House, lord and karaka agree: more speaks for each than against it, so the matters of \(matters) are well supported. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)" }
-        if leanings.allSatisfy({ $0 < 0 }) { return "House, lord and karaka agree in asking more: the matters of \(matters) are where care and steady effort are called for, and where capacity is built. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)" }
+        let matters = Lore.houseNames[house - 1].lowercased(), weight = weighed(ofHouse: house).words
+        if leanings.allSatisfy({ $0 > 0 }) { return "House, lord and karaka agree: more speaks for each than against it, so the matters of \(matters) are well supported. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)\(weight)" }
+        if leanings.allSatisfy({ $0 < 0 }) { return "House, lord and karaka agree in asking more: the matters of \(matters) are where care and steady effort are called for, and where capacity is built. Agreement among the limbs is confluence, and it is what makes a reading firm.\(same)\(weight)" }
         let words = zip(limbs, leanings).map { "\($0.0.id == "house" ? "the house" : $0.0.id == "lord" ? "the lord" : "the karaka " + called($0.0.graha ?? "")) \($0.1 > 0 ? "is supported" : $0.1 < 0 ? "asks more" : "is balanced")" }.joined(separator: ", ")
-        return "The limbs do not agree (\(words)), so no single factor settles the matters of \(matters): they are read as mixed, each limb giving in its own measure.\(same)"
+        return "The limbs do not agree (\(words)), so no single factor settles the matters of \(matters): they are read as mixed, each limb giving in its own measure.\(same)\(weight)"
     }
 }
 
