@@ -50,8 +50,20 @@ struct Engine {
         }
         let data = folder.appendingPathComponent("data")
         if (try? files.destinationOfSymbolicLink(atPath: data.path)) != payload.appendingPathComponent("data").path {
-            try? files.removeItem(at: data)
-            try files.createSymbolicLink(at: data, withDestinationURL: payload.appendingPathComponent("data"))
+            // two readings may arrive at once here too: the link is made aside and renamed into place, which
+            // replaces an older link in one step, so neither reading finds the name taken or missing
+            let aside = folder.appendingPathComponent("data-arriving-\(UUID().uuidString)")
+            try files.createSymbolicLink(at: aside, withDestinationURL: payload.appendingPathComponent("data"))
+            if rename(aside.path, data.path) != 0 {
+                // something other than a link holds the name (a folder left by hand): clear it and try once more
+                try? files.removeItem(at: data)
+                if rename(aside.path, data.path) != 0 {
+                    try? files.removeItem(at: aside)
+                    if (try? files.destinationOfSymbolicLink(atPath: data.path)) != payload.appendingPathComponent("data").path {
+                        throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: data.path])
+                    }
+                }
+            }
         }
         return folder
     }
