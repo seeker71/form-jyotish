@@ -82,7 +82,7 @@ extension Chart {
             let trine = ruled.filter { [5, 9].contains($0) }, trik = ruled.filter { [6, 8, 12].contains($0) }
             let frail = graha(code).flatMap(weakness).map { ", though it is \($0)" } ?? ""
             if code == lord { limb.supports.append("Its own lord \(article ? "the " : "")\(called(code)) \(verb): a lord looks after its own house\(frail)") }
-            else if !trine.isEmpty && trik.isEmpty { limb.supports.append("\(who), lord of the \(trine.map(Chart.ordinal).joined(separator: " and ")), \(verb): a trine lord helps the house it touches\(frail)") }
+            else if !trine.isEmpty && trik.isEmpty { limb.supports.append("\(who), lord of the \(trine.map(Chart.ordinal).joined(separator: " and ")), \(verb): a trikona lord helps the house it touches\(frail)") }
             else if benefic(code) { limb.supports.append("\(who), a natural benefic, \(verb)\(frail)") }
             else { limb.strains.append("\(who), a natural malefic, \(verb): its matters ask for \(Chart.asks[code] ?? "care")") }
             if code != lord, !trik.isEmpty, !ruled.contains(where: [1, 4, 5, 7, 9, 10].contains), benefic(code) {
@@ -95,7 +95,7 @@ extension Chart {
         }
         let places = [4, 8, 12, 5, 9].map { (sign + $0 - 1) % 12 }
         let around = grahas.filter { places.contains($0.sign) && !benefic($0.id) }.map(\.id)
-        if around.count >= 4 { limb.strains.append("Most of the malefics stand in the 4th, 8th, 12th or the trines from it (\(around.map(called).joined(separator: ", ")))") }
+        if around.count >= 4 { limb.strains.append("Most of the malefics stand in the 4th, 8th, 12th or the trikonas from it (\(around.map(called).joined(separator: ", ")))") }
         let karaka = Lore.bhavaKarakas[house - 1].code
         let kin: [Int: String] = [3: "younger siblings", 4: "the mother", 5: "children", 7: "the partner", 9: "the father", 11: "elder siblings"]
         let own = house == 9 ? "Su" : karaka
@@ -115,7 +115,7 @@ extension Chart {
         if g.status == "Exalt." { limb.supports.append("Exalted in \(Names.signs[g.sign])") }
         if own { limb.supports.append("In its own sign, \(Names.signs[g.sign])") }
         if let weak = weakness(g) { limb.strains.append("\(weak.prefix(1).uppercased() + weak.dropFirst()): \(g.combust == true ? "the outer matters of its houses ask more, while its inner qualities are lit by the Sun" : "it gives through effort")") }
-        if [1, 4, 7, 10, 5, 9].contains(house) { limb.supports.append("Placed in the \(Chart.ordinal(house)), \([5, 9].contains(house) ? "a trine" : "an angle")") }
+        if [1, 4, 7, 10, 5, 9].contains(house) { limb.supports.append("Placed in the \(Chart.ordinal(house)), \([5, 9].contains(house) ? "a trikona" : "a kendra")") }
         else if [6, 8, 12].contains(house) {
             if own { limb.supports.append("In the \(Chart.ordinal(house)), yet in its own sign, which holds it") }
             else { limb.strains.append("Placed in the \(Chart.ordinal(house)), a dusthana: it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")") }

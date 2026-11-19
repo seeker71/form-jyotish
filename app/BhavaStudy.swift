@@ -31,14 +31,14 @@ extension Lore {
     /// the classes a house belongs to, each with what the class means
     static func houseClasses(_ house: Int) -> [(name: String, words: String)] {
         var list: [(String, String)] = []
-        if [1, 4, 7, 10].contains(house) { list.append(("Kendra", "an angle, a place of action where grahas act strongly")) }
-        if [1, 5, 9].contains(house) { list.append(("Trikona", "a trine, a place of merit and opportunity")) }
+        if [1, 4, 7, 10].contains(house) { list.append(("Kendra", "one of houses 1, 4, 7 and 10, a place of action where grahas act strongly")) }
+        if [1, 5, 9].contains(house) { list.append(("Trikona", "one of houses 1, 5 and 9, a place of merit and opportunity")) }
         if [6, 8, 12].contains(house) { list.append(("Trik", "one of the three places of difficulty, where capacity is built through effort" + (house == 8 ? ", depth and renewal" : house == 12 ? " and letting go" : ""))) }
         if house == 3 { list.append(("Dusthana", "a place of difficulty, the mildest of the four (3, 6, 8, 12)")) }
         if [2, 7].contains(house) { list.append(("Maraka", "a place that bears on the close of the life span")) }
         if [3, 6, 10, 11].contains(house) { list.append(("Upachaya", "a place of improvement: results " + (house < 10 ? "start slowly and ease with time" : "are good and grow with time"))) }
-        if [2, 5, 8, 11].contains(house) { list.append(("Panaphara", "a house that follows an angle")) }
-        if [3, 6, 9, 12].contains(house) { list.append(("Apoklima", "a house falling away from an angle")) }
+        if [2, 5, 8, 11].contains(house) { list.append(("Panaphara", "a house that follows a kendra")) }
+        if [3, 6, 9, 12].contains(house) { list.append(("Apoklima", "a house falling away from a kendra")) }
         return list
     }
     static func houseClassLine(_ house: Int) -> String {
@@ -134,15 +134,15 @@ struct BhavaClassCard: View {
                 HStack(alignment: .top, spacing: 18) {
                     panel("The twelve bhavas", marks { h in [("\(h) \(Lore.houseSanskrit[h - 1])\n\(Lore.houseNames[h - 1])", Lore.houses[h - 1])] },
                           "The houses counted from this chart's lagna, each with its Sanskrit name. A bhava is a state or condition more than a place. Click a house to open it.")
-                    panel("Angles and trines", marks { h in Lore.houseClasses(h).filter { ["Kendra", "Trikona"].contains($0.name) }.map { ($0.name, $0.words) } },
-                          "The kendras (1, 4, 7, 10) are places of action; the trikonas (1, 5, 9) are places of merit and opportunity. Together they are the most valued houses; the 1st is both. The two axes of the angles, 1 to 7 and 4 to 10, are the chart's corridor of power.")
+                    panel("Kendras and trikonas", marks { h in Lore.houseClasses(h).filter { ["Kendra", "Trikona"].contains($0.name) }.map { ($0.name, $0.words) } },
+                          "The kendras (1, 4, 7, 10) are places of action; the trikonas (1, 5, 9) are places of merit and opportunity. Together they are the most valued houses; the 1st is both. The two axes of the kendras, 1 to 7 and 4 to 10, are the chart's corridor of power.")
                     panel("The four aims (purusharthas)", aimMarks,
-                          "Dharma in 1, 5, 9; artha in 2, 6, 10; kama in 3, 7, 11; moksha in 4, 8, 12. Each aim is a trine of houses, with this chart's grahas set in them.")
+                          "Dharma in 1, 5, 9; artha in 2, 6, 10; kama in 3, 7, 11; moksha in 4, 8, 12. Each aim is a trikona of houses, with this chart's grahas set in them.")
                     panel("Difficulty, closing, improvement", marks { h in Lore.houseClasses(h).filter { ["Trik", "Dusthana", "Maraka", "Upachaya"].contains($0.name) }.map { ($0.name, $0.words) } },
                           "Trik-sthanas (6, 8, 12) and the 3rd are the dusthanas; the marakas are 2 and 7; the upachayas (3, 6, 10, 11) improve with time. The 12th from any house is read as the outlay of that house's matters.")
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    SheetRow(graha: nil, cells: zip(["Aim", "Houses and signs", "Grahas in the trine", "Lords of its houses"], widths).map { SheetCell(text: $0, width: $1, header: true) })
+                    SheetRow(graha: nil, cells: zip(["Aim", "Houses and signs", "Grahas in the trikona", "Lords of its houses"], widths).map { SheetCell(text: $0, width: $1, header: true) })
                     ForEach(0..<4, id: \.self) { index in
                         let aim = Lore.aimsOfLife[index], inside = chart.grahas(inAim: index)
                         SheetRow(graha: nil, cells: [

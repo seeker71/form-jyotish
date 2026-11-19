@@ -7,7 +7,7 @@ extension Lore {
     /// what each dasha system is, how its first lord is found, and the condition under which the classics apply it
     static let dashaNotes: [String: (basis: String, condition: String)] = [
         "Ashtottari": ("108 years over eight grahas (Ketu is left out). Each graha rules a run of three or four nakshatras from Ardra.",
-                       "Rahu, not in the lagna, stands in an angle or trine from the lagna's lord."),
+                       "Rahu, not in the lagna, stands in a kendra or trikona from the lagna's lord."),
         "Yogini": ("36 years over eight yoginis, each tied to a graha, repeating. The Moon's nakshatra number plus three, cast out by eight, names the first.",
                    "Used for any chart, often as a second opinion beside Vimshottari."),
         "Shodashottari": ("116 years over eight grahas, counted from Pushya to the Moon's nakshatra.",

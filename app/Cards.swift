@@ -32,7 +32,7 @@ enum Catalog {
            CardInfo(id: "lagna-vichara", title: "Lagna vichara: the rising sign", keywords: "lagna ascendant rising sign analysis lagnesha lord of the lagna aries taurus gemini cancer leo virgo libra scorpio sagittarius capricorn aquarius pisces nature type", wide: true),
            CardInfo(id: "bhava-vichara", title: "Bhava vichara: house analysis", keywords: "house analysis natural benefic malefic temporal benefic malefic positive negative bhava karaka stable unstable universal principles shubha papa tatkalika", wide: true),
            CardInfo(id: "rashi-meanings", title: "Rashi characteristics", keywords: "signs constellations element dosha direction head rising back rising shirshodaya body parts fruitful barren odd even movable fixed dual", wide: true),
-           CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trines houses classes", wide: true),
+           CardInfo(id: "bhava-classes", title: "Bhava classifications and the four aims", keywords: "kendra trikona trik dusthana maraka upachaya panaphara apoklima dharma artha kama moksha purushartha trikonas houses classes", wide: true),
            CardInfo(id: "bhava-karakas", title: "Bhava karakas: the house significators", keywords: "karaka significator house bhava sun jupiter mars moon venus saturn mercury", wide: true),
            CardInfo(id: "bhava-meanings", title: "Bhava significations", keywords: "house meanings significations tanu dhana bhratri sukha putra shatru kalatra mrityu bhagya karma labha vyaya", wide: true),
            CardInfo(id: "graha-meanings", title: "Graha significations", keywords: "planet meanings significations rulerships soul mind father mother essence people nature", wide: true),
@@ -58,6 +58,7 @@ enum Catalog {
            CardInfo(id: "aspects", title: "Aspects", keywords: "drishti glance", wide: true),
            CardInfo(id: "avasthas", title: "Avasthas", keywords: "states baladi jagradadi deeptadi mood", wide: true),
            CardInfo(id: "transits", title: "Transits", keywords: "gochara sky now table", wide: true),
+           CardInfo(id: "transit-chart", title: "Transit chart", keywords: "gochara transit sky now current today chart", wide: false),
            CardInfo(id: "kp-grahas", title: "KP grahas", keywords: "krishnamurti star sub lord", wide: true),
            CardInfo(id: "kp-cusps", title: "KP cusps (Placidus)", keywords: "krishnamurti houses bhava", wide: true),
            CardInfo(id: "kp-houses", title: "KP house significators", keywords: "krishnamurti occupants", wide: true),
@@ -266,6 +267,7 @@ struct Card: View {
                 case "aspects": AspectTable(chart: chart)
                 case "avasthas": AvasthaTable(chart: chart)
                 case "transits": TransitTable(natal: chart)
+                case "transit-chart": TransitChart(natal: chart)
                 case "gochara": GocharaCard(natal: chart)
                 case "dina": DayNowCard(natal: chart)
                 case "panchanga": PanchangaCard(chart: chart)
@@ -303,7 +305,8 @@ struct Card: View {
             let back = g.retro && g.id != "Ra" && g.id != "Ke", retro = back ? "℞" : ""
             bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id)\(retro) \(Int(g.deg))°" : g.id + retro, retro: back))
         }
-        if let sky = store.sky {
+        // on Overview the birth charts stay clean: the sky stands in a chart of its own beside them
+        if let sky = store.sky, store.workspace != "Overview" {
             for g in sky.grahas { bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id) \(Int(g.deg))°" : g.id, transit: true, retro: g.retro && g.id != "Ra" && g.id != "Ke")) }
         }
         return bySign

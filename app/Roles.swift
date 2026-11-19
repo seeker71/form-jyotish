@@ -81,7 +81,7 @@ extension Chart {
         let who = Names.lords[code] ?? code, ruled = housesRuled(by: code), roles = self.roles(of: code)
         let words: [String: String] = [
             "lagna lord": "Lagna lord: it stands for the person as a whole, and its condition colours everything.",
-            "yogakaraka": "Yogakaraka: it rules both an angle and a trine, and so joins action with fortune. Its periods are read as the chart's most productive.",
+            "yogakaraka": "Yogakaraka: it rules both a kendra and a trikona, and so joins action with fortune. Its periods are read as the chart's most productive.",
             "trikona lord": "Trikona lord (5th or 9th): it carries merit, intelligence and fortune, and is read as helpful wherever it stands.",
             "kendra lord": "Kendra lord (4th, 7th or 10th): it carries the weight of home, partnership or work.",
             "lord of gains": "Lord of gains (11th): it brings income and fulfilment of aims, and asks that desire be kept in measure.",

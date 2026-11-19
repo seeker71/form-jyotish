@@ -10,8 +10,8 @@
 //   fortune:  lagna, Sun and Moon in odd signs by day is Mahabhagya; the 6th lord in the 8th is Viparita;
 //             Jupiter in an angle from the Moon is Kesari; Venus in the 2nd is Su-shubha
 //   lifted:   the Moon exalted in the lagna under Jupiter's aspect is Gauri; the Sun in its fall with the
-//             lord of its sign beside it is Neecha-bhanga
-//             (the Sun stands in the 6th, so the cancellation is no raja yoga; in `einstein` Mercury's, in the
+//             lord of its exaltation sign in an angle from the lagna is Neecha-bhanga
+//             (the Sun stands in the 6th, outside the angles and trines, so the cancellation is no raja yoga; in `einstein` Mercury's, in the
 //             10th, is one and the Moon's, in the 6th, is not, as Light on Life reads them)
 //   lagnas:   Jupiter exalted in the 4th from the lagna and the Sun and the 7th from the Moon is Hamsa from all
 //             three lagnas, the case Light on Life gives; in `teachers` it recurs from the Moon only
@@ -32,7 +32,7 @@ section [form.bml] {
   let cart = wy-read([2, 11, 5, 2, 4, 1, 8, 6, 0], 0);
   let teachers = wy-read([1, 2, 4, 5, 8, 11, 10, 5, 11], 2);
   let fortune = wy-read([0, 2, 9, 7, 5, 1, 10, 3, 9], 0);
-  let lifted = wy-read([6, 1, 4, 6, 9, 6, 2, 0, 6], 1);
+  let lifted = wy-read([6, 1, 4, 6, 5, 6, 2, 0, 6], 1);
   let claims = [
    wy-has(einstein, "Pravrajya yoga") && wy-has(einstein, "Dharma-karmadhipati yoga (9th and 10th)") && wy-has(einstein, "Kahala yoga (4th and 9th lords)") && wy-has(einstein, "Kedara yoga") && wy-has(einstein, "Daridra yoga"),
    wy-has(movable, "Rajju yoga") && wy-has(movable, "Kedara yoga") && !wy-has(movable, "Musala (nabhasa) yoga"),

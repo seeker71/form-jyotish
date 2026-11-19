@@ -103,7 +103,7 @@ struct FormJyotishApp: App {
                 hold("Venus is exalted in the 10th and Mars, lord of the Moon's sign, is exalted", venus.status == "Exalt." && book.house(ofSign: venus.sign) == 10 && mars.status == "Exalt.")
                 hold("the lagna stands in Ardra, within three minutes of Punarvasu", book.asc.nak == 5 && 20 - book.asc.deg < 0.75 && book.asc.sign == 2)
                 hold("Jupiter aspects the lagna", book.aspects[4].contains(book.asc.sign))
-                hold("Malavya recurs from all three lagnas, as the book counts it", book.yogas.contains { $0.name == "Malavya yoga" && $0.why.contains("recurs from all three lagnas (a trine gives the extended form)") })
+                hold("Malavya recurs from all three lagnas, as the book counts it", book.yogas.contains { $0.name == "Malavya yoga" && $0.why.contains("recurs from all three lagnas (a trikona gives the extended form)") })
                 hold("Mercury's cancellation is a raja yoga and the Moon's is not", book.yogas.contains { $0.name == "Neecha-bhanga raja yoga" && $0.grahas == ["Me"] } && book.yogas.contains { $0.name == "Neecha-bhanga" && $0.grahas == ["Mo"] })
                 hold("the first dasha, Mercury's, ends about 12 December 1888", book.dasha.first.map { $0.lord == "Me" && abs($0.end - 2410983.5) < 3 } == true)
                 hold("the Sun has directional strength in the 10th", book.graha("Su").map { book.finer($0).supports.contains { $0.hasPrefix("Directional strength") } } == true)

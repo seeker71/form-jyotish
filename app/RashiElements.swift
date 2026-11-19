@@ -55,13 +55,13 @@ struct RashiElementsCard: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Rashis and elements").font(.headline)
                         ChartView(style: store.style, title: "", ascSign: lagna, marks: marks({ Lore.elements[$0 % 4].capitalized }, { "a \(Lore.elements[$0 % 4]) rashi" })).frame(width: 300, height: 300)
-                        Text("Fire in 1, 5, 9 of the zodiac; earth in 2, 6, 10; air in 3, 7, 11; water in 4, 8, 12. Rashis of one element stand in trine to each other.")
+                        Text("Fire in 1, 5, 9 of the zodiac; earth in 2, 6, 10; air in 3, 7, 11; water in 4, 8, 12. Rashis of one element stand in trikona to each other.")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).frame(width: 300, alignment: .leading)
                     }
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Rashis and gunas").font(.headline)
                         ChartView(style: store.style, title: "", ascSign: lagna, marks: marks({ $0 % 3 == 2 ? "Dvisva-\nbhava" : Lore.modeSanskrit[$0 % 3].capitalized }, { "a \(Lore.modes[$0 % 3]) rashi, of \(Lore.modeGuna[$0 % 3])" })).frame(width: 300, height: 300)
-                        Text("Chara (movable, rajas) in 1, 4, 7, 10; sthira (fixed, tamas) in 2, 5, 8, 11; dvisvabhava (dual, sattva) in 3, 6, 9, 12. Rashis of one quality stand in angles to each other.")
+                        Text("Chara (movable, rajas) in 1, 4, 7, 10; sthira (fixed, tamas) in 2, 5, 8, 11; dvisvabhava (dual, sattva) in 3, 6, 9, 12. Rashis of one quality stand in kendras to each other.")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).frame(width: 300, alignment: .leading)
                     }
                     VStack(alignment: .leading, spacing: 8) {

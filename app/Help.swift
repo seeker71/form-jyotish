@@ -43,7 +43,7 @@ enum Help {
         case "nakshatras": return "The twenty-seven lunar mansions with meaning, span, ruler, deity and symbol, and what of this chart stands in each."
         case "anatomy": return "How the birth chart is laid out and read, shown on this chart in both the North and the South Indian drawing."
         case "rashi-meanings": return "The twelve rashis by the textbook's classes: element and dosha, direction, quality, how each rises, the part of the body, and the house each is in this chart."
-        case "bhava-classes": return "How the twelve houses are classed, set on this chart's lagna, and the four aims of life as four trines with this chart's grahas counted in each."
+        case "bhava-classes": return "How the twelve houses are classed, set on this chart's lagna, and the four aims of life as four trikonas with this chart's grahas counted in each."
         case "bhava-karakas": return "Every significator of each house and where it stands in this chart. A house is judged by the house, its lord and its karakas."
         case "bhava-meanings": return "What each house stands for, by theme, with its classes, its sign, its lord and the grahas in it."
         case "graha-meanings": return "What each graha stands for by nature, and the part it plays here: where it stands, what it rules, and which houses it signifies."
@@ -56,6 +56,7 @@ enum Help {
         case "bala-relations": return "Who is friend, neutral and enemy to whom by nature, and whose sign each graha stands in here."
         case "bala-charts": return "Three charts on this lagna: the lord of each sign, where each graha is exalted, and where each has directional strength. A tick marks a graha that stands there in this chart."
         case "avasthas": return "The state each graha is in: its age by degree, its wakefulness by the sign it is in, and its mood by its dignity."
+        case "transit-chart": return "The sky alone, with no birth positions: where each graha stands now, or at the moment the time bar shows. The houses are counted from the birth lagna, marked “As”, so each transit falls in the house it passes through. Read it beside the Rasi chart. Underlined grahas are retrograde."
         case "moon": return "The birth chart counted from the Moon's sign in place of the lagna. Read beside the birth chart: what holds from both is firm. “As” still marks the lagna's sign."
         case "birth": return "Type the date and the clock time at the birthplace as you know them (1971-03-11 or 11 Mar 1971; 02:50 or 2:50 am). The date is written as 1971-Mar-11 when you leave the field, so month and day cannot be taken for each other, and the time as 02:50:00. A place you type is looked up when you leave it, and its full name, latitude, longitude and time zone are filled in; a field shown in red cannot be read yet. Every card recalculates as you type."
         case "grahas": return "One row per graha: its sign, its degree within the sign, its nakshatra and pada, its lords and how it is placed. Click a row for the full detail; hover a column heading for what it means."
@@ -112,10 +113,10 @@ enum Help {
             "Shadbala": "Six-fold strength in rupas, and as a multiple of what the tradition requires of that graha.",
             "Uccha": "Strength from nearness to the degree of exaltation.", "Saptavargaja": "Strength from dignity in seven divisional charts.",
             "Ojayugma": "Strength from standing in an odd or even sign and navamsa, as suits the graha.",
-            "Kendradi": "Strength from standing in an angular (60), succedent (30) or cadent (15) house.",
+            "Kendradi": "Strength from standing in a kendra (60), succedent (30) or cadent (15) house.",
             "Drekkana": "Strength from the third of the sign that suits the graha's gender.",
             "Sthana bala": "Positional strength: the five rows above, added.",
-            "Dig bala": "Directional strength: nearness to the angle where the graha is strongest.",
+            "Dig bala": "Directional strength: nearness to the kendra where the graha is strongest.",
             "Nata-unnata": "Strength from the time of day: some grahas are strong at noon, some at midnight.",
             "Paksha": "Strength from the Moon's phase: benefics gain as the Moon waxes, malefics as it wanes.",
             "Tribhaga": "Strength to the lord of the third of the day or night in which the birth falls; Jupiter always.",

@@ -74,8 +74,8 @@ extension Chart {
         supports += fine.supports; strains += fine.strains
         let light = lightAndJoint(g)
         supports += light.supports; strains += light.strains
-        if [1, 4, 7, 10].contains(house) { supports.append("In an angle, the \(Chart.ordinal(house)) house") }
-        else if [5, 9].contains(house) { supports.append("In a trine, the \(Chart.ordinal(house)) house") }
+        if [1, 4, 7, 10].contains(house) { supports.append("In a kendra, the \(Chart.ordinal(house)) house") }
+        else if [5, 9].contains(house) { supports.append("In a trikona, the \(Chart.ordinal(house)) house") }
         else if [6, 8, 12].contains(house) { strains.append("In a dusthana, the \(Chart.ordinal(house)): it works through \(house == 6 ? "service and effort" : house == 8 ? "depth and renewal" : "release")" + (g.status == "Own" ? "; in its own sign there, its matters are only slightly held back" : "")) }
         if [3, 6, 10, 11].contains(house) { supports.append("In an upachaya house: what it signifies " + (house < 10 ? "starts slowly and eases with time" : "is good from the outset and grows with time")) }
         if g.navamsa == g.sign { supports.append("Vargottama: the same sign in the navamsa") }

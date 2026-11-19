@@ -53,7 +53,7 @@ final class Store: ObservableObject {
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
-        "Overview": ["chart:0", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
+        "Overview": ["chart:0", "transit-chart", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "events", "other-dashas"],
         "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-relations", "bala-charts", "chart:0", "avasthas", "shadbala", "ashtakavarga"],
@@ -112,8 +112,10 @@ final class Store: ObservableObject {
     @Published var enlarged: Set<String> = {
         // the Rasi chart is at its largest by default; that default is laid over an earlier saved choice once
         let defaults = UserDefaults.standard
-        var saved = Set(defaults.stringArray(forKey: "enlarged") ?? ["chart:0"])
+        var saved = Set(defaults.stringArray(forKey: "enlarged") ?? ["chart:0", "transit-chart"])
         if !defaults.bool(forKey: "rasiLargeByDefault") { saved.insert("chart:0"); defaults.set(true, forKey: "rasiLargeByDefault"); defaults.set(Array(saved), forKey: "enlarged") }
+        // the transit chart stands beside the Rasi chart at the same size: it takes the Rasi chart's size once
+        if !defaults.bool(forKey: "transitSizedWithRasi") { if saved.contains("chart:0") { saved.insert("transit-chart") }; defaults.set(true, forKey: "transitSizedWithRasi"); defaults.set(Array(saved), forKey: "enlarged") }
         return saved
     }() { didSet { defaults.set(Array(enlarged), forKey: "enlarged") } }
     func toggleEnlarged(_ id: String) { if enlarged.contains(id) { enlarged.remove(id) } else { enlarged.insert(id) } }

@@ -26,7 +26,7 @@ extension Lore {
         case 7: return "opposite each other, which sets their matters face to face"
         case 6, 8: return "6th and 8th from each other, a placing that asks the two periods to adjust to each other"
         case 2, 12: return "2nd and 12th from each other, a placing of give and take between the two"
-        case 5, 9: return "in trine to each other, a placing read as easy cooperation"
+        case 5, 9: return "in trikona to each other, a placing read as easy cooperation"
         case 3, 11: return "3rd and 11th from each other, a placing read as effort that brings gain"
         default: return "4th and 10th from each other, a placing read as action that builds"
         }
