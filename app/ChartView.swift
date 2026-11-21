@@ -25,6 +25,13 @@ enum Tint {
 
 /// One label in a chart: a graha (or the lagna) and what to show for it.
 struct ChartMark: Identifiable {
+    /// A position within its sign as a chart writes it: 16° or, with minutes, 16°43′ (the minutes are cut, not
+    /// rounded, so a graha is never written into the next degree).
+    static func degrees(_ deg: Double, minutes: Bool) -> String {
+        let whole = Int(deg), part = min(59, Int((deg - Double(whole)) * 60))
+        return minutes ? "\(whole)°\(part < 10 ? "0" : "")\(part)′" : "\(whole)°"
+    }
+
     /// the graha's code, or "As"
     var code: String
     var label: String
@@ -41,6 +48,8 @@ struct ChartMark: Identifiable {
 
 /// A chart every part of which can be pointed at: a graha's label picks the graha, a sign's field picks the sign.
 struct ChartView: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     var style: ChartStyle
     var title: String
@@ -93,6 +102,8 @@ struct ChartView: View {
 
     private func labels(_ sign: Int, perRow: Int, size: CGFloat) -> some View {
         let all = marks[sign] ?? []
+        // labels that carry minutes are longer: one fewer stands on a line, so they stay inside the sign's field
+        let perRow = all.contains(where: { $0.label.count > 8 }) ? max(1, perRow - 1) : perRow
         let rows = stride(from: 0, to: all.count, by: perRow).map { Array(all[$0..<min($0 + perRow, all.count)]) }
         return VStack(spacing: 0) {
             ForEach(rows.indices, id: \.self) { row in

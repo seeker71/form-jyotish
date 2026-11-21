@@ -326,6 +326,48 @@ struct FormJyotishApp: App {
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
     /// event, and say whether the explanation came up.
     /// a click on a window that is not key only brings it forward, so each click witness makes its window key first
+    /// `FormJyotish --probe-speed`: how long the window stops answering after each thing a person does. A beat
+    /// runs on the main thread every 4 ms; while the desk is redrawing the beat cannot run, so the longest gap
+    /// between two beats after an action is how long the window was frozen by it. Leaves 0 when every action
+    /// stayed under a second.
+    private static var beat: DispatchSourceTimer?
+    private func probeSpeed() {
+        setlinebuf(stdout)
+        var last = DispatchTime.now().uptimeNanoseconds, worst: UInt64 = 0, busy: UInt64 = 0
+        let beat = DispatchSource.makeTimerSource(queue: .main)
+        beat.schedule(deadline: .now(), repeating: .milliseconds(4))
+        beat.setEventHandler {
+            let now = DispatchTime.now().uptimeNanoseconds, gap = now - last
+            last = now
+            if gap > worst { worst = gap }
+            if gap > 12_000_000 { busy += gap }
+        }
+        beat.resume()
+        Self.beat = beat
+        var actions: [(name: String, run: () -> Void)] = (Store.workspaces.dropFirst() + ["Guide", "Overview"]).map { name in ("open \(name)", { store.workspace = name }) }
+        actions += [("point at Jupiter", { store.hover = .graha("Ju") }), ("point at Saturn", { store.hover = .graha("Sa") }), ("point away", { store.hover = nil }),
+                    ("click the Moon", { store.pick = .graha("Mo") }), ("click a sign", { store.pick = .sign(3) }),
+                    ("step one day", { store.step(seconds: 86400) }), ("step one more day", { store.step(seconds: 86400) }), ("Now", { store.goNow() }), ("Birth", { store.goBirth() }),
+                    ("chart style", { store.style = store.style == .south ? .north : .south }), ("minutes off", { store.chartMinutes.toggle() }),
+                    ("hide the explanation column", { store.inspectorShown = false }), ("show the explanation column", { store.inspectorShown = true })]
+        var slow: [String] = [], longest: (String, UInt64) = ("", 0)
+        func act(_ index: Int) {
+            guard index < actions.count else {
+                print("probe: slowest was \(longest.0) at \(longest.1 / 1_000_000) ms; \(slow.isEmpty ? "every action stayed under a second" : "over a second: " + slow.joined(separator: ", "))")
+                exit(slow.isEmpty ? 0 : 1)
+            }
+            worst = 0; busy = 0; last = DispatchTime.now().uptimeNanoseconds
+            actions[index].run()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                print("probe: \(actions[index].name): frozen at most \(worst / 1_000_000) ms, busy \(busy / 1_000_000) ms in all")
+                if worst > longest.1 { longest = (actions[index].name, worst) }
+                if worst >= 1_000_000_000 { slow.append(actions[index].name) }
+                act(index + 1)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { whenRead { DispatchQueue.main.asyncAfter(deadline: .now() + 3) { act(0) } } }
+    }
+
     /// Run `then` once the chart on the desk has been read: a click witness that starts on a clock alone fails
     /// whenever the first reading takes longer than the clock allowed.
     private func whenRead(since start: Date = Date(), _ then: @escaping () -> Void) {
@@ -361,7 +403,7 @@ struct FormJyotishApp: App {
             MainView()
                 .environmentObject(store)
                 .environmentObject(updater)
-                .onAppear { updater.check(); if CommandLine.arguments.contains("--example") { store.ephemeral = true; store.addSample("New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) }; if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() }; if CommandLine.arguments.contains("--probe-table") { probeTable() } }
+                .onAppear { updater.check(); if CommandLine.arguments.contains("--example") { store.ephemeral = true; store.addSample("New Delhi 2000", date: "2000-01-01", time: "17:30:00", zone: "Asia/Kolkata", place: "New Delhi, India", latitude: 28.6139, longitude: 77.209) }; if let i = CommandLine.arguments.firstIndex(of: "--public"), CommandLine.arguments.count > i + 1 { store.ephemeral = true; store.addPublic(CommandLine.arguments[i + 1]) }; if let i = CommandLine.arguments.firstIndex(of: "--show-card"), CommandLine.arguments.count > i + 1 { let card = CommandLine.arguments[i + 1]; DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { store.showCard = card } }; if let i = CommandLine.arguments.firstIndex(of: "--look-up"), CommandLine.arguments.count > i + 1 { store.lookedUp = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--workspace"), CommandLine.arguments.count > i + 1, Store.workspaces.contains(CommandLine.arguments[i + 1]) { store.workspace = CommandLine.arguments[i + 1] }; if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 { snapshot(to: CommandLine.arguments[i + 1]) }; if CommandLine.arguments.contains("--probe-tabs") { probeTabs() }; if CommandLine.arguments.contains("--probe-speed") { probeSpeed() }; if CommandLine.arguments.contains("--probe-palette") { probePalette() }; if CommandLine.arguments.contains("--probe-tour") { probeTour() }; if CommandLine.arguments.contains("--probe-table") { probeTable() } }
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .commands {

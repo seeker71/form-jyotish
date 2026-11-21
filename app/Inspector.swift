@@ -3,6 +3,8 @@ import SwiftUI
 /// Says what the picked thing is, in the birth chart and in the sky of the moment under view.
 /// Everything it names can be clicked to pick that in turn.
 struct Inspector: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
 
     var body: some View {

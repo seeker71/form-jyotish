@@ -173,6 +173,8 @@ struct Workspace: View {
 
 /// A card's frame: its title, its menu, and its content.
 struct Card: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     let id: String
     /// the height the card may take before its content scrolls within it; nil lets it grow
@@ -315,7 +317,7 @@ struct Card: View {
         var bySign: [Int: [ChartMark]] = [chart.asc.vargas[varga]: [ChartMark(code: "As", label: "As", sign: lagnaLabel ? chart.asc.vargas[varga] : nil)]]
         for g in chart.grahas {
             let back = g.retro && g.id != "Ra" && g.id != "Ke", retro = back ? "℞" : ""
-            bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id)\(retro) \(Int(g.deg))°" : g.id + retro, retro: back))
+            bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id)\(retro) \(ChartMark.degrees(g.deg, minutes: store.chartMinutes))" : g.id + retro, retro: back))
         }
         return bySign
     }
@@ -383,6 +385,8 @@ struct BirthForm: View {
 
 /// A table row that can be pointed at: it highlights with whatever else shows the same pick.
 struct PickRow: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     var pick: Pick?
     var cells: [(text: String, width: CGFloat)]

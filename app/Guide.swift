@@ -106,6 +106,8 @@ struct ReadingCard: View {
 
 /// The twelve houses: what each covers, and the four things a reader looks at for it.
 struct HousesCard: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     let chart: Chart
 

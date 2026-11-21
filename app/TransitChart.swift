@@ -29,7 +29,7 @@ struct TransitChart: View {
         var bySign: [Int: [ChartMark]] = [natal.asc.sign: [ChartMark(code: "As", label: "As")]]
         for g in sky.grahas {
             let back = g.retro && g.id != "Ra" && g.id != "Ke"
-            bySign[g.sign, default: []].append(ChartMark(code: g.id, label: "\(g.id)\(back ? "℞" : "") \(Int(g.deg))°", retro: back,
+            bySign[g.sign, default: []].append(ChartMark(code: g.id, label: "\(g.id)\(back ? "℞" : "") \(ChartMark.degrees(g.deg, minutes: store.chartMinutes))", retro: back,
                                                          note: "\(Names.lords[g.id] ?? g.id) in the sky of this moment, in \(Names.signs[g.sign])\(back ? ". Retrograde." : ".")"))
         }
         return bySign

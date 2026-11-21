@@ -4,6 +4,8 @@ private let seven = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"]
 
 /// The six-fold strength: every row for the seven grahas, the sums in bold, then rupas and the share of what is required.
 struct ShadbalaTable: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     let chart: Chart
 
@@ -51,6 +53,8 @@ struct ShadbalaTable: View {
 
 /// Bindus by graha and sign, with the sarvashtakavarga under them. A row picks its graha, a column its sign.
 struct AshtakavargaTable: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     let chart: Chart
 

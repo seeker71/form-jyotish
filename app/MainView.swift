@@ -217,6 +217,7 @@ struct Palette: View {
             list += (1...12).map { house in Command(id: "pick-house-\(house)", title: "Show the \(Chart.ordinal(house)) house (\(Lore.houseNames[house - 1].lowercased()))", keywords: "house bhava \(house) pick", run: { store.pick = .sign(chart.sign(ofHouse: house)) }) }
         }
         list += PublicCharts.all.map { entry in Command(id: "public-\(entry.key)", title: "Add a public chart: \(entry.birth.name)", keywords: "example famous celebrity notable horoscopes sample test public", run: { store.addPublic(entry.key) }) }
+        list.append(Command(id: "minutes", title: store.chartMinutes ? "Charts: write the degree only" : "Charts: write the degree and minutes", keywords: "degree minutes arc chart labels busy", run: { store.chartMinutes.toggle() }))
         list += ChartStyle.allCases.map { style in Command(id: "style-\(style.rawValue)", title: "\(style.rawValue) charts", keywords: "style chart form", run: { store.style = style }) }
         list += [
             Command(id: "text-larger", title: "Larger text", keywords: "font size bigger zoom in", run: { store.textScale = Store.textScales.first { $0.scale > store.textScale }?.scale ?? store.textScale }),
@@ -374,6 +375,9 @@ struct ChartSettings: View {
             }
             row("Chart style", "South Indian charts keep the signs in place; North Indian charts keep the houses in place.") {
                 Picker("Chart style", selection: only(\.style)) { ForEach(ChartStyle.allCases) { Text($0.rawValue).tag($0) } }
+            }
+            row("Degrees in charts", "How each graha's place is written in the Rasi and Transit charts: the degree alone, or the degree and the minutes of arc. Choose the degree alone if a chart reads too busy.") {
+                Picker("Degrees in charts", selection: only(\.chartMinutes)) { Text("Degree and minutes").tag(true); Text("Degree only").tag(false) }
             }
             row("Ayanamsa (this chart)", "Kept with the chart on the desk. The gap between the tropical zodiac of the seasons and the sidereal zodiac of the stars. Lahiri is India's official value; True Chitra fixes the star Spica at the start of Libra; B.V. Raman's is about 1 degree 27 minutes smaller.") {
                 Picker("Ayanamsa", selection: only(\.ayanamsa)) {

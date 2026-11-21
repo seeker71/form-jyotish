@@ -40,6 +40,15 @@ final class Feed {
     }
 }
 
+/// What the pointer rests on, and what a yoga or the walk-through lights up. Kept apart from the store so that a
+/// move of the pointer redraws the charts, rows and explanation that show it, and nothing else.
+@MainActor
+final class Pointer: ObservableObject {
+    static let shared = Pointer()
+    @Published var hover: Pick?
+    @Published var glow: [String] = []
+}
+
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
@@ -83,7 +92,9 @@ final class Store: ObservableObject {
     @Published var rectify: Double = 0 { didSet { if rectify != oldValue { readNatal() } } }
     @Published var rectifying = false
     @Published var pick: Pick?
-    @Published var hover: Pick?
+    /// what the pointer rests on. It lives in `Pointer`, not here: a change in the store redraws every card on the
+    /// desk, and the pointer moves far too often for that. Only views that light up under the pointer watch it.
+    var hover: Pick? { get { Pointer.shared.hover } set { if Pointer.shared.hover != newValue { Pointer.shared.hover = newValue } } }
     /// the step of the walk-through that is open; nil when it is closed
     @Published var tourAt: Int? = nil
     /// guidance for a reader who knows the tradition: each card states its method in place of the plain words
@@ -98,7 +109,7 @@ final class Store: ObservableObject {
         set { if showHelp != (newValue != "off") { showHelp = newValue != "off" }; if newValue != "off", familiar != (newValue == "familiar") { familiar = newValue == "familiar" } }
     }
     /// grahas lit together on every card while the pointer rests on something they form: a yoga, a period
-    @Published var glow: [String] = []
+    var glow: [String] { get { Pointer.shared.glow } set { if Pointer.shared.glow != newValue { Pointer.shared.glow = newValue } } }
     /// whether the inspector shows what the pointer rests on, or only what was clicked
     /// the explanation column at the right: whether it shows, and how wide it stands
     static let inspectorNarrowest = 150.0, inspectorStandard = 210.0, inspectorWidest = 480.0
@@ -135,7 +146,7 @@ final class Store: ObservableObject {
     @Published var layout: [String: [String]] { didSet { if !Store.trial { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } } }
     /// a run that only pictures or probes the window: it shows the standard desk and writes nothing of the desk's
     /// arrangement, workspace or guidance level
-    static let trial = ["--snapshot", "--probe-tour", "--probe-table", "--probe-tabs", "--probe-palette"].contains { CommandLine.arguments.contains($0) }
+    static let trial = ["--snapshot", "--probe-tour", "--probe-table", "--probe-tabs", "--probe-palette", "--probe-speed"].contains { CommandLine.arguments.contains($0) }
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }
     static let textScales: [(name: String, scale: Double)] = [("Small", 0.9), ("Standard", 1.0), ("Large", 1.15), ("Larger", 1.3), ("Largest", 1.5)]
@@ -157,6 +168,8 @@ final class Store: ObservableObject {
         if ayanamsa != wantAyanamsa { ayanamsa = wantAyanamsa }
         applying = false
     }
+    /// whether the Rasi and Transit charts write each graha's minutes of arc after its degree
+    @Published var chartMinutes: Bool = UserDefaults.standard.object(forKey: "chartMinutes") as? Bool ?? true { didSet { defaults.set(chartMinutes, forKey: "chartMinutes") } }
     @Published var style: ChartStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
     /// explanations shown in place on every card and in the inspector; on until the person turns it off
     @Published var showHelp: Bool { didSet { if !Store.trial { defaults.set(showHelp, forKey: "showHelp") } } }

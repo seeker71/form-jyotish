@@ -197,6 +197,8 @@ struct SheetCell: View {
 }
 
 struct SheetRow: View {
+    /// redrawn when the pointer moves: see `Pointer`
+    @ObservedObject private var pointer = Pointer.shared
     @EnvironmentObject var store: Store
     var graha: String?
     /// a row that stands for a house picks its sign
