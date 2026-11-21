@@ -194,6 +194,8 @@ struct FormJyotishApp: App {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { print("probe: no window"); exit(1) }
             var held = 0
+            // start from the last desk, so the first tab has to answer too
+            store.workspace = Store.workspaces.last ?? "Guide"
             func press(_ index: Int) {
                 guard index < Store.workspaces.count else { print("probe: \(held) of \(Store.workspaces.count) tabs answered a click"); exit(held == Store.workspaces.count ? 0 : 1) }
                 let name = Store.workspaces[index]
@@ -250,7 +252,6 @@ struct FormJyotishApp: App {
     /// sent to the window, and say whether the step and the workspace followed each press.
     private func probeTour() {
         makeKey(after: 1.5)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { store.tour(to: 0) }
         let presses: [(button: String, step: Int?)] = [("next", 1), ("next", 2), ("next", 3), ("next", 4), ("next", 5), ("next", 6), ("back", 5), ("end", nil)]
         var held = 0
         func press(_ index: Int) {
@@ -271,14 +272,19 @@ struct FormJyotishApp: App {
                 press(index + 1)
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { press(0) }
+        // the walk-through needs the chart: it starts once the chart is read, not after a fixed wait
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { whenRead { store.tour(to: 0); DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { press(0) } } }
     }
 
     /// `FormJyotish --probe-table`: on Overview, click the Jupiter row and then the Nakshatra heading with real
     /// mouse events, and say whether the row was picked and the heading explained.
     private func probeTable() {
+        // every wait below is counted from the moment the chart is read, not from the launch
+        func go() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { store.workspace = "Overview" }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { store.showCard = "grahas" }
+        // the table stands alone on the desk, at its head: a row reports its place only when it is drawn, so a
+            // table that had to be scrolled to would be clicked where it used to stand (a probe writes no layout)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { PickRow.spots = [:]; store.layout["Overview"] = ["grahas"] }
         // a heading that carries an explanation and stands inside the window now
         func heading() -> String? {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { return nil }
@@ -298,7 +304,7 @@ struct FormJyotishApp: App {
         }
         // a click on a window that is not key only brings it forward, so the witness makes its window key first
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { NSApp.activate(ignoringOtherApps: true); NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil })?.makeKeyAndOrderFront(nil) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7) {
             guard NSApp.windows.contains(where: { $0.isKeyWindow }) else { print("probe: the window could not be made key, so no click was tried"); exit(2) }
             guard click("row:Ju") else { exit(1) }
             // the pick opens the inspector and the desk settles again before the next click can land
@@ -313,11 +319,21 @@ struct FormJyotishApp: App {
                 }
             }
         }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { whenRead { go() } }
     }
 
     /// `FormJyotish --probe-palette`: open the palette on "shad", click "What is Shadbala?" with a real mouse
     /// event, and say whether the explanation came up.
     /// a click on a window that is not key only brings it forward, so each click witness makes its window key first
+    /// Run `then` once the chart on the desk has been read: a click witness that starts on a clock alone fails
+    /// whenever the first reading takes longer than the clock allowed.
+    private func whenRead(since start: Date = Date(), _ then: @escaping () -> Void) {
+        if store.chart != nil { print("probe: the chart was read \(String(format: "%.1f", Date().timeIntervalSince(start))) s into the wait"); then(); return }
+        guard Date().timeIntervalSince(start) < 30 else { print("probe: no chart was read within 30 s"); exit(1) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { whenRead(since: start, then) }
+    }
+
     private func makeKey(after seconds: Double) {
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { NSApp.activate(ignoringOtherApps: true); NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil })?.makeKeyAndOrderFront(nil) }
     }
@@ -350,6 +366,15 @@ struct FormJyotishApp: App {
         }
         .commands {
             CommandGroup(after: .appInfo) { Button("Check for Updates…") { updater.check(byHand: true) } }
+            // a second way to every desk, which no layout can cover: see WorkspaceTabs
+            CommandMenu("Desk") {
+                ForEach(Array(Store.workspaces.enumerated()), id: \.element) { index, name in
+                    if index < 9 { Button(name) { store.workspace = name }.keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command) }
+                    else { Button(name) { store.workspace = name } }
+                }
+                Divider()
+                Button("Show or Hide the Explanation Column") { store.inspectorShown.toggle() }.keyboardShortcut("i", modifiers: [.command, .option])
+            }
         }
         Settings { SettingsView() }
     }

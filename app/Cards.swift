@@ -88,11 +88,19 @@ struct Workspace: View {
     /// the least width a card needs to share a row; nil for a card that takes the full width
     private func least(_ id: String) -> CGFloat? { isChart(id) ? (store.enlarged.contains(id) ? 360 : 230) : Catalog.shared[id] }
 
+    /// The cards on the desk. While the time bar stands away from the birth, the Transit chart joins the Rasi
+    /// chart on any desk that does not already hold it, so the sky is seen beside the birth chart, never over it.
+    private var shown: [String] {
+        var cards = store.cards
+        if store.moment != nil, !cards.contains("transit-chart"), let rasi = cards.firstIndex(of: "chart:0") { cards.insert("transit-chart", at: rasi + 1) }
+        return cards
+    }
+
     /// The cards in rows, in their order: each row takes the next card while its least width still fits.
     private func rows(width: CGFloat) -> [[String]] {
         let room = width - 32
         var result: [[String]] = [], used = CGFloat.infinity
-        for id in store.cards where store.showAdditions || !Catalog.additions.contains(id) {
+        for id in shown where store.showAdditions || !Catalog.additions.contains(id) {
             guard let need = least(id) else { result.append([id]); used = .infinity; continue }
             if used + 14 + need <= room { result[result.count - 1].append(id); used += 14 + need } else { result.append([id]); used = need }
         }
@@ -298,16 +306,12 @@ struct Card: View {
         return parts.isEmpty ? rest : parts.joined(separator: " · ")
     }
 
-    /// Birth positions in a varga, with the sky's positions beside them while the desk stands away from the birth.
+    /// Birth positions in a varga, and nothing else: the sky stands in the Transit chart, a card of its own.
     private func marks(_ chart: Chart, _ varga: Int, lagnaLabel: Bool = false) -> [Int: [ChartMark]] {
         var bySign: [Int: [ChartMark]] = [chart.asc.vargas[varga]: [ChartMark(code: "As", label: "As", sign: lagnaLabel ? chart.asc.vargas[varga] : nil)]]
         for g in chart.grahas {
             let back = g.retro && g.id != "Ra" && g.id != "Ke", retro = back ? "℞" : ""
             bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id)\(retro) \(Int(g.deg))°" : g.id + retro, retro: back))
-        }
-        // on Overview the birth charts stay clean: the sky stands in a chart of its own beside them
-        if let sky = store.sky, store.workspace != "Overview" {
-            for g in sky.grahas { bySign[g.vargas[varga], default: []].append(ChartMark(code: g.id, label: varga == 0 ? "\(g.id) \(Int(g.deg))°" : g.id, transit: true, retro: g.retro && g.id != "Ra" && g.id != "Ke")) }
         }
         return bySign
     }

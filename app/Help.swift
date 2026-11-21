@@ -21,7 +21,7 @@ enum Help {
     }
 
     static func card(_ id: String) -> String {
-        if id == "chart:0" { return "Where each graha stood at birth. “As” marks the lagna, the sign rising in the east. Click a graha or a sign to read about it. Underlined grahas are retrograde; italic ones show the sky of the moment in the time bar." }
+        if id == "chart:0" { return "Where each graha stood at birth. “As” marks the lagna, the sign rising in the east. Click a graha or a sign to read about it. Underlined grahas are retrograde. The sky of now, or of the moment in the time bar, stands in the Transit chart beside it." }
         if id == "chart:5" { return "The navamsa divides each sign into nine parts. It is read beside the birth chart for a graha's inner strength, and for marriage." }
         if id.hasPrefix("chart:"), let index = Int(id.dropFirst(6)) { return "\(Names.vargaCodes[index]) divides each sign into \(Names.vargaCodes[index].dropFirst()) parts and places each graha by the part it falls in. Read for: \(Names.vargas[index])." }
         switch id {

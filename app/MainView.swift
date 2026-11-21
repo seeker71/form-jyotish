@@ -22,18 +22,23 @@ struct MainView: View {
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
             .toolbar { Button { store.add() } label: { Label("New chart", systemImage: "plus") } }
         } detail: {
-            Zoomed(scale: store.textScale) { room in
-                VStack(spacing: 0) {
-                    WorkspaceTabs()
-                    Divider()
-                    HStack(spacing: 0) {
-                        Workspace()
+            // the tabs stand above the zoomed area, not in it: see WorkspaceTabs
+            VStack(spacing: 0) {
+                WorkspaceTabs()
+                Divider()
+                Zoomed(scale: store.textScale) { room in
+                    VStack(spacing: 0) {
+                        HStack(spacing: 0) {
+                            Workspace()
+                            if store.inspectorShown {
+                                InspectorHandle()
+                                // the explanations give way before the workspace does when text is large or the window narrow
+                                Inspector().frame(width: max(60, min(store.inspectorWidth, max(Store.inspectorNarrowest, room.width - 600))))
+                            }
+                        }
                         Divider()
-                        // the explanations give way before the workspace does when text is large or the window narrow
-                        Inspector().frame(width: min(280, max(200, room.width - 600)))
+                        TimeBar()
                     }
-                    Divider()
-                    TimeBar()
                 }
             }
         }

@@ -66,7 +66,7 @@ extension Chart {
                      detail: "Vimshottari is counted from the Moon's nakshatra, with a year of 365.25 days. The running lords are read by the houses they rule and occupy.",
                      tryIt: "Press the arrows in the time bar at the bottom. The running period, the timeline and the charts all follow the moment.",
                      workspace: "Dasha", pick: running.map { .period(lords: [$0.lord], start: $0.start, end: $0.end) }, card: "chart:0"),
-            TourStep(title: "What is passing", words: "The present sky is now laid over the birth chart: the italic marks are today's positions. Saturn and Jupiter set the season; they act within what the dasha allows.",
+            TourStep(title: "What is passing", words: "The present sky now stands in the Transit chart, beside the birth chart: today's positions in the houses of the birth lagna. Saturn and Jupiter set the season; they act within what the dasha allows.",
                      detail: "Transit houses are counted from the lagna and from the Moon. Saturn in the 12th, 1st and 2nd from the Moon is Sade Sati.",
                      tryIt: "Press Play in the time bar and watch the sky move over the chart. Press Birth to return to the birth chart alone.",
                      workspace: "Transits", card: "chart:0", now: true),

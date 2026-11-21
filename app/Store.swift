@@ -55,11 +55,11 @@ final class Store: ObservableObject {
         "Annual": ["annual", "chart:0", "dasha-context"],
         "Overview": ["chart:0", "transit-chart", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
-        "Dasha": ["chart:0", "dasha-context", "timeline", "dashas", "events", "other-dashas"],
+        "Dasha": ["chart:0", "transit-chart", "dasha-context", "timeline", "dashas", "events", "other-dashas"],
         "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-relations", "bala-charts", "chart:0", "avasthas", "shadbala", "ashtakavarga"],
         "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
-        "Transits": ["chart:0", "gochara", "dina", "transits", "transit-dates", "timeline"],
+        "Transits": ["chart:0", "transit-chart", "gochara", "dina", "transits", "transit-dates", "timeline"],
     ]
     /// the desk's arrangement was redrawn at this number; an earlier saved arrangement gives way to it once
     static let layoutVersion = 4
@@ -100,6 +100,10 @@ final class Store: ObservableObject {
     /// grahas lit together on every card while the pointer rests on something they form: a yoga, a period
     @Published var glow: [String] = []
     /// whether the inspector shows what the pointer rests on, or only what was clicked
+    /// the explanation column at the right: whether it shows, and how wide it stands
+    static let inspectorNarrowest = 150.0, inspectorStandard = 210.0, inspectorWidest = 480.0
+    @Published var inspectorShown: Bool = UserDefaults.standard.object(forKey: "inspectorShown") as? Bool ?? true { didSet { if !Store.trial { defaults.set(inspectorShown, forKey: "inspectorShown") } } }
+    @Published var inspectorWidth: Double = UserDefaults.standard.object(forKey: "inspectorWidth") as? Double ?? Store.inspectorStandard { didSet { if !Store.trial { defaults.set(inspectorWidth, forKey: "inspectorWidth") } } }
     @Published var followPointer: Bool = UserDefaults.standard.object(forKey: "followPointer") as? Bool ?? true { didSet { defaults.set(followPointer, forKey: "followPointer") } }
     /// what the inspector and the charts speak of: the thing under the pointer, else the thing clicked
     var focus: Pick? { followPointer ? (hover ?? pick) : pick }
