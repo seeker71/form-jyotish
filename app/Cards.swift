@@ -134,7 +134,10 @@ struct Workspace: View {
     private func content(width: CGFloat, height: CGFloat, sideways: Bool) -> some View {
         ScrollViewReader { reader in
         ScrollView(sideways ? [.vertical, .horizontal] : .vertical) {
-            VStack(alignment: .leading, spacing: 14) {
+            // lazy: only the rows in view are built and kept up to date. A desk holds up to seventeen cards, and
+            // every move of the pointer or the time bar redraws what is built, so building them all made each
+            // such move wait on cards nobody could see.
+            LazyVStack(alignment: .leading, spacing: 14) {
                 if let problem = store.problem { Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                 if store.showHelp {
                     Label(Help.workspace(store.workspace), systemImage: "lightbulb").font(.callout).foregroundStyle(.secondary)
@@ -162,7 +165,8 @@ struct Workspace: View {
             .padding(16)
             .frame(width: width, alignment: .leading)
         }
-        .onChanged(of: store.showCard) { if let card = store.showCard { withAnimation { reader.scrollTo(card, anchor: .top) }; store.showCard = nil } }
+        // a card not yet in view is not built yet, so the desk scrolls to the card's row, which is always known
+        .onChanged(of: store.showCard) { if let card = store.showCard { if let row = rows(width: width).first(where: { $0.contains(card) }) { withAnimation { reader.scrollTo(row, anchor: .top) } }; store.showCard = nil } }
         }
     }
 }
