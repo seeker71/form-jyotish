@@ -51,6 +51,7 @@ enum Catalog {
            CardInfo(id: "bala-table", title: "Graha strength and weakness", keywords: "strength weakness own sign exaltation debilitation dig bala retrograde combust planetary war table light on life", wide: true),
            CardInfo(id: "bala-keys", title: "Primary and secondary strength", keywords: "strength weakness primary secondary benefic malefic flanked friend enemy full new moon eclipse", wide: true),
            CardInfo(id: "proforma-a", title: "Chart Prep Pro Forma A", keywords: "reading pro forma chart prep yoga lagna bhava dasha bhukti gochara vichara static dynamic potential timing vedic traditions", wide: true),
+           CardInfo(id: "proforma-rahu-ketu", title: "Pro Forma Rahu/Ketu", keywords: "reading pro forma rahu ketu nodes dasha bhukti dispositor nakshatra acts like natural malefic karakatva duplication", wide: true),
            CardInfo(id: "bala-navamsa", title: "From Rasi to Navamsa: the tree and its fruit", keywords: "navamsa d9 d1 vargottama fruit tree develops stronger weaker ripens over time growth later life", wide: true),
            CardInfo(id: "bala-relations", title: "Graha relations", keywords: "friends neutrals enemies mitra sama shatru natural friendship camps", wide: true),
            CardInfo(id: "bala-charts", title: "Visualizing strength", keywords: "rulership own sign exaltation dig bala directional charts", wide: true),
@@ -278,6 +279,7 @@ struct Card: View {
                 case "bala-table": StrengthSheet(chart: chart)
                 case "bala-keys": KeyFactorsCard(chart: chart)
                 case "proforma-a": ProFormaCard(chart: chart)
+                case "proforma-rahu-ketu": RahuKetuProFormaCard(chart: chart)
                 case "bala-navamsa": NavamsaGrowthCard(chart: chart)
                 case "bala-relations": RelationsCard(chart: chart)
                 case "bala-charts": StrengthCharts(chart: chart)

@@ -59,7 +59,7 @@ final class Store: ObservableObject {
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
         "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "rashi-elements", "rashi-meanings", "nakshatras", "anatomy", "lagna-vichara", "bhava-vichara", "houses", "reading", "glossary", "sources"],
-        "Reading": ["proforma-a"],
+        "Reading": ["proforma-a", "proforma-rahu-ketu"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],

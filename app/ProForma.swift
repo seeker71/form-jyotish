@@ -264,3 +264,172 @@ struct ProFormaCard: View {
         }
     }
 }
+
+/// Pro Forma Rahu/Ketu: the levels by which a Rahu or Ketu dasha or bhukti is analysed, after the Level 2
+/// lessons of Vedic Traditions (Steven Highburger), each level answered from the chart on the desk.
+///
+///   1. As a natural malefic   2. Its karakatva, the innate meanings   3. Acting like other grahas:
+///      its rashi dispositor, its nakshatra dispositor, the grahas associated with it, the grahas aspecting it;
+///   then one list of those grahas, sorted by their condition and by how often each one's influence repeats.
+struct RahuKetuProFormaCard: View {
+    @EnvironmentObject var store: Store
+    let chart: Chart
+    private let wide: CGFloat = 980
+
+    private func name(_ code: String) -> String { Names.lords[code] ?? code }
+    private func ord(_ n: Int) -> String { Chart.ordinal(n) }
+    private func houses(_ list: [Int]) -> String { list.isEmpty ? "no house" : "the " + list.map(ord).joined(separator: ", ") }
+    private var day: Double { store.moment.map { $0.timeIntervalSince1970 / 86400 + 2440587.5 } ?? Date().timeIntervalSince1970 / 86400 + 2440587.5 }
+
+    private func step(_ words: String) -> some View { Text(words).font(.headline).padding(.top, 8) }
+    private func answer(_ words: String) -> some View {
+        Text(words).font(.callout).fixedSize(horizontal: false, vertical: true).frame(maxWidth: wide - 30, alignment: .leading).padding(.leading, 30)
+    }
+    private func answer(_ head: String, _ words: String) -> some View {
+        (Text(head + " ").fontWeight(.semibold) + Text(words)).font(.callout).fixedSize(horizontal: false, vertical: true).frame(maxWidth: wide - 30, alignment: .leading).padding(.leading, 30)
+    }
+
+    /// a graha's condition as a number and in words: primary factors count two, secondary one
+    private func condition(_ code: String) -> (score: Int, words: String) {
+        guard let g = chart.graha(code) else { return (0, "") }
+        let k = chart.keyFactors(g), score = 2 * k.primaryStrength.count - 2 * k.primaryWeakness.count + k.secondaryStrength.count - k.secondaryWeakness.count
+        let lines = [("Primary strength", k.primaryStrength), ("Primary weakness", k.primaryWeakness), ("Secondary strength", k.secondaryStrength), ("Secondary weakness", k.secondaryWeakness)]
+            .filter { !$0.1.isEmpty }.map { "\($0.0): \($0.1.joined(separator: "; "))" }
+        let verdict = score >= 2 ? "Strong" : score <= -2 ? "Weak" : score > 0 ? "Leans strong" : score < 0 ? "Leans weak" : "Middling"
+        return (score, verdict + (lines.isEmpty ? "" : "\n" + lines.joined(separator: "\n")))
+    }
+
+    /// the four ways a node takes on other grahas, in the pro forma's order
+    private func actsLike(_ node: Graha) -> [(role: String, grahas: [String])] {
+        let with = chart.grahas.filter { $0.sign == node.sign && !["Ra", "Ke"].contains($0.id) && Lore.exalted[$0.id] != nil }.map(\.id)
+        let seeing = chart.aspecting(sign: node.sign).filter { !with.contains($0) }
+        return [("Its rashi dispositor", [Chart.signLords[node.sign]]), ("Its nakshatra dispositor", [node.nak_lord]),
+                ("Grahas associated with it", with), ("Grahas aspecting it", seeing)]
+    }
+
+    /// short themes of each node, in the app's own words
+    private static let themes: [String: String] = [
+        "Ra": "hunger that is hard to satisfy; ambition that can run against the person's own grain, and the frustration that follows it; restless effort and reaction; strategy and control; masks and concealment, with insight once the veil lifts; foreign people, places and cultures; a pull that fascinates.",
+        "Ke": "the other end of the same axis: what is already known and is let go; detachment, insight and liberation; suddenness; the hidden and the past. Like Rahu it wears the dress of the grahas it is tied to."]
+
+    private typealias Listed = (code: String, roles: [String], state: (score: Int, words: String))
+
+    private func stands(_ g: Graha, _ code: String) -> String {
+        let format = Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: store.zone)
+        let running = Vimshottari.running(at: day, in: chart.dasha, depth: 2)
+        let mahas = chart.dasha.filter { $0.lord == code && $0.end > chart.jd }
+        var text = "\(Names.signs[g.sign]), the \(ord(chart.house(ofSign: g.sign))) house, in \(g.nak_name) pada \(g.pada). "
+        if !mahas.isEmpty {
+            let spans: [String] = mahas.map { Names.date(julianDay: $0.start).formatted(format) + " to " + Names.date(julianDay: $0.end).formatted(format) }
+            text += "Its daśā: " + spans.joined(separator: "; ") + ". "
+        }
+        if running.count == 2, running[0].lord == code { text += "Its daśā is running now. " }
+        if running.count == 2, running[1].lord == code { text += "Its bhukti is running now, within \(name(running[0].lord))'s daśā, until " + Names.date(julianDay: running[1].end).formatted(format) + "." }
+        return text
+    }
+
+    private func malefic(_ code: String, house: Int) -> String {
+        let classes: String = Lore.houseClasses(house).map(\.name).joined(separator: ", ").lowercased()
+        let kind: String = Lore.positiveHouses.contains(house) ? "a positive house, where a malefic disturbs what would otherwise be easy" : "a house that asks more, where a malefic can contain the harder side"
+        return "\(name(code)) is a natural malefic. It presses on the \(ord(house)) house (\(Lore.houses[house - 1])). That house is \(classes), \(kind)."
+    }
+
+    private func meanings(_ code: String) -> String {
+        let own: String = Lore.signifies[code].map { $0.prefix(1).uppercased() + $0.dropFirst() + ". " } ?? ""
+        let more: String = Self.themes[code].map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? ""
+        return own + more
+    }
+
+    private func stance(_ other: String) -> String {
+        let sign: String = chart.graha(other).map { Names.signs[$0.sign] } ?? ""
+        return "\(name(other)) stands \(chart.placing(other)), in \(sign); it rules \(houses(chart.housesRuled(by: other)))."
+    }
+
+    private func listed(_ acts: [(role: String, grahas: [String])]) -> [Listed] {
+        var roles: [String: [String]] = [:]
+        for row in acts { for other in row.grahas { roles[other, default: []].append(row.role) } }
+        let items: [Listed] = roles.map { (code: $0.key, roles: $0.value, state: condition($0.key)) }
+        return items.sorted { a, b in
+            if a.state.score != b.state.score { return a.state.score > b.state.score }
+            if a.roles.count != b.roles.count { return a.roles.count > b.roles.count }
+            return a.code < b.code
+        }
+    }
+
+    private func reading(_ code: String, _ list: [Listed]) -> String? {
+        guard let lead = list.max(by: { a, b in a.roles.count != b.roles.count ? a.roles.count < b.roles.count : a.state.score < b.state.score }) else { return nil }
+        let times: String = lead.roles.count == 1 ? "once" : "\(lead.roles.count) times"
+        let through: String = lead.roles.map { $0.lowercased() }.joined(separator: "; ")
+        let state: String = lead.state.words.components(separatedBy: "\n").first?.lowercased() ?? ""
+        return "\(name(code)) acts most like \(name(lead.code)), which reaches it \(times) (\(through)) and is \(state) in this chart. A node gives as the grahas it acts like are able to give: the stronger and the more often repeated, the more its period delivers in their name."
+    }
+
+    private func actsTable(_ acts: [(role: String, grahas: [String])]) -> some View {
+        var rows: [(graha: String?, cells: [SheetCell])] = []
+        for (index, row) in acts.enumerated() {
+            if row.grahas.isEmpty {
+                rows.append((nil, [SheetCell(text: "\(index + 1).", width: 28), SheetCell(text: row.role, width: 220, met: true), SheetCell(text: "none", width: 110), SheetCell(text: "—", width: 560)]))
+            }
+            for other in row.grahas {
+                rows.append((other, [SheetCell(text: "\(index + 1).", width: 28), SheetCell(text: row.role, width: 220, met: true),
+                                     SheetCell(text: name(other), width: 110, tint: Tint.graha(other)), SheetCell(text: stance(other), width: 560)]))
+            }
+        }
+        let heads: [SheetCell] = [SheetCell(text: "", width: 28, header: true), SheetCell(text: "Acts like", width: 220, header: true), SheetCell(text: "Graha", width: 110, header: true), SheetCell(text: "Where it stands and what it rules", width: 560, header: true)]
+        return VStack(alignment: .leading, spacing: 1) {
+            SheetRow(graha: nil, cells: heads)
+            ForEach(rows.indices, id: \.self) { SheetRow(graha: rows[$0].graha, cells: rows[$0].cells) }
+        }
+        .padding(.leading, 30)
+    }
+
+    private func listTable(_ list: [Listed]) -> some View {
+        let heads: [SheetCell] = [SheetCell(text: "Graha", width: 110, header: true), SheetCell(text: "1. Condition", width: 420, header: true), SheetCell(text: "2. Duplication", width: 110, header: true), SheetCell(text: "Through", width: 280, header: true)]
+        return VStack(alignment: .leading, spacing: 1) {
+            SheetRow(graha: nil, cells: heads)
+            ForEach(list, id: \.code) { item in
+                SheetRow(graha: item.code, cells: [
+                    SheetCell(text: name(item.code), width: 110, tint: Tint.graha(item.code)),
+                    SheetCell(text: item.state.words, width: 420, met: abs(item.state.score) >= 2, helps: item.state.score >= 0),
+                    SheetCell(text: item.roles.count == 1 ? "once" : "\(item.roles.count) times", width: 110, met: item.roles.count > 1),
+                    SheetCell(text: item.roles.joined(separator: "\n"), width: 280)])
+            }
+        }
+        .padding(.leading, 30)
+    }
+
+    @ViewBuilder private func node(_ code: String) -> some View {
+        if let g = chart.graha(code) {
+            let house: Int = chart.house(ofSign: g.sign)
+            let acts = actsLike(g)
+            let list: [Listed] = listed(acts)
+            Text(name(code)).font(.title3).fontWeight(.semibold).foregroundStyle(Color.orange).padding(.top, 12)
+            answer("Stands in", stands(g, code))
+            step("1.  As a NM")
+            answer(malefic(code, house: house))
+            step("2.  \(name(code))'s Karaka-tva (innate meanings)")
+            answer(meanings(code))
+            answer("In this chart", "these meanings gather in the \(ord(house)) house: the matters of \(Lore.houseNames[house - 1].lowercased()) are where the pull, the high expectation and the blind spot are met.")
+            step("3.  Along with the meanings above, it will also “act” like other grahas")
+            Text("Acts like:").font(.callout).fontWeight(.semibold).padding(.leading, 30).padding(.top, 2)
+            actsTable(acts)
+            step("Make a list and sort by:  1. Condition of grahas   2. Duplication of influence on \(code == "Ra" ? "RA" : "KE")")
+            listTable(list)
+            if let words = reading(code, list) { answer("Read:", words) }
+        }
+    }
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("To analyse any Rahu or Ketu daśā or bhukti, several levels are looked at, in this order. After Steven Highburger, Vedic Traditions; each level is answered from this chart, for Rahu and then for Ketu.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).frame(maxWidth: wide, alignment: .leading)
+                node("Ra")
+                node("Ke")
+                Text("Rahu and Ketu have no mass, always stand opposite each other, cause the eclipses and own no sign or house: they give through the grahas they are tied to, which is why the list above is the heart of the reading.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).frame(maxWidth: wide, alignment: .leading).padding(.top, 10)
+            }
+            .frame(minWidth: wide, alignment: .leading)
+        }
+    }
+}
