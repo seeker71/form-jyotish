@@ -243,7 +243,7 @@ struct Card: View {
                 // (no name inside a chart on a card: the card's heading already names it, here and for the vargas below)
                 ChartView(style: store.style, title: "", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart), owned: owned(chart))
             } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
-                ChartView(style: store.style, title: "", ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [], owned: varga == 0 ? owned(chart) : [])
+                ChartView(style: store.style, title: "", ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : varga == 5 ? aspected(chart, varga: varga) : [], owned: varga == 0 || varga == 5 ? owned(chart) : [])
             } else {
                 switch id {
                 case "karakas": KarakaCard(chart: chart)
@@ -303,11 +303,18 @@ struct Card: View {
 
     /// the signs the graha in focus (under the pointer, else clicked) aspects, and the signs it rules: tinted in the birth chart
     private func aspected(_ chart: Chart) -> [Int] { store.focus?.graha.map { chart.aspectedSigns(by: $0) } ?? [] }
+    /// the signs the graha in focus aspects from where it stands in a varga: the 7th for all, and the special
+    /// aspects of Mars (4th, 8th), Jupiter (5th, 9th) and Saturn (3rd, 10th); the nodes cast none here
+    private func aspected(_ chart: Chart, varga: Int) -> [Int] {
+        guard let code = store.focus?.graha, let g = chart.graha(code), Lore.exalted[code] != nil else { return [] }
+        let extra = ["Ma": [3, 7], "Ju": [4, 8], "Sa": [2, 9]][code] ?? []
+        return ([6] + extra).map { (g.vargas[varga] + $0) % 12 }
+    }
     private func owned(_ chart: Chart) -> [Int] { store.focus?.graha.map { code in chart.housesRuled(by: code).map { (chart.asc.sign + $0 - 1) % 12 } } ?? [] }
     /// Under a birth chart, what the tints mean. The line always stands there, one line high, so the cards
     /// below keep their place while the pointer moves over the chart.
     private var legend: String? {
-        guard id == "chart:0" || id == "moon" else { return nil }
+        guard id == "chart:0" || id == "chart:5" || id == "moon" else { return nil }
         let rest = "Point at a graha to tint the signs it aspects and rules."
         guard let chart = store.chart, let code = store.focus?.graha, chart.graha(code) != nil else { return rest }
         let name = Names.lords[code] ?? code, seen = aspected(chart), ruled = owned(chart)
