@@ -37,10 +37,10 @@ enum Lore {
         ("Aditi, mother of the gods", "a quiver of arrows"), ("Brihaspati, teacher of the gods", "a flower, or a cow's udder"), ("the Nagas, serpents", "a coiled serpent"),
         ("the Pitris, the ancestors", "a throne"), ("Bhaga, giver of delight", "the front of a couch"), ("Aryaman, patron of bonds", "the back of a couch"),
         ("Savitar, the Sun as inspirer", "a hand"), ("Tvashtar, the divine craftsman", "a bright jewel"), ("Vayu, the wind", "a young shoot in the wind"),
-        ("Indra and Agni together", "a triumphal arch"), ("Mitra, friendship", "a lotus"), ("Indra, chief of the gods", "an earring or umbrella"),
+        ("Indra and Agni together", "a triumphal arch"), ("Mitra, friendship", "a lotus, or a triumphal gateway"), ("Indra, chief of the gods", "an earring or umbrella"),
         ("Nirriti, dissolution", "a bundle of roots"), ("Apas, the waters", "a winnowing fan"), ("the Vishvedevas, the universal gods", "an elephant's tusk"),
         ("Vishnu, the preserver", "an ear, or three footprints"), ("the eight Vasus", "a drum"), ("Varuna, the cosmic waters", "an empty circle"),
-        ("Aja Ekapada, the one-footed goat", "the front of a funeral cot"), ("Ahir Budhnya, serpent of the deep", "the back of a funeral cot"), ("Pushan, the nourisher", "a fish"),
+        ("Aja Ekapada, the one-footed goat", "the front of a funeral cot"), ("Ahir Budhnya, serpent of the deep", "the back of a funeral cot"), ("Pushan, the nourisher", "a fish, or a drum that marks time"),
     ]
     static func nakshatra(_ index: Int) -> String { "Presided over by \(nakshatras[index].deity); its sign is \(nakshatras[index].symbol)." }
 
