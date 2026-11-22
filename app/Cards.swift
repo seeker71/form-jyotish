@@ -239,7 +239,8 @@ struct Card: View {
         } else if let chart = store.chart {
             if id == "moon" {
                 // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house
-                ChartView(style: store.style, title: "Chandra", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart), owned: owned(chart))
+                // (no name inside the chart: the card's heading already says Chandra)
+                ChartView(style: store.style, title: "", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart), owned: owned(chart))
             } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
                 ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [], owned: varga == 0 ? owned(chart) : [])
             } else {
