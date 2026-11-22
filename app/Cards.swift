@@ -50,6 +50,7 @@ enum Catalog {
            CardInfo(id: "bala-sky", title: "The sky at birth: Moon, eclipse, retrogression, combustion, war", keywords: "moon full new waxing waning dark bright eclipse lunar solar retrograde combust planetary war graha yuddha", wide: true),
            CardInfo(id: "bala-table", title: "Graha strength and weakness", keywords: "strength weakness own sign exaltation debilitation dig bala retrograde combust planetary war table light on life", wide: true),
            CardInfo(id: "bala-keys", title: "Primary and secondary strength", keywords: "strength weakness primary secondary benefic malefic flanked friend enemy full new moon eclipse", wide: true),
+           CardInfo(id: "bala-navamsa", title: "From Rasi to Navamsa: the tree and its fruit", keywords: "navamsa d9 d1 vargottama fruit tree develops stronger weaker ripens over time growth later life", wide: true),
            CardInfo(id: "bala-relations", title: "Graha relations", keywords: "friends neutrals enemies mitra sama shatru natural friendship camps", wide: true),
            CardInfo(id: "bala-charts", title: "Visualizing strength", keywords: "rulership own sign exaltation dig bala directional charts", wide: true),
            CardInfo(id: "shadbala", title: "Shadbala", keywords: "strength six-fold sthana dig kala cheshta naisargika drik rupas", wide: true),
@@ -239,10 +240,10 @@ struct Card: View {
         } else if let chart = store.chart {
             if id == "moon" {
                 // the birth chart counted from the Moon's sign: the same signs, the Moon's as the first house
-                // (no name inside the chart: the card's heading already says Chandra)
+                // (no name inside a chart on a card: the card's heading already names it, here and for the vargas below)
                 ChartView(style: store.style, title: "", ascSign: chart.graha("Mo")?.sign ?? chart.asc.sign, marks: marks(chart, 0, lagnaLabel: true), aspected: aspected(chart), owned: owned(chart))
             } else if id.hasPrefix("chart:"), let varga = Int(id.dropFirst(6)) {
-                ChartView(style: store.style, title: Names.vargaCodes[varga], ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [], owned: varga == 0 ? owned(chart) : [])
+                ChartView(style: store.style, title: "", ascSign: chart.asc.vargas[varga], marks: marks(chart, varga), aspected: varga == 0 ? aspected(chart) : [], owned: varga == 0 ? owned(chart) : [])
             } else {
                 switch id {
                 case "karakas": KarakaCard(chart: chart)
@@ -274,6 +275,7 @@ struct Card: View {
                 case "bala-sky": StrengthSky(chart: chart)
                 case "bala-table": StrengthSheet(chart: chart)
                 case "bala-keys": KeyFactorsCard(chart: chart)
+                case "bala-navamsa": NavamsaGrowthCard(chart: chart)
                 case "bala-relations": RelationsCard(chart: chart)
                 case "bala-charts": StrengthCharts(chart: chart)
                 case "shadbala": ShadbalaTable(chart: chart)

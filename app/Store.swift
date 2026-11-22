@@ -65,7 +65,7 @@ final class Store: ObservableObject {
         "Overview": ["chart:0", "transit-chart", "chart:5", "moon", "grahas", "panchanga", "edges", "birth", "timeline"],
         "Vargas": (0..<16).map { "chart:\($0)" },
         "Dasha": ["chart:0", "transit-chart", "dasha-context", "timeline", "dashas", "events", "other-dashas"],
-        "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-relations", "bala-charts", "chart:0", "avasthas", "shadbala", "ashtakavarga"],
+        "Strength": ["bala-sky", "bala-table", "bala-keys", "bala-navamsa", "bala-relations", "bala-charts", "chart:0", "avasthas", "shadbala", "ashtakavarga"],
         "Yogas": ["chart:0", "yogas", "aspects"],
         "KP": ["kp-grahas", "kp-cusps", "kp-houses", "kp-planets"],
         "Transits": ["chart:0", "transit-chart", "gochara", "dina", "transits", "transit-dates", "timeline"],

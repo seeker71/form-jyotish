@@ -53,6 +53,7 @@ enum Help {
         case "bala-sky": return "Read from this chart's positions: whether the Moon is new, dark, bright or full and waxing or waning; whether the birth fell on an eclipse; and which planets are retrograde, combust or at war."
         case "bala-table": return "The rules of strength and weakness, one row for each graha. A lit cell is a rule this chart meets: green adds strength, orange asks more."
         case "bala-keys": return "What each graha meets of the primary and secondary factors. Primary factors weigh most; secondary factors shade them."
+        case "bala-navamsa": return "Each graha in the birth chart and in the navamsa side by side: whether it grows stronger, holds or grows weaker from the one to the other, and the years of its own periods, when that turn shows most. The strip below colours the whole life by it."
         case "bala-relations": return "Who is friend, neutral and enemy to whom by nature, and whose sign each graha stands in here."
         case "bala-charts": return "Three charts on this lagna: the lord of each sign, where each graha is exalted, and where each has directional strength. A tick marks a graha that stands there in this chart."
         case "avasthas": return "The state each graha is in: its age by degree, its wakefulness by the sign it is in, and its mood by its dignity."

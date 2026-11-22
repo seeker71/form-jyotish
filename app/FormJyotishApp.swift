@@ -344,11 +344,13 @@ struct FormJyotishApp: App {
         }
         beat.resume()
         Self.beat = beat
+        // the two settings the probe changes are kept by the app even in a probe: each is changed and changed back
         var actions: [(name: String, run: () -> Void)] = (Store.workspaces.dropFirst() + ["Guide", "Overview"]).map { name in ("open \(name)", { store.workspace = name }) }
         actions += [("point at Jupiter", { store.hover = .graha("Ju") }), ("point at Saturn", { store.hover = .graha("Sa") }), ("point away", { store.hover = nil }),
                     ("click the Moon", { store.pick = .graha("Mo") }), ("click a sign", { store.pick = .sign(3) }),
                     ("step one day", { store.step(seconds: 86400) }), ("step one more day", { store.step(seconds: 86400) }), ("Now", { store.goNow() }), ("Birth", { store.goBirth() }),
-                    ("chart style", { store.style = store.style == .south ? .north : .south }), ("minutes off", { store.chartMinutes.toggle() }),
+                    ("chart style", { store.style = store.style == .south ? .north : .south }), ("chart style back", { store.style = store.style == .south ? .north : .south }),
+                    ("minutes", { store.chartMinutes.toggle() }), ("minutes back", { store.chartMinutes.toggle() }),
                     ("hide the explanation column", { store.inspectorShown = false }), ("show the explanation column", { store.inspectorShown = true })]
         var slow: [String] = [], longest: (String, UInt64) = ("", 0)
         func act(_ index: Int) {

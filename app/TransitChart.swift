@@ -40,7 +40,7 @@ struct TransitChart: View {
         let sky = store.moment == nil ? now : store.sky, at = store.moment ?? readAt
         VStack(alignment: .leading, spacing: 6) {
             if let sky {
-                ChartView(style: store.style, title: "Transit", ascSign: natal.asc.sign, marks: marks(sky))
+                ChartView(style: store.style, title: "", ascSign: natal.asc.sign, marks: marks(sky))
             } else {
                 Text(problem ?? "Reading the sky…").foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 120)
             }
