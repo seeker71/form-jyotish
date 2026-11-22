@@ -50,6 +50,7 @@ enum Catalog {
            CardInfo(id: "bala-sky", title: "The sky at birth: Moon, eclipse, retrogression, combustion, war", keywords: "moon full new waxing waning dark bright eclipse lunar solar retrograde combust planetary war graha yuddha", wide: true),
            CardInfo(id: "bala-table", title: "Graha strength and weakness", keywords: "strength weakness own sign exaltation debilitation dig bala retrograde combust planetary war table light on life", wide: true),
            CardInfo(id: "bala-keys", title: "Primary and secondary strength", keywords: "strength weakness primary secondary benefic malefic flanked friend enemy full new moon eclipse", wide: true),
+           CardInfo(id: "proforma-a", title: "Chart Prep Pro Forma A", keywords: "reading pro forma chart prep yoga lagna bhava dasha bhukti gochara vichara static dynamic potential timing vedic traditions", wide: true),
            CardInfo(id: "bala-navamsa", title: "From Rasi to Navamsa: the tree and its fruit", keywords: "navamsa d9 d1 vargottama fruit tree develops stronger weaker ripens over time growth later life", wide: true),
            CardInfo(id: "bala-relations", title: "Graha relations", keywords: "friends neutrals enemies mitra sama shatru natural friendship camps", wide: true),
            CardInfo(id: "bala-charts", title: "Visualizing strength", keywords: "rulership own sign exaltation dig bala directional charts", wide: true),
@@ -165,6 +166,7 @@ struct Workspace: View {
             .animation(.easeInOut(duration: 0.22), value: store.enlarged)
             .padding(16)
             .frame(width: width, alignment: .leading)
+            .offset(y: -Store.probeScroll)
         }
         // a card not yet in view is not built yet, so the desk scrolls to the card's row, which is always known
         .onChanged(of: store.showCard) { if let card = store.showCard { if let row = rows(width: width).first(where: { $0.contains(card) }) { withAnimation { reader.scrollTo(row, anchor: .top) } }; store.showCard = nil } }
@@ -275,6 +277,7 @@ struct Card: View {
                 case "bala-sky": StrengthSky(chart: chart)
                 case "bala-table": StrengthSheet(chart: chart)
                 case "bala-keys": KeyFactorsCard(chart: chart)
+                case "proforma-a": ProFormaCard(chart: chart)
                 case "bala-navamsa": NavamsaGrowthCard(chart: chart)
                 case "bala-relations": RelationsCard(chart: chart)
                 case "bala-charts": StrengthCharts(chart: chart)

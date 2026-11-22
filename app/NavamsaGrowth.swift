@@ -119,7 +119,7 @@ struct NavamsaGrowthCard: View {
                         SheetRow(graha: g.id, cells: [
                             SheetCell(text: Names.lords[g.id] ?? g.id, width: widths[0], tint: Tint.graha(g.id)),
                             SheetCell(text: "\(Names.signs[g.sign])\n\(r.rasi.word)", width: widths[1], met: r.rasi.grade >= 4 || r.rasi.grade == 0, helps: r.rasi.grade != 0),
-                            SheetCell(text: "\(Names.signs[g.navamsa])\(r.vargottama ? " · vargottama" : "")\n\(r.navamsa.word)", width: widths[2], met: r.navamsa.grade >= 4 || r.navamsa.grade == 0 || r.vargottama, helps: r.navamsa.grade != 0),
+                            SheetCell(text: "\(Names.signs[g.navamsa])\(r.vargottama ? " · vargottama" : "")\n\(r.navamsa.word)\nby \(g.nak_name), pada \(g.pada)", width: widths[2], met: r.navamsa.grade >= 4 || r.navamsa.grade == 0 || r.vargottama, helps: r.navamsa.grade != 0),
                             SheetCell(text: "\(Self.mark(r.turn)) \(r.words)", width: widths[3], met: r.turn != 0 || r.vargottama, helps: r.turn >= 0),
                             SheetCell(text: own(g.id), width: widths[4])])
                     }
@@ -127,6 +127,7 @@ struct NavamsaGrowthCard: View {
                 timeline
                 VStack(alignment: .leading, spacing: 2) {
                     Text("The Rasi shows what a graha promises; the Navamsa shows what that promise is worth as it is lived. A graha that stands better in the Navamsa gives more than the Rasi alone suggests; one that stands worse gives less, or gives and does not keep. The turn is felt most in the graha's own periods, and more as the life goes on.")
+                    Text("The navamsa is read off the nakshatra pada: each of the 108 padas is one navamsa, counted round the zodiac from Ashvini pada 1 in Mesha, so a graha's pada names its navamsa sign, and with it how it stands there. Padas 1 to 4 of any nakshatra fall in a fire, an earth, an air and a water sign in turn.")
                     Text("Both charts are graded on one scale: exalted, own sign, a natural friend's sign, a neutral's, an enemy's, debilitated. The Dignity column elsewhere also counts where the grahas stand to each other in this chart, so its word for the Rasi can differ.")
                 }
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)

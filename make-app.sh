@@ -61,6 +61,6 @@ codesign --force --sign - "$app"
 # the tabs must answer real clicks before the build is called built: the probe clicks every tab and leaves 0
 # only when each one answered (set SKIP_PROBES=1 where no window can open, as on a build machine without a screen)
 if [ -z "$SKIP_PROBES" ]; then
-  "$app/Contents/MacOS/FormJyotish" --example --probe-tabs | tail -1 | grep -q "^probe: 11 of 11" || { echo "the tabs did not all answer a click: run $app/Contents/MacOS/FormJyotish --example --probe-tabs"; exit 1; }
+  "$app/Contents/MacOS/FormJyotish" --example --probe-tabs >/dev/null || { echo "the tabs did not all answer a click: run $app/Contents/MacOS/FormJyotish --example --probe-tabs"; exit 1; }
 fi
 echo "built $app (build $build): $(lipo -archs "$app/Contents/MacOS/FormJyotish")"

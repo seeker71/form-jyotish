@@ -52,13 +52,14 @@ final class Pointer: ObservableObject {
 /// The saved births, the chart on the desk, the moment under view, and what is picked.
 @MainActor
 final class Store: ObservableObject {
-    nonisolated static let workspaces = ["Guide", "Strength", "Overview", "Yogas", "Dasha", "Transits", "Vargas", "Jaimini", "KP", "Annual", "Match"]
+    nonisolated static let workspaces = ["Guide", "Strength", "Overview", "Yogas", "Dasha", "Transits", "Vargas", "Reading", "Jaimini", "KP", "Annual", "Match"]
     /// the desks whose methods Light on Life does not teach: they stand last, as additions
     nonisolated static let additions: Set<String> = ["Jaimini", "KP", "Annual", "Match"]
     /// Cards that belong together stand next to each other: the workspace lays neighbours side by side
     /// where the window has room, so a chart sits beside the table that reads it.
     static let standardLayout: [String: [String]] = [
         "Guide": ["guide", "chart:0", "zodiac", "graha-meanings", "bhava-classes", "bhava-karakas", "bhava-meanings", "rashi-elements", "rashi-meanings", "nakshatras", "anatomy", "lagna-vichara", "bhava-vichara", "houses", "reading", "glossary", "sources"],
+        "Reading": ["proforma-a"],
         "Jaimini": ["chart:0", "karakas", "arudhas", "chara-dasha"],
         "Match": ["match", "chart:0", "moon"],
         "Annual": ["annual", "chart:0", "dasha-context"],
@@ -146,6 +147,8 @@ final class Store: ObservableObject {
     @Published var layout: [String: [String]] { didSet { if !Store.trial { defaults.set(try? JSONEncoder().encode(layout), forKey: "layout") } } }
     /// a run that only pictures or probes the window: it shows the standard desk and writes nothing of the desk's
     /// arrangement, workspace or guidance level
+    /// `--scroll 900` draws the desk that many points further down: a picture of what stands below the window's edge
+    static let probeScroll: CGFloat = CommandLine.arguments.firstIndex(of: "--scroll").flatMap { CommandLine.arguments.count > $0 + 1 ? Double(CommandLine.arguments[$0 + 1]) : nil }.map { CGFloat($0) } ?? 0
     static let trial = ["--snapshot", "--probe-tour", "--probe-table", "--probe-tabs", "--probe-palette", "--probe-speed"].contains { CommandLine.arguments.contains($0) }
     /// how large the desk is drawn: 1 is the system's own text size
     @Published var textScale: Double = UserDefaults.standard.object(forKey: "textScale") as? Double ?? 1.15 { didSet { defaults.set(textScale, forKey: "textScale") } }

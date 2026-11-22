@@ -6,6 +6,7 @@ enum Help {
     static func workspace(_ name: String) -> String {
         switch name {
         case "Guide": return "Where to begin, in the order the book teaches: the zodiac, what the grahas stand for, how the houses are classed and what they stand for, the rashis by element and quality, the nakshatras, how the chart is laid out, then this chart read house by house. Every name is a link."
+        case "Reading": return "A reading prepared step by step from a set pro forma: first what the chart holds, then when it comes forward."
         case "Overview": return "The birth data, the birth chart, the navamsa, the grahas' positions and the dasha timeline. Start here."
         case "Vargas": return "The sixteen divisional charts. Each divides every sign into finer parts and shows one area of life in more detail."
         case "Dasha": return "The Vimshottari periods: which graha's time is running, from the 120-year cycle down to spans of days."
@@ -53,6 +54,7 @@ enum Help {
         case "bala-sky": return "Read from this chart's positions: whether the Moon is new, dark, bright or full and waxing or waning; whether the birth fell on an eclipse; and which planets are retrograde, combust or at war."
         case "bala-table": return "The rules of strength and weakness, one row for each graha. A lit cell is a rule this chart meets: green adds strength, orange asks more."
         case "bala-keys": return "What each graha meets of the primary and secondary factors. Primary factors weigh most; secondary factors shade them."
+        case "proforma-a": return "A reading prepared in the five steps of the Level 1 Chart Prep Pro Forma: yoga, lagna and bhava vichara for what the chart holds, then dasha-bhukti and gochara vichara for when. Every heading is a prompt of the pro forma; under it is this chart's answer."
         case "bala-navamsa": return "Each graha in the birth chart and in the navamsa side by side: whether it grows stronger, holds or grows weaker from the one to the other, and the years of its own periods, when that turn shows most. The strip below colours the whole life by it."
         case "bala-relations": return "Who is friend, neutral and enemy to whom by nature, and whose sign each graha stands in here."
         case "bala-charts": return "Three charts on this lagna: the lord of each sign, where each graha is exalted, and where each has directional strength. A tick marks a graha that stands there in this chart."
